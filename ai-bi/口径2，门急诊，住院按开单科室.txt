@@ -1,0 +1,145 @@
+SELECT sum(cast(pvalue_rc as float)) FROM dbo.ai_pat_info_mz where pdate between '2025-05-01' and '2025-05-31 23:59:59' --门急诊人次
+SELECT sum(cast(pvalue_rc as float)) FROM dbo.ai_pat_info_zy where pdate between '2025-05-01' and '2025-05-31 23:59:59' --住院人次
+
+--一
+--门急诊：科室+病种维度的就诊费用汇总（按开单科室计算）
+select 
+left(a.pdate,7)  as 年月
+,a.pat_kind_name as 就诊类型
+,a.deptname      as 开单科室
+,b.icdecode      as 病种编码
+,b.icdename      as 病种名称
+--,sum(cast(b.pvalue_rc as float))     as 就诊人次 
+,sum(a.pvalue)        as 总费用 
+from dbo.ai_pat_fee_detail_mz2 a (nolock)
+inner join dbo.ai_pat_info_mz b (nolock) on b.visit_no = a.visit_no
+where a.pdate between '2025-05-01' and '2025-05-31 23:59:59' 
+and a.pname in ('门诊收入','急诊收入')
+and a.visit_no !='0'
+and isnull(a.visit_no,'') !=''
+and b.visit_no !='0'
+and isnull(b.visit_no,'') !=''
+group by left(a.pdate,7),a.pat_kind_name,a.deptname,b.icdecode,b.icdename
+--住院：科室+病种维度的就诊费用汇总（按开单科室计算）
+select 
+left(a.pdate,7)  as 年月
+,a.pat_kind_name as 就诊类型
+,a.deptname      as 开单科室
+,b.icdecode      as 病种编码
+,b.icdename      as 病种名称
+--,sum(cast(b.pvalue_rc as float))     as 就诊人次 
+,sum(a.pvalue)        as 总费用 
+from dbo.ai_pat_fee_detail_zy2 a (nolock)
+inner join dbo.ai_pat_info_zy b (nolock) on b.visit_no = a.visit_no
+where a.pdate between '2025-05-01' and '2025-05-31 23:59:59' 
+and a.pname = '住院总费用'
+and a.visit_no !='0'
+and isnull(a.visit_no,'') !=''
+and b.visit_no !='0'
+and isnull(b.visit_no,'') !=''
+group by left(a.pdate,7),a.pat_kind_name,a.deptname,b.icdecode,b.icdename
+
+--二
+--门急诊：费用分类汇总（按开单科室计算）
+select 
+left(a.pdate,7)  as 年月
+,a.pat_kind_name as 就诊类型
+,a.deptname      as 开单科室
+,b.icdecode      as 病种编码
+,b.icdename      as 病种名称
+,a.pname         as 费用类别
+,sum(a.pvalue)        as 费用金额
+,sum(a.num)    as 项目数量
+from dbo.ai_pat_fee_detail_mz2 a (nolock)
+inner join dbo.ai_pat_info_mz b (nolock) on b.visit_no = a.visit_no
+where a.pdate between '2025-05-01' and '2025-05-01 23:59:59' 
+and a.pname not in ('门诊收入','急诊收入','门诊医疗服务收入','急诊医疗服务收入')
+and a.visit_no !='0'
+and isnull(a.visit_no,'') !=''
+and b.visit_no !='0'
+and isnull(b.visit_no,'') !=''
+
+group by left(a.pdate,7),a.pat_kind_name,a.deptname,b.icdecode,b.icdename,a.pname 
+--住院：费用分类汇总（按开单科室计算）
+select 
+left(a.pdate,7)  as 年月
+,a.pat_kind_name as 就诊类型
+,a.deptname      as 开单科室
+,b.icdecode      as 病种编码
+,b.icdename      as 病种名称
+,a.pname         as 费用类别
+,sum(a.pvalue)        as 费用金额
+,sum(a.num)    as 项目数量
+from dbo.ai_pat_fee_detail_zy2 a (nolock)
+inner join dbo.ai_pat_info_zy b (nolock) on b.visit_no = a.visit_no
+where a.pdate between '2025-05-01' and '2025-05-01 23:59:59' 
+and a.pname not in ('住院总费用','住院医疗服务收入')
+and a.visit_no !='0'
+and isnull(a.visit_no,'') !=''
+and b.visit_no !='0'
+and isnull(b.visit_no,'') !=''
+group by left(a.pdate,7),a.pat_kind_name,a.deptname,b.icdecode,b.icdename,a.pname 
+
+
+--三
+--门急诊：项目级费用明细（按开单科室计算）
+select 
+left(a.pdate,7)  as 年月
+,a.pat_kind_name as 就诊类型
+,a.deptname      as 开单科室
+,b.icdecode      as 病种编码
+,b.icdename      as 病种名称
+,a.itemcode      as 收费项目编码
+,a.itemname      as 收费项目名称
+,a.pname         as 费用类别
+,a.num 数量
+,a.price 单价
+,a.pvalue 金额
+from dbo.ai_pat_fee_detail_mz2 a (nolock)
+inner join dbo.ai_pat_info_mz b (nolock) on b.visit_no = a.visit_no
+where a.pdate between '2025-05-01' and '2025-05-01 23:59:59' 
+and a.pname not in ('门诊收入','急诊收入','门诊医疗服务收入','急诊医疗服务收入')
+and a.visit_no !='0'
+and isnull(a.visit_no,'') !=''
+and b.visit_no !='0'
+and isnull(b.visit_no,'') !=''
+
+--住院：项目级费用明细（按开单科室计算）
+select 
+left(a.pdate,7)  as 年月
+,a.pat_kind_name as 就诊类型
+,a.deptname      as 开单科室
+,b.icdecode      as 病种编码
+,b.icdename      as 病种名称
+,a.itemcode      as 收费项目编码
+,a.itemname      as 收费项目名称
+,a.pname         as 费用类别
+,a.num           as 数量
+,a.price		 as 单价
+,a.pvalue		 as 金额
+from dbo.ai_pat_fee_detail_zy2 a (nolock)
+inner join dbo.ai_pat_info_zy b (nolock) on b.visit_no = a.visit_no
+where a.pdate between '2025-05-01' and '2025-05-01 23:59:59' 
+and a.pname not in ('住院总费用','住院医疗服务收入')
+and a.visit_no !='0'
+and isnull(a.visit_no,'') !=''
+and b.visit_no !='0'
+and isnull(b.visit_no,'') !=''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

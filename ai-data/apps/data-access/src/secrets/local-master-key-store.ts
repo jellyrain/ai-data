@@ -1,0 +1,199 @@
+import { randomUUID, randomBytes } from "node:crypto";
+import { mkdir, open, readFile, readdir, unlink, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+
+/** 本地密钥库中当前用于新密文的 AES 主密钥。 */
+interface ActiveMasterKey {
+  /** 主密钥版本标识，同时用于定位原始密钥文件。 */
+  keyId: string;
+  /** 仅在进程内使用的 32 字节 AES-256 密钥。 */
+  value: Buffer;
+}
+
+/** 按密钥版本读取主密钥，供密文解析器依赖。 */
+interface MasterKeyProvider {
+  /** 读取指定密钥版本的 32 字节主密钥。 */
+  getKey(keyId: string): Promise<Buffer>;
+}
+
+/** 读取当前活动主密钥，供创建新密文的管理服务依赖。 */
+interface ActiveMasterKeyProvider extends MasterKeyProvider {
+  /** 返回当前用于新 AES-GCM 密文的密钥版本和密钥内容。 */
+  getActiveKey(): Promise<ActiveMasterKey>;
+}
+
+/** DAS 自管的本地 AES 主密钥库，不与启动配置或操作系统密钥库耦合。 */
+class LocalMasterKeyStore implements ActiveMasterKeyProvider {
+  private readonly activeKeyPath: string;
+  private readonly keysDirectory: string;
+  private readonly bootstrapLockPath: string;
+
+  constructor(private readonly keyStoreDirectory: string) {
+    this.activeKeyPath = join(keyStoreDirectory, "active-key.json");
+    this.keysDirectory = join(keyStoreDirectory, "keys");
+    this.bootstrapLockPath = join(keyStoreDirectory, ".bootstrap.lock");
+  }
+
+  /** 读取当前活动主密钥；仅当密钥库完全不存在时才创建第一把密钥。 */
+  async getActiveKey(): Promise<ActiveMasterKey> {
+    await mkdir(this.keyStoreDirectory, { recursive: true });
+    const activeKeyId = await this.readActiveKeyId();
+
+    if (activeKeyId !== undefined) {
+      return { keyId: activeKeyId, value: await this.getKey(activeKeyId) };
+    }
+
+    await this.assertAbsentKeyStore();
+    return this.bootstrapInitialKey();
+  }
+
+  /** 按版本读取已存在的主密钥，缺失或损坏时拒绝解密。 */
+  async getKey(keyId: string): Promise<Buffer> {
+    assertSafeKeyId(keyId);
+
+    let key: Buffer;
+    try {
+      key = await readFile(join(this.keysDirectory, `${keyId}.key`));
+    } catch (error) {
+      if (isFileNotFound(error)) {
+        throw new Error(`本地主密钥文件不存在: ${keyId}`, { cause: error });
+      }
+      throw error;
+    }
+
+    if (key.length !== 32) {
+      throw new Error(`本地主密钥 ${keyId} 必须为 32 字节`);
+    }
+
+    return key;
+  }
+
+  private async readActiveKeyId(): Promise<string | undefined> {
+    let content: string;
+    try {
+      content = await readFile(this.activeKeyPath, "utf8");
+    } catch (error) {
+      if (isFileNotFound(error)) {
+        return undefined;
+      }
+      throw error;
+    }
+
+    let value: unknown;
+    try {
+      value = JSON.parse(content) as unknown;
+    } catch {
+      throw new Error("本地主密钥活动记录不是合法 JSON");
+    }
+
+    if (
+      typeof value !== "object" ||
+      value === null ||
+      Array.isArray(value) ||
+      Object.keys(value).length !== 1 ||
+      typeof (value as Record<string, unknown>).key_id !== "string"
+    ) {
+      throw new Error("本地主密钥活动记录格式无效");
+    }
+
+    const keyId = (value as Record<string, unknown>).key_id as string;
+    assertSafeKeyId(keyId);
+    return keyId;
+  }
+
+  private async assertAbsentKeyStore(): Promise<void> {
+    try {
+      const entries = await readdir(this.keysDirectory);
+      if (entries.length > 0) {
+        throw new Error("本地主密钥活动记录缺失，拒绝生成替代密钥");
+      }
+    } catch (error) {
+      if (!isFileNotFound(error)) {
+        throw error;
+      }
+    }
+  }
+
+  private async bootstrapInitialKey(): Promise<ActiveMasterKey> {
+    let lock: Awaited<ReturnType<typeof open>>;
+    try {
+      lock = await open(this.bootstrapLockPath, "wx", 0o600);
+    } catch (error) {
+      if (!isFileAlreadyExists(error)) {
+        throw error;
+      }
+      return this.waitForActiveKey();
+    }
+
+    try {
+      const existingKeyId = await this.readActiveKeyId();
+      if (existingKeyId !== undefined) {
+        return { keyId: existingKeyId, value: await this.getKey(existingKeyId) };
+      }
+
+      await this.assertAbsentKeyStore();
+      await mkdir(this.keysDirectory, { recursive: true });
+      const keyId = randomUUID();
+      const value = randomBytes(32);
+      await writeFile(join(this.keysDirectory, `${keyId}.key`), value, { flag: "wx", mode: 0o600 });
+      await writeFile(this.activeKeyPath, JSON.stringify({ key_id: keyId }), {
+        flag: "wx",
+        mode: 0o600,
+      });
+      return { keyId, value };
+    } finally {
+      await lock.close();
+      await removeBootstrapLock(this.bootstrapLockPath);
+    }
+  }
+
+  private async waitForActiveKey(): Promise<ActiveMasterKey> {
+    for (let attempts = 0; attempts < 50; attempts += 1) {
+      const keyId = await this.readActiveKeyId();
+      if (keyId !== undefined) {
+        return { keyId, value: await this.getKey(keyId) };
+      }
+      await new Promise<void>((resolve) => setTimeout(resolve, 100));
+    }
+    throw new Error("本地主密钥库初始化未完成");
+  }
+}
+
+/** 只接受可安全拼入密钥文件名的版本标识。 */
+function assertSafeKeyId(keyId: string): void {
+  if (!/^[A-Za-z0-9_-]+$/.test(keyId)) {
+    throw new Error("key_id 必须是安全密钥标识");
+  }
+}
+
+/** 判断文件读取失败是否由文件不存在引起。 */
+function isFileNotFound(error: unknown): error is NodeJS.ErrnoException {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as NodeJS.ErrnoException).code === "ENOENT"
+  );
+}
+
+/** 判断独占创建失败是否说明另一实例正在初始化。 */
+function isFileAlreadyExists(error: unknown): error is NodeJS.ErrnoException {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as NodeJS.ErrnoException).code === "EEXIST"
+  );
+}
+
+/** 删除仅用于首次初始化互斥的锁文件。 */
+async function removeBootstrapLock(path: string): Promise<void> {
+  try {
+    await unlink(path);
+  } catch (error) {
+    if (!isFileNotFound(error)) {
+      throw error;
+    }
+  }
+}
+
+export { LocalMasterKeyStore };
+export type { ActiveMasterKey, ActiveMasterKeyProvider, MasterKeyProvider };

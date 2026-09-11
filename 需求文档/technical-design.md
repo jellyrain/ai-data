@@ -1,0 +1,489 @@
+# AI BI 技术方案
+
+版本：v0.2  
+设计基线日期：2026-09-11  
+状态：已确认的技术设计基线；新增能力待实现与验收  
+关联文档：[requirements.md](./requirements.md) · [contracts.md](./contracts.md) · [development-standards.md](./development-standards.md) · [dependencies.md](./dependencies.md) · [data-access-design.md](./data-access-design.md)
+
+## 1. 已定技术决策
+
+| 项目          | 决策                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 主语言        | Node.js + TypeScript                                                                                                           |
+| 前端          | Vue 3 + Vite + TypeScript                                                                                                      |
+| 业务 API      | Node.js + Fastify                                                                                                              |
+| Agent Runtime | Codex SDK 驱动 Codex App Server                                                                                                |
+| 数据访问      | 独立只读 Data Access Service；查询请求无会话状态，服务自持运行配置与审计，全部查询使用 DSL，内部通过可插拔连接器访问多种数据源 |
+| 业务数据源    | MVP 优先 SQL Server 报表库、只读副本或数仓；通过连接器扩展其他只读数据源                                                       |
+| 产品元数据    | 独立 SQL Server 数据库 `ai_bi_meta`                                                                                            |
+| 流式协议      | API 到前端使用 SSE                                                                                                             |
+| 查询语言      | 受控业务查询 DSL；禁止 Agent 直接执行任意 SQL                                                                                  |
+| 队列与缓存    | MVP 不引入 Redis、Kafka 或向量数据库                                                                                           |
+
+## 2. 总体架构
+
+```text
+浏览器
+  |
+  | HTTP / SSE
+  v
+Web（Vue 3 + Vite 构建产物）
+  |
+  v
+AI BI API / Agent Gateway（Fastify）
+  |- 用户、组织、权限、会话、审计
+  |- 记忆、指标定义、报告、任务状态
+  |- Codex SDK
+  |    |
+  |    v
+  |  Codex App Server
+  |    |- Skills
+  |    |- 业务工具
+  |    `- API Tools
+  |
+  v
+SQL Server: ai_bi_meta
+
+Data Access Service（独立只读服务）
+  |- 访问上下文验签与 API 签名执行范围校验
+  |- `das.config.json`：API Host、JWT 公钥、DAS 元数据 SQL Server 连接
+  |- DAS 元数据 SQL Server：数据源连接、对象暴露白名单与执行审计
+  |- 数据源连接器与当前目录发现
+  |- DSL 校验、受控执行、结果脱敏
+  `- 本地审计、限流、超时和成本限制
+       |
+       v
+业务数据源：SQL Server / HTTP API / 其他只读连接器
+```
+
+## 3. 部署模型
+
+### 3.1 MVP
+
+MVP 有三个部署单元：
+
+```text
+1. Web
+2. API（包含 Codex SDK 管理的 Codex App Server 子进程）
+3. Data Access Service
+```
+
+Codex App Server 是独立运行进程，但第一阶段不是独立网络服务。它由同一 API 实例通过 SDK 启动和管理，不能暴露给浏览器或公网。
+
+### 3.2 扩展阶段
+
+当并发、稳定性或任务执行隔离要求提高后：
+
+```text
+Web 多副本
+API / Agent Gateway 多副本
+Codex App Server Runner 池
+Data Access Service 多副本
+独立 Memory Worker
+Redis / 消息队列（按实际压力引入）
+```
+
+从第一版开始，会话、分析任务、分析步骤、证据和记忆事件都必须持久化，不能只放在 API 或 App Server 内存中。
+
+## 4. 各组件职责
+
+### 4.1 Web
+
+- 发起对话、展示 SSE 流式事件。
+- 渲染表格、图表、报告和证据链。
+- 渲染模型通过 SSE 推送的问题与选项，并回传所选选项 ID 或自定义输入。
+- 不直连 Codex App Server、Data Access Service 或 SQL Server。
+
+### 4.1.1 Vue 前端组织约束
+
+选择 Vue 3 是因为它符合现有团队技术栈，降低组件复用、代码审查、维护和后续交付的成本。
+
+为避免业务逻辑堆积在单个 `.vue` 文件中，采用 feature-first 目录结构。页面组件只承担布局、组件组合和少量展示态；流式处理、接口调用、领域转换和跨页面状态必须拆到对应模块中：
+
+```text
+apps/web/src/
+  features/
+    chat/
+      ChatPage.vue                 页面布局与组件组合
+      components/                  消息、澄清、表格、图表等展示组件
+      composables/                 useChatStream、useConversation 等交互逻辑
+      api/                         对 API 的请求封装
+      domain/                      分析结果类型、事件转换和纯业务规则
+      stores/                      仅限跨组件或跨页面的聊天状态
+  router/                          路由定义
+  shared/                          通用 UI、工具与基础请求能力
+```
+
+前端基线依赖及每个包的责任见 [dependencies.md](./dependencies.md)。单个 `.vue` 组件不承载长流程编排、SSE 协议解析、数据请求或领域计算；这些逻辑优先进入 composable、API client 或 domain 模块。
+
+### 4.2 AI BI API / Agent Gateway
+
+- 认证、组织隔离、角色权限和限流。
+- 创建 `conversation` 和 `analysis_run`。
+- 管理已批准关系、关联键与基数，以及指标粒度、去重、聚合和上卷规则；根据这些配置完成所有业务查询构造，并生成语义完整、可直接执行的最终 DSL。
+- 按关联语义决定行权限和用户条件的位置，控制参数化数据集的权限参数，校验固定输出的列权限，并生成签名输出脱敏或匿名化规则。
+- 在每轮执行前加载已发布指标定义、当前会话确认项、用户偏好和当前 Skill 内容。
+- 使用 Codex SDK 驱动 Agent，转发流式事件给前端。
+- 执行业务工具调用：读取口径、读取当前数据目录、读取/保存个人偏好、创建知识候选、保存报告。
+- 通过受控工具提供确定性计算、授权和执行能力；持久化动态分析步骤、假设、查询结果摘要、证据关系和运行限制，模型依据 Skill 与运行时证据决定分析分支。
+- 维护组织、用户、会话和运行隔离的持久化状态、幂等键、原子状态迁移、澄清标识和执行租约，控制 SSE 订阅、取消与重启恢复。
+- 记录工具调用、最终查询 DSL、指标版本、解析出的对象和字段、分析结果及审计日志。
+- 保存报告模板、快照和来源数据范围，分别执行查看者权限下的模板运行与完整快照访问校验。
+
+### 4.3 Codex App Server
+
+- 执行 Agent 任务、运行 Skills、调用 API Tools。
+- 按当前 Skill、指标知识、目录和证据处理多步分析、追问、澄清和工具结果，动态选择查询与后续分析。
+- 每个运行使用独立 Agent 上下文，由 API 校验身份并注入当前会话的授权上下文；运行切换或恢复时按持久化记录加载上下文。
+- 不直接持有 SQL Server 凭据。
+- 不作为长期记忆和企业业务知识的唯一存储。
+
+### 4.4 Data Access Service
+
+- 是唯一允许访问受控业务数据源的服务。
+- 一个服务通过多个连接器管理配置化数据源，而非一个数据库或接口一个独立服务。
+- API 是用户、角色、对象权限与行过滤策略的唯一事实来源；Data Access Service 不保存这些业务数据。
+- DAS 对每个 API 查询请求不保存会话状态。`das.config.json` 提供 API Host、JWT 公钥和 DAS 元数据 SQL Server 连接；服务启动后从自己的 SQL Server 读取数据源连接配置和对象暴露白名单，并写入执行审计。
+- API 使用私钥签发短时 JWT，并构建 `{ access, query, signature }` 内部请求；模型不可编辑其中任何授权或签名字段。API 在发送前完成对象、字段、Join、参数、权限及指标语义校验，在最终 DSL 中表达精确的过滤位置和聚合计算。Data Access Service 使用 API 公钥验签并验证整体签名。
+- DAS 严格校验签名请求与本地能力，将逻辑对象映射到本地对象白名单，完成物理映射、SQL 编译及执行，并应用资源限制。结果脱敏或匿名化规则由 API 放入已签名的输出控制，当前 `access.output_masks` 支持的规则按合同执行。新输出规则须补齐合同与执行能力后启用。
+- API 在下发前确定业务关系、粒度、去重、聚合、上卷和条件语义。DAS 对不能按原语义执行的请求返回错误，不自行补充关联、调整指标算法或修改过滤作用位置。Catalog 由 API 提供给模型，字段敏感性不由 Catalog 或数据访问服务推断。
+- 仅执行经过 DSL 校验并编译得到的参数化只读查询；不接收或执行自由 SQL。
+- 向 API 返回纯数据源目录和查询结果；模型目录、业务说明和批准关系由 API 组合后提供给模型。不负责指标解析、自然语言意图理解、业务归因或学习。
+- 查询的执行、拒绝、超时和失败事件由 DAS 写入自己的 SQL Server 审计库；API 按 `analysis_run_id` 关联展示或补充自身业务审计。
+- 按固定间隔向 API 发送 `dataAccessHeartbeatSchema` 服务心跳；API 按 `service_id` 记录最后一次心跳，并在超过失联阈值后停止向该实例调度查询。心跳中的数据源健康状态只影响对应 `source_id` 的路由。
+- 详细合同见 [data-access-design.md](./data-access-design.md)。
+
+## 5. Data Access Service 的多数据源模型
+
+每个数据源配置至少包括：
+
+```text
+source_id
+secret_ref
+allowed_objects
+row_limit
+timeout_ms
+scan_or_cost_limit
+freshness_rule
+connection_pool_limit
+```
+
+连接器类型、连接能力、`secret_ref` 和允许向 API 暴露的对象白名单保存在 DAS 自己的元数据 SQL Server 中；Agent、前端和 API 不传递数据库连接串、接口密钥或目标 URL。API 的地址、内部端点、JWT 验签公钥、TLS 以及 DAS 元数据 SQL Server 的连接信息由 `das.config.json` 提供，因为它们必须在服务连接数据库前可用；敏感连接值只通过密钥系统或 `secret_ref` 引用。
+
+API 只能向 Data Access Service 传受控内部请求 `{ access, query, signature }`。`source_id` 必须是 DAS 本地已启用的配置标识，不允许传数据库名、服务器地址或自由 SQL。API 按 DSL 实际使用范围构建 `access`，并让 `signature` 覆盖 `access` 与 `query`。角色对对象、字段操作、Join、脱敏规则和行的原始权限策略由 API 统一保存；API 将最终校验结果表达为已签名 DSL，详细规则见 [data-access-design.md](./data-access-design.md)。
+
+API 根据统一 Dataset 的真实 `kind` 和查询能力生成 DSL：关系表支持过滤、聚合、分组、排序和经批准的 Join；参数化数据集提交 `query_parameters`。跨数据源分析采用“分别查询、受控合并”的方式，合并键、粒度和计算规则由 API 决定，默认不允许跨源 Join。
+
+存储过程和 HTTP 参数化数据集的行权限必须落实到可强制执行的 API 受控参数。API 通过 `query_parameter_policies` 计算用户有效范围，覆盖权限参数或校验用户输入是该范围的合法收窄，再签名下发；默认值只是输入便利，不能替代授权。若参数能力不能表达所需范围、源端执行不能保证约束，或固定输出不能满足列权限及脱敏要求，API 拒绝该查询。DAS 仅调用配置允许的只读过程或 HTTP 查询能力，并验证参数类型、范围和固定结果结构。
+
+HTTP API 连接器为每个数据源创建受控 Axios 实例，以统一处理超时、请求/响应拦截、错误转换和取消；随后只按 DAS 元数据中已审核的 JSONPath 映射提取行和字段、完成类型转换后输出统一扁平 Dataset。API、Agent 和用户无法提交或查看 JSONPath、原始 JSON、外部 URL 或接口密钥。
+
+## 6. 业务查询 DSL
+
+模型提出查询意图，API 结合已确认指标、批准关系、粒度规则和权限完成业务查询构造，再下发可直接执行的 DSL。以下单表查询示例使用现有合同表达根过滤；关联查询的过滤位置由第 6.2 节的语义要求决定。
+
+```json
+{
+  "type": "relational_query",
+  "source_id": "sales_reporting",
+  "from": { "object_id": "sales.orders", "alias": "o" },
+  "select": [
+    { "field": "o.amount", "aggregation": "sum", "as": "total_amount" }
+  ],
+  "filters": {
+    "logic": "and",
+    "items": [{ "field": "o.region", "op": "eq", "value": "east_china" }]
+  },
+  "group_by": [],
+  "order_by": [],
+  "limit": 100
+}
+```
+
+API 构造请求的顺序：
+
+```text
+确认指标 ID、版本和固定时间归属
+-> 按当前目录解析对象、字段与已批准关系
+-> 校验对象、字段、Join、行权限及参数范围
+-> 确定过滤位置、粒度、去重、聚合与上卷计算
+-> 校验 DSL 与连接器能够完整表达并执行所需语义
+-> 固化最终 DSL、输出控制和来源范围并签名
+```
+
+Data Access Service 执行顺序：
+
+```text
+验证 JWT、signature 与 access/query 完整性
+-> 严格校验 DSL Schema、签名执行范围及本地对象白名单
+-> 验证请求符合连接器能力和内部执行限制
+-> 完成物理映射、编译并执行参数化只读请求
+-> 持续执行超时、行数、并发、速率和成本限制
+-> 应用 API 签名的输出脱敏或匿名化规则
+-> 返回结构化结果、新鲜度、截断状态与审计关联信息
+```
+
+API 提供给模型的工具：
+
+```text
+search_catalog(source_id, query, limit?)
+list_datasets(source_id, cursor?)
+describe_dataset(source_id, object_id)
+query_dataset(query)
+```
+
+### 6.1 数据目录发现与探索
+
+正式指标定义保存业务知识，执行对象依据 API Catalog 和参数化查询定义动态解析。不同时间归属使用不同指标 ID 和定义，例如“门诊人次（挂号时间）”与“门诊人次（就诊时间）”；每个定义固定日期依据、粒度、去重及聚合规则。Catalog 发现服务于当前选定指标的实现，改变时间依据须明确选择另一个指标。
+
+Catalog 由 API 管理并提供给模型，包含统一表结构、字段类型、源注释、查询参数以及 API 补充的业务说明和批准关系；不表达最终用户的敏感等级或脱敏结果。API 根据当前用户权限生成 DSL 和 access context，再调用 Data Access Service 执行。表和字段注释是模型理解当前数据对象的重要输入，但不是业务口径的唯一事实来源。
+
+```text
+用户问题
+-> API/Agent 查询已发布指标/别名
+-> 需要解析执行对象或补齐口径信息：模型调用 API 目录工具
+-> 结合已知信息选择 search_catalog 或 list_datasets
+-> 对候选对象调用 API 提供的 describe_dataset
+-> API 返回 Catalog 和业务配置
+-> API 生成 DSL，并调用 Data Access Service 查询
+```
+
+`search_catalog` 是 API 提供给模型的目录检索工具，不是第二个 AI Agent。它检索 API 管理的 Catalog；自然语言理解、检索词扩展和候选取舍由模型负责。
+
+`list_datasets` 和 `describe_dataset` 由 API 按当前用户权限返回 Catalog；结果可以包含 API 配置的业务说明、粒度和批准关系，但不返回最终用户的脱敏规则或 JWT 内容。禁止把整个数据源的完整目录或原始样例一次性注入模型上下文。
+
+从目录探索得到的推断只能作为本次分析候选。核心 KPI 的去重键、状态排除、日期归属和计算公式以选定指标的已发布定义为准；缺失知识进入探索、澄清或候选审核。跨对象关联使用 API 配置的已批准关系。目录发生变化时，Agent 按当前目录重新探索，API 验证新解析仍符合该指标定义。每次执行保存指标 ID/版本、实际对象、字段、关联关系及版本、策略版本和最终 DSL。
+
+### 6.2 关联语义、行权限与指标粒度
+
+API 同时考虑条件作用对象、关联类型和查询意图，决定条件作用于输入对象、关联匹配条件还是关联后的结果。主对象的权限在所有查询中强制生效。对于需要保留主侧记录的外连接，可选侧行权限限制其参与匹配的数据；无获授权匹配时保留主侧记录并让可选侧为空。用户明确要求匹配存在、缺失或关联后筛选时，API 按该业务含义放置用户条件。
+
+例如左连接中，某主记录仅关联到未授权的可选侧记录时，该主记录仍可按其自身授权被返回，但可选侧内容不得泄露。将可选侧权限表达为关联后的非空条件会误删主记录，API 必须在构造时避免这类语义变化。最终 DSL 明确所需过滤位置；DAS 编译保持该语义。
+
+API 的批准关系配置包含关联键和基数；指标配置包含基准粒度、去重键、聚合方式及上卷规则。构造一对多或多对多查询时，API 根据定义决定所需的预聚合、去重或分步计算，避免关联扇出造成重复计数。比例、去重人数等不可直接相加的指标按其定义重算，维度拆分总量与总体口径须可核对。关系配置和实际数据不满足计算前提时，停止该查询并返回可解释的原因。
+
+现有 DSL、共享 Schema 和连接器须逐项核对这些语义的表达能力；过滤位置、分阶段聚合或去重所需支持列为开放相关查询前的待办。本方案定义职责与正确性约束，具体结构在共享合同设计和验收后确定；未支持的语义不能由 DAS 临时推断。
+
+## 7. Skills 与业务工具
+
+Skills 是存放在 Git 管理 Markdown 目录中的通用分析方法说明，可包含可选的真实案例。指标定义、业务知识和实际对象解析通过运行时 API 工具获取。模型依据 Skill、当前指标知识、目录和证据选择查询及后续分支。
+
+初期 Skills：
+
+```text
+query-analysis
+anomaly-diagnosis
+```
+
+`query-analysis` 支持口径澄清、目录探索、查数、追问和证据整理；`anomaly-diagnosis` 提供基线核对、拆分、贡献计算和候选解释验证等可复用方法。首个可用版本以这些方法和真实指标闭环为基础，再通过案例修订方法、示例和停止条件；报告能力成熟后补充 `report-generation`。
+
+API 工具执行确定性统计计算、授权、查询与状态/证据持久化。模型提出调查目标和参数，并依据返回结果决定下一步；阶段名称用于记录和展示，分析可循环、转向、澄清或结束。每个运行固定 Skill 版本，并保存查询次数、步骤、执行时长和成本额度及已使用量。API 在调度前检查剩余额度，额度耗尽时保存已有证据和停止原因。
+
+每项结论关联指标版本、比较基线、查询/计算记录和证据。描述变化、贡献或相关性时使用相应强度的语言；因果性结论需要额外证据。知识或证据不足时，模型调用探索工具或请求澄清，未证实解释作为假设保存。
+
+业务工具由 API 提供：
+
+```text
+get_session_context()
+get_user_preferences(user_id)
+get_metric_definition(metric_or_alias)
+save_user_preference(key, value, confirmation_id)
+create_knowledge_candidate(content, evidence)
+save_report(analysis_run_id)
+```
+
+查询、确定性计算、步骤和证据记录工具的输入输出须在共享合同中逐项补齐并验证；工具调用由 API 绑定当前组织、用户、会话和运行，模型参数不能覆盖执行身份。
+
+AI BI 不开放任意文件写入、终端执行或任意数据库写入。需要持久化的信息只能通过这些受控工具写入。
+
+## 8. 记忆与知识
+
+Codex App Server 负责当前 Agent 任务中的短期上下文；长期记忆与企业知识由 `ai_bi_meta` 管理。
+
+| 类型         | 存储与用途                               |
+| ------------ | ---------------------------------------- |
+| 会话记忆     | 当前对话、已确认筛选和澄清结果           |
+| 用户长期记忆 | 默认口径、常用区域、展示偏好             |
+| 企业业务知识 | 已发布指标、维度、业务规则、版本与负责人 |
+| 知识候选     | 用户提出但尚未审核的口径或规则           |
+| 分析案例     | 复用方法、条件和证据，不复用过期数值     |
+
+读取优先级：
+
+```text
+已发布企业口径
+> 当前会话已确认选择
+> 当前用户个人默认
+> 历史分析案例
+> 模型推断
+```
+
+个人偏好在用户明确确认后可立即写入。企业知识只允许创建候选，必须经过负责人审核、版本化和发布后才可成为全局事实。
+
+### 8.1 报告模板与快照
+
+报告模板保存分析意图、指标引用和呈现结构。打开模板并执行时，API 以查看者当前身份重新校验指标、对象、字段及行范围，创建独立 `report_execution` 记录，按需关联 `analysis_run`，保存本次结果和证据。
+
+快照保存生成时的表格、图表、文字、导出产物，以及完整来源清单：组织、数据源、对象、行范围、字段、指标版本、策略版本、脱敏要求和证据引用。来源清单覆盖计算、文字总结和聚合中实际使用的数据范围，不能只记录最终展示列或少量结果行。
+
+每次读取、下载或导出快照，API 先验证报告 ACL，再确认查看者当前有效权限覆盖快照完整来源范围及输出敏感程度。不能证明完整覆盖时拒绝快照访问，不能通过隐藏部分表格、保留文字或图表的方式发布剩余内容。查看者可按自身权限基于模板发起新执行，原快照保持独立保存。静态产物下载入口与分享链接执行同样的授权检查。
+
+## 9. SQL Server 数据模型
+
+`ai_bi_meta` 初期包含：
+
+```text
+organizations
+users
+conversations
+conversation_messages
+analysis_runs
+analysis_steps
+analysis_hypotheses
+analysis_evidence
+analysis_artifacts
+metric_definitions
+metric_versions
+metric_aliases
+user_preferences
+knowledge_candidates
+knowledge_reviews
+memory_events
+saved_reports
+audit_logs
+data_sources
+catalog_objects
+roles
+user_roles
+role_object_permissions
+role_object_row_policies
+role_object_column_permissions
+```
+
+业务数据库与 `ai_bi_meta` 分离。Data Access Service 使用只读账号访问业务库；API 使用受限账号访问 `ai_bi_meta`；两类账号不能互用。
+
+以上是目标数据模型，具体完成状态以开发清单为准。已存在组织、用户、角色、权限、会话、消息、基础运行记录及 DAS 注册/目录配置基础；动态分析、版本化指标、完整运行生命周期、证据和快照范围记录须在现有基础上补齐。
+
+### 9.1 每次运行的持久化上下文
+
+`analysis_run` 及其关联记录必须持久化：
+
+| 内容       | 约束                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------ |
+| 归属与身份 | 组织、用户、会话和运行标识不可由模型或前端覆盖；所有读取、写入与工具调用验证同一归属 |
+| 已确认语义 | 用户请求、指标 ID/版本、固定时间依据、已确认条件、解析对象/字段和策略版本            |
+| 执行进度   | 状态、状态版本、当前步骤、假设、查询与结果摘要、证据和产物引用                       |
+| 澄清       | `clarification_id`、问题和选项、待答/已答状态、答案、提交幂等键                      |
+| 调度控制   | 执行租约所有者、到期时间、递增执行代次（lease epoch）、取消标记和重试信息            |
+| 幂等与事件 | 创建请求及工具调用的幂等键、已提交结果、递增 SSE 事件序号                            |
+| 运行额度   | 最大步骤数、查询次数、耗时和成本，以及累计消耗和停止原因                             |
+
+具体表结构和状态枚举在迁移与共享合同中落实。数据模型须支持按组织、用户、会话和运行索引查找，并保持结果、证据和 Agent 上下文的身份与归属隔离。同一会话的后续追问可在当前权限校验后明确引用历史运行的结果与证据，同时保留来源运行和指标版本；当前运行的执行状态、租约和工具结果仍独立管理。
+
+### 9.2 生命周期、并发与恢复
+
+目标运行状态为 `created`、`running`、`waiting_clarification`、`cancelling`、`completed`、`failed` 和 `cancelled`，对应共享合同与持久化实现须补齐。`created` 领取执行后进入 `running`；澄清在 `running` 与 `waiting_clarification` 之间转换；取消先进入 `cancelling`，清理后进入 `cancelled`。`completed`、`failed` 和 `cancelled` 为终态，状态与事件在同一事务中提交。
+
+1. **创建与领取**：API 从认证上下文确定归属，以幂等键创建运行；同一键的重复请求返回已有运行。第一版同一会话只允许一个活跃运行，其他请求串行等待；等待澄清的运行仍视为活跃。不同会话在全局资源限额内并发。
+2. **执行与提交**：执行者通过原子条件更新领取租约并取得新的执行代次，按期限续租。状态迁移和步骤、结果、证据、事件的提交校验预期状态版本、有效租约及执行代次，只有当前执行者可提交。
+3. **工具幂等**：每次工具调用关联稳定标识和请求内容摘要，重复提交返回已提交结果。重试前核对执行记录，区分已完成、尚未执行和结果未知；结果未知时按只读重试规则处理，防止重复记账、证据或状态迁移。
+4. **澄清暂停与续接**：API 原子保存澄清及 `waiting_clarification` 状态后发送事件。答案必须匹配组织、用户、会话、运行和未完成 `clarification_id`；重复答案幂等，过期答案或另一运行的答案拒绝。提交成功后恢复同一运行及剩余执行额度。
+5. **取消**：API 原子记录 `cancelling` 状态并阻止后续结果提交，通知模型和在途查询尽力停止。取消后的迟到结果只可进入必要的操作审计，不进入正式答案、证据或报告；取消终态不能被完成回调覆盖。
+6. **租约过期与重启**：恢复者检查非终态运行及租约，以新执行代次领取可恢复任务。旧执行者即使恢复网络也无法续写；重新验证持久化结果、证据和已确认语义的访问权限后，重建独立 Agent 上下文，查询前再次校验权限。待答运行继续等待原澄清，已完成且仍获授权的步骤按幂等记录复用，无法安全续接时保存失败原因。
+7. **完成与释放**：结论、证据引用、最终状态和完成事件原子提交，释放会话活跃位置。失败、取消和额度结束同样保存明确终态及已完成工作，后续运行依据授权后的会话上下文开始。
+
+## 10. 流式事件协议
+
+Web 与 API 使用 SSE。事件需包含 `conversation_id`、`analysis_run_id` 和每运行递增序号，并持久化必要事件以支持按游标补发。API 在建立订阅、恢复连接、补发事件和读取结果时验证当前身份、组织、会话/运行归属与权限；客户端提交的游标不能改变这些范围。除运行状态和工具事件外，API 可以发送 `thinking` 事件展示当前分析阶段和用户可读摘要；该事件不暴露模型内部完整推理链。
+
+```text
+run_started
+progress
+thinking
+tool_call
+tool_result
+clarification
+table
+chart
+final_answer
+run_completed
+run_failed
+run_cancelled
+```
+
+`thinking` 携带 `understanding`、`planning`、`querying`、`validating` 或 `summarizing` 阶段和面向用户的分析摘要，阶段可随动态分析重复或跳转。`clarification` 包含模型生成的问题、选项、是否允许自定义输入以及唯一 `clarification_id`；用户提交时带回会话、运行、`clarification_id` 和幂等标识，API 校验待答状态后续接同一个 `analysis_run`。
+
+上述事件列表为现有基线，取消操作请求、恢复、停止原因和澄清标识等生命周期所需合同须在实现相应能力前补齐。SSE 发送以已持久化状态为准，重连和重复事件不触发新的业务执行；鉴权失效后停止推送。
+
+## 11. 后台任务
+
+MVP 使用 SQL Server 任务表 `memory_events`，不要求外部队列：
+
+```text
+对话完成
+-> 规则筛选是否值得学习
+-> 创建 pending 事件
+-> 同一 API 进程低优先级、限并发处理
+-> no_op / 创建候选 / 写入已确认个人偏好
+```
+
+任务必须具备状态、租约、超时回收、幂等键和失败重试。前台回答不等待后台学习完成。
+
+## 12. 安全与可靠性
+
+- 浏览器只访问 Web/API；App Server 和 Data Access Service 仅暴露内部网络。
+- 数据库凭据只存在于 Data Access Service 的密钥配置中。
+- 业务数据库账号仅有目标对象的 `SELECT` 权限。
+- 所有查询都要记录组织、用户、角色、会话、运行、策略版本、数据源、实际对象和字段、指标版本、DSL、执行时间、行数和结果摘要。
+- 强制参数化查询、超时、最大行数、连接池上限和并发限制。
+- 所有分析使用可取消且有界的 `analysis_run`，按第 9.2 节落实租约、幂等、原子迁移和迟到结果保护。
+- 优先访问报表库、只读副本或数仓，避免分析查询影响生产交易库。
+
+### 12.1 后置安全设计项
+
+当前接口阶段固定 `{ access, query, signature }` 和 JWT 授权边界。以下内容暂不纳入本阶段接口合同，待 Data Access Service 部署安全设计时统一评估：
+
+- 请求时间戳、nonce、JWT `jti` 的重放防护。
+- API 私钥、Data Access Service 公钥和密钥轮换配置的托管、固定与完整性校验。
+
+## 13. Monorepo 结构
+
+```text
+ai-data-v2/
+  apps/
+    web/                 Vue 3 + Vite 前端
+    api/                 Fastify API 与 Agent Gateway
+    data-access/         多数据源只读 Data Access Service
+  packages/
+    contracts/           Zod Schema：DSL、SSE、工具输入输出
+    domain/              指标、记忆、审核、报告领域逻辑
+    skills/              Git 管理的 Skill Markdown
+    config/              非敏感数据源与功能配置
+```
+
+所有 DSL、工具输入输出、SSE 事件和 API/Data Access Service 内部请求结构均以 Zod Schema 定义，并在对应服务共享类型。JWT 签发与验签属于独立认证授权层，不作为模型工具参数暴露给 Agent。
+
+## 14. 实施顺序
+
+在现有 API 认证、组织/角色/权限、用户管理、会话和基础运行持久化、目录配置与 DAS 心跳基础上推进。既有完成项保留原验收记录；本节新增语义与运行要求分别实现和验收。
+
+1. **一个真实指标、两个数据角色**：选择真实数据和不同授权范围，发布固定时间依据及粒度规则的指标定义；补齐当前目录解析、批准关系及 API 业务查询构造。对所需 DSL 语义做能力核对，补齐后再开放受影响查询。
+2. **可追问的查询闭环**：接入 Codex SDK/App Server 和初版 `query-analysis` Skill，打通口径澄清、目录探索、授权查询、结果证据和多轮追问；同时补齐运行隔离、SSE 鉴权、澄清幂等、执行租约、取消及重启恢复。
+3. **真实案例驱动的动态分析**：围绕同一真实指标迭代 `anomaly-diagnosis` Skill 和确定性计算工具，验证模型按证据选择查询与分支、运行限制有效、结论强度合理、来源可复核。
+4. **扩展产品能力**：在闭环稳定后扩展指标、角色与分析案例，完善偏好记忆、候选审核、报告、画布和导出。模板使用查看者权限；快照访问必须实现完整来源范围授权后开放。
+5. **按负载扩展部署**：依据实际并发、延迟和资源消耗，再拆 Runner、Worker、Redis 或消息队列。
+
+## 15. 当前核心合同
+
+系统稳定性主要取决于以下合同：
+
+```text
+指标定义合同：固定时间依据、粒度、去重、聚合与上卷规则，负责人和版本
+分析运行合同：身份隔离、步骤、假设、证据、限额、幂等、租约和恢复
+查询 DSL 合同：API 如何完整表达最终过滤位置、关联和指标计算语义
+数据访问合同：签名执行范围、参数权限、输出控制、目录和结构化结果
+报告访问合同：查看者权限下的模板运行，完整底层数据范围覆盖的快照访问
+工具协议合同：Agent 可以读写哪些受控业务能力
+```
+
+在新增复杂 Agent 能力前，应优先保证这些合同可验证、可审计。

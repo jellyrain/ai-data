@@ -1,0 +1,27 @@
+packages:
+  - apps/*
+  - packages/*
+
+allowBuilds:
+  esbuild: true
+  oracledb: true
+
+catalog:
+  "@eslint/js": ^10.0.1
+  "@types/node": ^26.2.0
+  eslint: ^10.9.0
+  eslint-config-prettier: ^10.1.8
+  prettier: ^3.9.6
+  typescript: 7.0.2
+  typescript-eslint: ^8.67.0
+  tsx: ^4.23.12
+  esbuild: ^0.28.2
+  vitest: ^4.1.11
+  zod: 4.4.3
+  mssql: ^12.7.0
+  dayjs: ^1.11.23
+  axios: ^1.19.0
+  pino: ^10.3.1
+  p-limit: ^7.3.1
+  fastify: ^5.12.1
+  jose: ^6.2.10

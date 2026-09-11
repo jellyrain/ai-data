@@ -1,0 +1,186 @@
+-- BI.dbo.ai_pat_fee_detail_mz1 definition
+
+-- Drop table
+
+-- DROP TABLE BI.dbo.ai_pat_fee_detail_mz1;
+
+CREATE TABLE BI.dbo.ai_pat_fee_detail_mz1 (
+	pdate varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	branchname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pat_kind_name varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	deptname varchar(500) COLLATE Chinese_PRC_CI_AS NULL,
+	doctorname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pvalue decimal(16,4) NULL,
+	visit_no varchar(10) COLLATE Chinese_PRC_CI_AS NULL,
+	itemcode varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	itemname varchar(500) COLLATE Chinese_PRC_CI_AS NULL,
+	num decimal(16,2) NULL,
+	price decimal(16,2) NULL
+);
+ CREATE NONCLUSTERED INDEX index_name1 ON BI.dbo.ai_pat_fee_detail_mz1 (  visit_no ASC  , pname ASC  )  
+	 INCLUDE ( deptname , pvalue ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+ CREATE NONCLUSTERED INDEX index_name2 ON BI.dbo.ai_pat_fee_detail_mz1 (  pdate ASC  , pname ASC  )  
+	 INCLUDE ( deptname , pat_kind_name , pvalue , visit_no ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+
+
+-- BI.dbo.ai_pat_fee_detail_mz2 definition
+
+-- Drop table
+
+-- DROP TABLE BI.dbo.ai_pat_fee_detail_mz2;
+
+CREATE TABLE BI.dbo.ai_pat_fee_detail_mz2 (
+	pdate varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	branchname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pat_kind_name varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	deptname varchar(500) COLLATE Chinese_PRC_CI_AS NULL,
+	doctorname varchar(500) COLLATE Chinese_PRC_CI_AS NULL,
+	pname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pvalue decimal(16,4) NULL,
+	visit_no varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	itemcode varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	itemname varchar(500) COLLATE Chinese_PRC_CI_AS NULL,
+	num decimal(16,2) NULL,
+	price decimal(16,2) NULL
+);
+ CREATE NONCLUSTERED INDEX index_name1 ON BI.dbo.ai_pat_fee_detail_mz2 (  pdate ASC  , pname ASC  , visit_no ASC  )  
+	 INCLUDE ( deptname , pat_kind_name , pvalue ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+ CREATE NONCLUSTERED INDEX index_name2 ON BI.dbo.ai_pat_fee_detail_mz2 (  pdate ASC  , pname ASC  , visit_no ASC  )  
+	 INCLUDE ( deptname , pat_kind_name , pvalue ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+
+
+-- BI.dbo.ai_pat_fee_detail_zy1 definition
+
+-- Drop table
+
+-- DROP TABLE BI.dbo.ai_pat_fee_detail_zy1;
+
+CREATE TABLE BI.dbo.ai_pat_fee_detail_zy1 (
+	pdate varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	branchname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pat_kind_name varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	deptname varchar(500) COLLATE Chinese_PRC_CI_AS NULL,
+	doctorname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pvalue decimal(16,4) NULL,
+	visit_no varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	itemcode varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	itemname varchar(500) COLLATE Chinese_PRC_CI_AS NULL,
+	num decimal(16,4) NULL,
+	price decimal(16,4) NULL
+);
+ CREATE NONCLUSTERED INDEX index_name1 ON BI.dbo.ai_pat_fee_detail_zy1 (  pname ASC  , pdate ASC  )  
+	 INCLUDE ( deptname , pat_kind_name , pvalue , visit_no ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+ CREATE NONCLUSTERED INDEX index_name2 ON BI.dbo.ai_pat_fee_detail_zy1 (  pdate ASC  , pname ASC  )  
+	 INCLUDE ( deptname , num , pat_kind_name , pvalue , visit_no ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+ CREATE NONCLUSTERED INDEX index_name3 ON BI.dbo.ai_pat_fee_detail_zy1 (  visit_no ASC  , pdate ASC  )  
+	 INCLUDE ( deptname , num , pat_kind_name , pname , pvalue ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+
+
+-- BI.dbo.ai_pat_fee_detail_zy2 definition
+
+-- Drop table
+
+-- DROP TABLE BI.dbo.ai_pat_fee_detail_zy2;
+
+CREATE TABLE BI.dbo.ai_pat_fee_detail_zy2 (
+	pdate varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	branchname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pat_kind_name varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	deptname varchar(500) COLLATE Chinese_PRC_CI_AS NULL,
+	doctorname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pvalue decimal(16,4) NULL,
+	visit_no varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	itemcode varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	itemname varchar(500) COLLATE Chinese_PRC_CI_AS NULL,
+	num decimal(16,4) NULL,
+	price decimal(16,4) NULL
+);
+ CREATE NONCLUSTERED INDEX index_name1 ON BI.dbo.ai_pat_fee_detail_zy2 (  pname ASC  , pdate ASC  )  
+	 INCLUDE ( deptname , pat_kind_name , pvalue , visit_no ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+ CREATE NONCLUSTERED INDEX index_name2 ON BI.dbo.ai_pat_fee_detail_zy2 (  pdate ASC  , pname ASC  )  
+	 INCLUDE ( deptname , num , pat_kind_name , pvalue , visit_no ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+
+
+-- BI.dbo.ai_pat_info_mz definition
+
+-- Drop table
+
+-- DROP TABLE BI.dbo.ai_pat_info_mz;
+
+CREATE TABLE BI.dbo.ai_pat_info_mz (
+	pdate varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	patid varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	icdecode varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	icdename varchar(255) COLLATE Chinese_PRC_CI_AS NULL,
+	visit_no varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	OutPatno varchar(20) COLLATE Chinese_PRC_CI_AS NULL,
+	branch varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	visit_type_code varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	visit_type_name varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	deptcode varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	deptname varchar(500) COLLATE Chinese_PRC_CI_AS NULL,
+	doctorcode varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	doctorname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pvalue_rc varchar(50) COLLATE Chinese_PRC_CI_AS NULL
+);
+ CREATE NONCLUSTERED INDEX index_name1 ON BI.dbo.ai_pat_info_mz (  visit_no ASC  )  
+	 INCLUDE ( icdecode , icdename , pvalue_rc ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+
+
+-- BI.dbo.ai_pat_info_zy definition
+
+-- Drop table
+
+-- DROP TABLE BI.dbo.ai_pat_info_zy;
+
+CREATE TABLE BI.dbo.ai_pat_info_zy (
+	pdate varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	patid varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	icdecode varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	icdename varchar(255) COLLATE Chinese_PRC_CI_AS NULL,
+	visit_no varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	outpatno varchar(20) COLLATE Chinese_PRC_CI_AS NULL,
+	branch varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	visit_type_code varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	visit_type_name varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	deptcode varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	deptname varchar(500) COLLATE Chinese_PRC_CI_AS NULL,
+	dpctorcode varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	dpctorname varchar(50) COLLATE Chinese_PRC_CI_AS NULL,
+	pvalue_rc varchar(50) COLLATE Chinese_PRC_CI_AS NULL
+);
+ CREATE NONCLUSTERED INDEX index_name1 ON BI.dbo.ai_pat_info_zy (  visit_no ASC  )  
+	 INCLUDE ( icdecode , icdename , pvalue_rc ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+ CREATE NONCLUSTERED INDEX index_name2 ON BI.dbo.ai_pat_info_zy (  visit_no ASC  )  
+	 INCLUDE ( icdecode , icdename , pvalue_rc ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;
+ CREATE NONCLUSTERED INDEX index_nmae1 ON BI.dbo.ai_pat_info_zy (  visit_no ASC  )  
+	 INCLUDE ( icdecode , icdename , pvalue_rc ) 
+	 WITH (  PAD_INDEX = OFF ,FILLFACTOR = 100  ,SORT_IN_TEMPDB = OFF , IGNORE_DUP_KEY = OFF , STATISTICS_NORECOMPUTE = OFF , ONLINE = OFF , ALLOW_ROW_LOCKS = ON , ALLOW_PAGE_LOCKS = ON  )
+	 ON [PRIMARY ] ;

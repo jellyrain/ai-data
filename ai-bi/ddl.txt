@@ -1,0 +1,393 @@
+create table ai_pat_fee_detail_mz1
+(
+    pdate         varchar(50),
+    branchname    varchar(50),
+    pat_kind_name varchar(50),
+    deptname      varchar(500),
+    doctorname    varchar(50),
+    pname         varchar(50),
+    pvalue        decimal(16, 4),
+    visit_no      varchar(10),
+    itemcode      varchar(50),
+    itemname      varchar(500),
+    num           decimal(16, 2),
+    price         decimal(16, 2)
+)
+go
+
+exec sp_addextendedproperty 'MS_Description', N'门诊患者费用明细表（门诊1）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_fee_detail_mz1'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'费用发生日期', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_mz1',
+     'COLUMN', 'pdate'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'院区/分支机构名称', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_mz1',
+     'COLUMN', 'branchname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'患者类型/就诊类型（门诊）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_fee_detail_mz1', 'COLUMN', 'pat_kind_name'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'就诊科室名称', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_mz1',
+     'COLUMN', 'deptname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'开单医生姓名', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_mz1',
+     'COLUMN', 'doctorname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'费用大类名称（如：门诊化验费）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_fee_detail_mz1', 'COLUMN', 'pname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'总金额（单价*数量）', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_mz1',
+     'COLUMN', 'pvalue'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'门诊就诊号/挂号流水号', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_fee_detail_mz1', 'COLUMN', 'visit_no'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'医院内部收费项目编码', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_fee_detail_mz1', 'COLUMN', 'itemcode'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'收费项目明细名称', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_mz1',
+     'COLUMN', 'itemname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'数量', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_mz1', 'COLUMN',
+     'num'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'单价', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_mz1', 'COLUMN',
+     'price'
+go
+
+create index index_name1
+    on ai_pat_fee_detail_mz1 (visit_no, pname) include (deptname, pvalue)
+    with (fillfactor = 100)
+go
+
+create index index_name2
+    on ai_pat_fee_detail_mz1 (pdate, pname) include (deptname, pat_kind_name, pvalue, visit_no)
+    with (fillfactor = 100)
+go
+
+create table ai_pat_fee_detail_mz2
+(
+    pdate         varchar(50),
+    branchname    varchar(50),
+    pat_kind_name varchar(50),
+    deptname      varchar(500),
+    doctorname    varchar(500),
+    pname         varchar(50),
+    pvalue        decimal(16, 4),
+    visit_no      varchar(50),
+    itemcode      varchar(50),
+    itemname      varchar(500),
+    num           decimal(16, 2),
+    price         decimal(16, 2)
+)
+go
+
+create index index_name1
+    on ai_pat_fee_detail_mz2 (pdate, pname, visit_no) include (deptname, pat_kind_name, pvalue)
+    with (fillfactor = 100)
+go
+
+create index index_name2
+    on ai_pat_fee_detail_mz2 (pdate, pname, visit_no) include (deptname, pat_kind_name, pvalue)
+    with (fillfactor = 100)
+go
+
+create table ai_pat_fee_detail_zy1
+(
+    pdate         varchar(50),
+    branchname    varchar(50),
+    pat_kind_name varchar(50),
+    deptname      varchar(500),
+    doctorname    varchar(50),
+    pname         varchar(50),
+    pvalue        decimal(16, 4),
+    visit_no      varchar(50),
+    itemcode      varchar(50),
+    itemname      varchar(500),
+    num           decimal(16, 4),
+    price         decimal(16, 4)
+)
+go
+
+exec sp_addextendedproperty 'MS_Description', N'住院患者费用明细表（口径1：按出院科室归集）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_fee_detail_zy1'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'计费日期（费用发生/记账日期，格式：YYYY-MM-DD）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_fee_detail_zy1', 'COLUMN', 'pdate'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'院区名称（分院/院区中文名称）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_fee_detail_zy1', 'COLUMN', 'branchname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'患者类别名称（如：职工医保、居民医保、自费、公费等）', 'SCHEMA', 'dbo',
+     'TABLE', 'ai_pat_fee_detail_zy1', 'COLUMN', 'pat_kind_name'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'出院科室名称（口径1：住院费用按出院科室归集）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_fee_detail_zy1', 'COLUMN', 'deptname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'开单/执行医生姓名', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_zy1',
+     'COLUMN', 'doctorname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'费用类别', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_zy1', 'COLUMN',
+     'pname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'费用总金额（通常为 数量 × 单价）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_fee_detail_zy1', 'COLUMN', 'pvalue'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'住院就诊流水号（关联 ai_pat_info_zy 表）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_fee_detail_zy1', 'COLUMN', 'visit_no'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'收费项目代码', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_zy1',
+     'COLUMN', 'itemcode'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'收费项目名称', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_zy1',
+     'COLUMN', 'itemname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'数量（收费项目数量）', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_zy1',
+     'COLUMN', 'num'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'单价（收费项目单价）', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_fee_detail_zy1',
+     'COLUMN', 'price'
+go
+
+create index index_name1
+    on ai_pat_fee_detail_zy1 (pname, pdate) include (deptname, pat_kind_name, pvalue, visit_no)
+    with (fillfactor = 100)
+go
+
+create index index_name2
+    on ai_pat_fee_detail_zy1 (pdate, pname) include (deptname, num, pat_kind_name, pvalue, visit_no)
+    with (fillfactor = 100)
+go
+
+create index index_name3
+    on ai_pat_fee_detail_zy1 (visit_no, pdate) include (deptname, num, pat_kind_name, pname, pvalue)
+    with (fillfactor = 100)
+go
+
+create table ai_pat_fee_detail_zy2
+(
+    pdate         varchar(50),
+    branchname    varchar(50),
+    pat_kind_name varchar(50),
+    deptname      varchar(500),
+    doctorname    varchar(50),
+    pname         varchar(50),
+    pvalue        decimal(16, 4),
+    visit_no      varchar(50),
+    itemcode      varchar(50),
+    itemname      varchar(500),
+    num           decimal(16, 4),
+    price         decimal(16, 4)
+)
+go
+
+create index index_name1
+    on ai_pat_fee_detail_zy2 (pname, pdate) include (deptname, pat_kind_name, pvalue, visit_no)
+    with (fillfactor = 100)
+go
+
+create index index_name2
+    on ai_pat_fee_detail_zy2 (pdate, pname) include (deptname, num, pat_kind_name, pvalue, visit_no)
+    with (fillfactor = 100)
+go
+
+create table ai_pat_info_mz
+(
+    pdate           varchar(50),
+    patid           varchar(50),
+    icdecode        varchar(50),
+    icdename        varchar(255),
+    visit_no        varchar(50),
+    OutPatno        varchar(20),
+    branch          varchar(50),
+    visit_type_code varchar(50),
+    visit_type_name varchar(50),
+    deptcode        varchar(50),
+    deptname        varchar(500),
+    doctorcode      varchar(50),
+    doctorname      varchar(50),
+    pvalue_rc       varchar(50)
+)
+go
+
+exec sp_addextendedproperty 'MS_Description', N'门诊人次表', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'挂号日期（格式：YYYY-MM-DD 或 字符型日期）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_info_mz', 'COLUMN', 'pdate'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'患者唯一标识ID（主键或关联键）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_info_mz', 'COLUMN', 'patid'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'ICD疾病诊断代码（国际疾病分类编码）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_info_mz', 'COLUMN', 'icdecode'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'ICD疾病诊断名称', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz', 'COLUMN',
+     'icdename'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'本次门诊就诊流水号', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz',
+     'COLUMN', 'visit_no'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'门诊号', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz', 'COLUMN',
+     'OutPatno'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'院区/分院编码（多院区标识）', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz',
+     'COLUMN', 'branch'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'就诊类型代码', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz', 'COLUMN',
+     'visit_type_code'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'就诊类型名称', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz', 'COLUMN',
+     'visit_type_name'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'挂号科室编码', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz', 'COLUMN',
+     'deptcode'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'挂号科室名称', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz', 'COLUMN',
+     'deptname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'接诊医生工号/编码', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz',
+     'COLUMN', 'doctorcode'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'接诊医生姓名', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz', 'COLUMN',
+     'doctorname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'门诊人次计数', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_mz', 'COLUMN',
+     'pvalue_rc'
+go
+
+create index index_name1
+    on ai_pat_info_mz (visit_no) include (icdecode, icdename, pvalue_rc)
+    with (fillfactor = 100)
+go
+
+create table ai_pat_info_zy
+(
+    pdate           varchar(50),
+    patid           varchar(50),
+    icdecode        varchar(50),
+    icdename        varchar(255),
+    visit_no        varchar(50),
+    outpatno        varchar(20),
+    branch          varchar(50),
+    visit_type_code varchar(50),
+    visit_type_name varchar(50),
+    deptcode        varchar(50),
+    deptname        varchar(500),
+    dpctorcode      varchar(50),
+    dpctorname      varchar(50),
+    pvalue_rc       varchar(50)
+)
+go
+
+exec sp_addextendedproperty 'MS_Description', N'住院人次表', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'出院日期（格式：YYYY-MM-DD 或 字符型日期）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_info_zy', 'COLUMN', 'pdate'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'患者唯一标识ID（主键或关联键）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_info_zy', 'COLUMN', 'patid'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'ICD疾病诊断代码（国际疾病分类编码）', 'SCHEMA', 'dbo', 'TABLE',
+     'ai_pat_info_zy', 'COLUMN', 'icdecode'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'ICD疾病诊断名称', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy', 'COLUMN',
+     'icdename'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'本次住院就诊流水号', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy',
+     'COLUMN', 'visit_no'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'门诊号', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy', 'COLUMN',
+     'outpatno'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'院区/分院编码（多院区标识）', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy',
+     'COLUMN', 'branch'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'就诊类型代码', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy', 'COLUMN',
+     'visit_type_code'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'就诊类型名称', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy', 'COLUMN',
+     'visit_type_name'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'出院科室编码', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy', 'COLUMN',
+     'deptcode'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'出院科室名称', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy', 'COLUMN',
+     'deptname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'主治医生工号/编码', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy',
+     'COLUMN', 'dpctorcode'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'主治医生姓名', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy', 'COLUMN',
+     'dpctorname'
+go
+
+exec sp_addextendedproperty 'MS_Description', N'出院人次计数', 'SCHEMA', 'dbo', 'TABLE', 'ai_pat_info_zy', 'COLUMN',
+     'pvalue_rc'
+go
+
+create index index_name1
+    on ai_pat_info_zy (visit_no) include (icdecode, icdename, pvalue_rc)
+    with (fillfactor = 100)
+go
+
+create index index_name2
+    on ai_pat_info_zy (visit_no) include (icdecode, icdename, pvalue_rc)
+    with (fillfactor = 100)
+go
+
+create index index_nmae1
+    on ai_pat_info_zy (visit_no) include (icdecode, icdename, pvalue_rc)
+    with (fillfactor = 100)
+go
+

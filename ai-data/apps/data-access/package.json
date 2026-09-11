@@ -1,0 +1,44 @@
+{
+  "name": "@ai-data/data-access",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "prebuild": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "tsc -p tsconfig.build.json --noEmit && esbuild src/index.ts --bundle --platform=node --format=esm --target=node24 --minify --legal-comments=none --external:oracledb --outfile=dist/index.js",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run --pool=threads --maxWorkers=1",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/mssql": "^12.3.0",
+    "@types/node": "catalog:",
+    "@types/pg": "^8.23.1",
+    "esbuild": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "dependencies": {
+    "@ai-data/contracts": "workspace:*",
+    "@ai-data/metadata": "workspace:*",
+    "axios": "catalog:",
+    "dayjs": "catalog:",
+    "fastify": "catalog:",
+    "jose": "catalog:",
+    "jsonpath-plus": "^10.4.0",
+    "mssql": "catalog:",
+    "mysql2": "^3.24.2",
+    "oracledb": "^7.0.1",
+    "p-limit": "catalog:",
+    "pg": "^8.23.0",
+    "pino": "catalog:",
+    "zod": "catalog:"
+  }
+}
