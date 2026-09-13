@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { DataSourceConnector } from "../../src/connectors/connector";
 import { DataSourceManager } from "../../src/data-sources/data-source-manager";
-import type { DataSourceConfig } from "../../src/metadata/metadata-records";
+import type { DataSourceConfig } from "../../src/data-sources/data-source-types";
 import type {
   DataSourceSecretResolver,
   ResolvedDataSourceSecret,
@@ -20,8 +20,8 @@ const sourceConfig: DataSourceConfig = {
   costLimit: 50000,
 };
 
+// 用工厂创建次数、实例身份和关闭回调检查缓存生命周期，连接器替身不建立真实连接池。
 describe("运行时数据源管理器", () => {
-  // BDD 场景：多个请求访问同一已启用数据源；TDD 断言：复用一个业务连接器实例，不重复解密凭据或创建连接池。
   it("按 source_id 缓存连接器实例", async () => {
     const created: DataSourceConnector[] = [];
     const manager = new DataSourceManager(
@@ -43,7 +43,6 @@ describe("运行时数据源管理器", () => {
     expect(created).toHaveLength(1);
   });
 
-  // BDD 场景：同一数据源同时收到多个首次请求；TDD 断言：等待同一创建过程，不并发创建重复业务连接池。
   it("并发首次请求只创建一个连接器", async () => {
     let creationCount = 0;
     const manager = new DataSourceManager(
@@ -69,7 +68,6 @@ describe("运行时数据源管理器", () => {
     expect(connectors[1]).toBe(connectors[2]);
   });
 
-  // BDD 场景：一个服务器账号提供两个业务数据库；TDD 断言：同一 secret_ref 的不同 source_id 各自创建独立连接器并保留目标库。
   it("复用凭据并为不同目标库创建独立连接器", async () => {
     const archiveConfig: DataSourceConfig = {
       ...sourceConfig,
@@ -98,7 +96,6 @@ describe("运行时数据源管理器", () => {
     ]);
   });
 
-  // BDD 场景：管理员停用或更新数据源配置；TDD 断言：失效时关闭旧连接器，下一次请求再创建新实例。
   it("失效时关闭已有连接器", async () => {
     let closed = false;
     const manager = new DataSourceManager(
@@ -119,7 +116,6 @@ describe("运行时数据源管理器", () => {
     expect(closed).toBe(true);
   });
 
-  // BDD 场景：DAS 正常退出；TDD 断言：已创建的每个业务连接器都被关闭并从运行时缓存移除。
   it("退出时关闭全部已创建的连接器", async () => {
     let closed = 0;
     const anotherSource: DataSourceConfig = { ...sourceConfig, sourceId: "clinical_archive" };

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import type { DataSourceConfig, EncryptedDataSourceSecret } from "../metadata/metadata-records";
+import type { DataSourceConfig } from "../data-sources/data-source-types";
+import type { EncryptedDataSourceSecret } from "./secret-types";
 import { Aes256GcmSecretCipher, type AesGcmEncryptedPayload } from "./aes-256-gcm-secret-cipher";
 import type { MasterKeyProvider } from "./local-master-key-store";
 
@@ -12,11 +13,11 @@ const databaseSecretFields = {
   port: z.number().int().min(1).max(65535),
   /** 只读业务数据库登录名。 */
   user: z.string().min(1),
-  /** 只读业务数据库登录密码，仅在连接器创建期间驻留内存。 */
+  /** 数据库账号密码，解密后供驱动建立连接使用。 */
   password: z.string().min(1),
 };
 
-/** 解密后只允许形成当前五类连接器所需的受控凭据结构。 */
+/** 按 connectorKind 校验解密后的凭据，五种分支均仅接受自身声明的字段。 */
 const resolvedDataSourceSecretSchema = z.discriminatedUnion("connectorKind", [
   z
     .object({
@@ -99,6 +100,7 @@ class SecretResolver implements DataSourceSecretResolver {
     return resolved;
   }
 
+  /** 将底层解密失败统一为凭据引用级错误，避免回传密码或原始密文内容。 */
   private decrypt(secret: EncryptedDataSourceSecret, key: Buffer): Buffer {
     try {
       return this.cipher.decrypt(

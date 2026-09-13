@@ -32,7 +32,7 @@ const contractErrorCodeSchema = z.enum([
   "INTERNAL_ERROR",
 ]);
 
-/** 面向调用方的结构化合同错误。 */
+/** 面向调用方的结构化合同错误，仅接受声明字段。 */
 const contractErrorSchema = z
   .object({
     /** 统一错误码，供程序分支处理。 */
@@ -42,7 +42,6 @@ const contractErrorSchema = z
     /** 可选请求关联 ID，便于定位日志。 */
     request_id: z.string().min(1).optional(),
   })
-  /** 禁止错误对象携带未定义字段。 */
   .strict();
 
 export { contractErrorCodeSchema, contractErrorSchema };

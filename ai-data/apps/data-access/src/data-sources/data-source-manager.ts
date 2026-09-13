@@ -1,5 +1,5 @@
 import type { DataSourceConnector } from "../connectors/connector";
-import type { DataSourceConfig } from "../metadata/metadata-records";
+import type { DataSourceConfig } from "./data-source-types";
 import type {
   DataSourceSecretResolver,
   ResolvedDataSourceSecret,
@@ -19,6 +19,7 @@ interface DataSourceConnectorFactory {
 
 /** 管理按 source_id 隔离的业务连接器实例及其生命周期。 */
 class DataSourceManager {
+  // 缓存初始化 Promise，让同一 source_id 的并发访问共享正在创建的实例。
   private readonly connectors = new Map<string, Promise<DataSourceConnector>>();
   private readonly connectorSecretRefs = new Map<string, string>();
 
@@ -40,6 +41,7 @@ class DataSourceManager {
     try {
       return await created;
     } catch (error) {
+      // 仅清除本次失败的初始化，保留期间因失效重建而写入的新缓存。
       if (this.connectors.get(sourceId) === created) {
         this.connectors.delete(sourceId);
       }
@@ -70,6 +72,7 @@ class DataSourceManager {
     const connectors = [...this.connectors.values()];
     this.connectors.clear();
     this.connectorSecretRefs.clear();
+    // 尝试关闭全部实例后再报告失败，避免一个关闭错误中断其他资源的清理。
     const results = await Promise.allSettled(
       connectors.map(async (connector) => {
         await (await connector).close();
@@ -81,6 +84,7 @@ class DataSourceManager {
     }
   }
 
+  /** 解析配置与凭据后创建实例，确认工厂返回的数据源身份一致再登记凭据依赖。 */
   private async createConnector(sourceId: string): Promise<DataSourceConnector> {
     const config = await this.sourceLookup.findEnabledBySourceId(sourceId);
     if (config === undefined) {

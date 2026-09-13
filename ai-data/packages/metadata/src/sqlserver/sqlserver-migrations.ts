@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import type { MetadataBatchExecutor, MetadataMigration } from "../metadata-types";
 
-/** 从外置目录加载 SQL Server 元数据库迁移文件。 */
+/** 从应用发布目录读取 SQL 迁移；按文件名排序，因此版本前缀需保持可排序格式。 */
 function loadSqlServerMigrations(migrationsDirectory: string): MetadataMigration[] {
   const migrationFiles = readdirSync(migrationsDirectory, { withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(".sql"))
@@ -20,7 +20,10 @@ function loadSqlServerMigrations(migrationsDirectory: string): MetadataMigration
   }));
 }
 
-/** 按文件名顺序执行所有 SQL Server 元数据库迁移。 */
+/**
+ * 顺序提交每个迁移文件为独立批次，失败时停止后续迁移。
+ * 每次启动都会读取全部文件；版本跳过与事务范围由各 SQL 文件自身控制。
+ */
 async function applySqlServerMigrations(
   executor: MetadataBatchExecutor,
   migrationsDirectory: string,

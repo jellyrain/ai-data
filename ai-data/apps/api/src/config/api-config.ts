@@ -4,24 +4,38 @@ import { z } from "zod";
 
 import type { MetadataConnectionConfig } from "@ai-data/metadata";
 
-/** API 元数据库 SQL Server 连接配置的校验规则。 */
+/** API 专属 SQL Server 连接配置；对象各层拒绝未知字段，连接池最小容量不得超过最大容量。 */
 const metadataConnectionSchema = z
   .object({
+    /** 元数据库主机名或 IP。 */
     server: z.string().min(1, "metadata_sqlserver.server 不能为空"),
+    /** SQL Server TCP 端口。 */
     port: z.number().int().min(1).max(65535),
+    /** 保存 API 用户、会话与业务配置的数据库名称。 */
     database: z.string().min(1, "metadata_sqlserver.database 不能为空"),
+    /** API 访问元数据库的专属登录名。 */
     user: z.string().min(1, "metadata_sqlserver.user 不能为空"),
+    /** 元数据库登录密码。 */
     password: z.string().min(1, "metadata_sqlserver.password 不能为空"),
+    /** 连接安全、超时与连接池资源限制。 */
     options: z
       .object({
+        /** 是否对 SQL Server 连接启用加密。 */
         encrypt: z.boolean(),
+        /** 是否信任服务端证书，部署方应按证书配置决定。 */
         trust_server_certificate: z.boolean(),
+        /** 建连等待上限，单位毫秒，允许 0.1 秒至 2 分钟。 */
         connection_timeout_ms: z.number().int().min(100).max(120000),
+        /** 单次元数据库请求的等待上限，单位毫秒。 */
         request_timeout_ms: z.number().int().min(100).max(120000),
+        /** 池容量上限为 100，空闲连接回收范围为 1 秒至 1 小时。 */
         pool: z
           .object({
+            /** 连接池最多保留的连接数。 */
             max: z.number().int().min(1).max(100),
+            /** 最小保留连接数；0 表示允许连接池完全空闲。 */
             min: z.number().int().min(0).max(100),
+            /** 空闲连接回收时间，单位毫秒。 */
             idle_timeout_ms: z.number().int().min(1000).max(3600000),
           })
           .strict()
@@ -33,7 +47,7 @@ const metadataConnectionSchema = z
   })
   .strict();
 
-/** API 启动所需的服务和元数据库配置。 */
+/** API 启动配置；根对象和嵌套对象均拒绝未声明字段，防止部署配置拼写错误被忽略。 */
 const apiConfigSchema = z
   .object({
     /** 运行环境名称，用于日志和默认安全策略。 */
@@ -53,23 +67,41 @@ const apiConfigSchema = z
       .strict(),
     /** API 自己的元数据库连接配置。 */
     metadata_sqlserver: metadataConnectionSchema,
+    /** 获准接入的 DAS 实例；省略时没有实例可注册。版本递增后旧接入凭证失效。 */
+    trusted_data_access_services: z
+      .array(
+        z
+          .object({
+            service_id: z.string().min(1),
+            credential_version: z.number().int().positive(),
+            enabled: z.boolean(),
+          })
+          .strict(),
+      )
+      .refine(
+        (services) =>
+          new Set(services.map((service) => service.service_id)).size === services.length,
+        "DAS 实例标识不能重复",
+      )
+      .optional(),
     /** API 签发和校验访问 JWT 的配置。 */
     jwt: z
       .object({
-        /** JWT 签发方，API 和内部服务使用它校验令牌来源。 */
+        /** 面向浏览器的 Access JWT 签发方；内部查询 JWT 使用独立的固定值。 */
         issuer: z.string().min(1, "jwt.issuer 不能为空"),
-        /** JWT 受众，限制令牌只能用于指定服务。 */
+        /** Access JWT 允许的受众，由 API 验证令牌时匹配。 */
         audience: z.string().min(1, "jwt.audience 不能为空"),
         /** Access JWT 的有效期，单位为秒。 */
         access_token_ttl_seconds: z.number().int().min(60).max(3600),
-        /** 签发 JWT 的 PKCS#8 私钥 PEM。 */
+        /** PKCS#8 私钥 PEM；与公钥同时提供时使用此密钥对，否则进入本地密钥库流程。 */
         signing_private_key_pem: z.string().min(1).optional(),
-        /** 校验 JWT 的 SubjectPublicKeyInfo 公钥 PEM。 */
+        /** 与配置私钥配套的 SubjectPublicKeyInfo 公钥 PEM。 */
         verification_public_key_pem: z.string().min(1).optional(),
-        /** API 本地 JWT 密钥文件目录。 */
+        /** 本地密钥目录；启动入口未收到此项时使用应用 secrets 目录。 */
         key_directory: z.string().min(1).optional(),
       })
       .strict(),
+    /** 首次部署的管理员资料；省略时跳过默认账号初始化。 */
     bootstrap_admin: z
       .object({
         /** 默认组织主键。 */
@@ -100,7 +132,7 @@ function parseBoolean(value: string, fieldName: string): boolean {
   throw new Error(`${fieldName} 必须是 true 或 false`);
 }
 
-/** 将环境变量中的十进制文本转换为整数。 */
+/** 用 Number 转换环境变量文本并要求整数，取值范围由配置 Schema 校验。 */
 function parseInteger(value: string, fieldName: string): number {
   const parsed = Number(value);
   if (!Number.isInteger(parsed)) throw new Error(`${fieldName} 必须是整数`);
@@ -121,7 +153,7 @@ function parseApiConfig(content: string): ApiConfig {
   return apiConfigSchema.parse(parsed);
 }
 
-/** 从环境变量构造并校验 API 配置。 */
+/** 按环境变量构造配置的独立入口；当前服务启动入口读取 JSON 文件。 */
 function parseApiEnvironment(env: NodeJS.ProcessEnv): ApiConfig {
   const required = (name: string): string => {
     const value = env[name];
@@ -130,6 +162,7 @@ function parseApiEnvironment(env: NodeJS.ProcessEnv): ApiConfig {
   };
 
   return apiConfigSchema.parse({
+    // 环境变量入口默认监听本机 3000；连接启用加密，池容量为 0–10。
     node_env: env.NODE_ENV ?? "development",
     service: {
       host: env.API_HOST ?? "127.0.0.1",
@@ -185,7 +218,7 @@ function parseApiEnvironment(env: NodeJS.ProcessEnv): ApiConfig {
   });
 }
 
-/** 从指定 JSON 文件加载 API 配置，保留给测试和文件化部署使用。 */
+/** 读取并校验启动入口指定的 JSON 文件；文件与配置错误在启动阶段向上传播。 */
 function loadApiConfig(path: string): ApiConfig {
   return parseApiConfig(readFileSync(path, "utf8"));
 }

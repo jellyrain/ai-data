@@ -3,7 +3,7 @@ import { z } from "zod";
 import { dateTimeSchema } from "../shared/data-values";
 import { outputMaskSchema } from "../query/output-mask";
 
-/** API 已将查询授权条件合并进 query.filters 后传给 DAS 的审计上下文。 */
+/** API 随最终查询签发的审计与结果脱敏上下文；仅接受合同声明的字段。 */
 const queryAccessContextSchema = z
   .object({
     /** 发起本次查询的用户标识，用于 DAS 审计。 */
@@ -14,9 +14,9 @@ const queryAccessContextSchema = z
     analysis_run_id: z.string().min(1),
     /** API 权限策略版本，用于审计追溯。 */
     policy_version: z.number().int().positive(),
-    /** API 签发查询权限的过期时间。 */
+    /** 本次请求声明的授权截止时间，使用东八区文本；此处校验日期和时间格式。 */
     expires_at: dateTimeSchema,
-    /** API 已按权限策略计算、由 DAS 在返回前执行的结果脱敏规则。 */
+    /** API 计算、由 DAS 在返回前执行的结果脱敏规则；省略时按空规则列表处理。 */
     output_masks: z.array(outputMaskSchema).default([]),
   })
   .strict();

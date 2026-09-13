@@ -22,7 +22,7 @@ interface ActiveMasterKeyProvider extends MasterKeyProvider {
   getActiveKey(): Promise<ActiveMasterKey>;
 }
 
-/** DAS 自管的本地 AES 主密钥库，不与启动配置或操作系统密钥库耦合。 */
+/** DAS 本地文件密钥库；活动记录保存版本引用，keys 目录保存对应的原始密钥。 */
 class LocalMasterKeyStore implements ActiveMasterKeyProvider {
   private readonly activeKeyPath: string;
   private readonly keysDirectory: string;
@@ -34,7 +34,7 @@ class LocalMasterKeyStore implements ActiveMasterKeyProvider {
     this.bootstrapLockPath = join(keyStoreDirectory, ".bootstrap.lock");
   }
 
-  /** 读取当前活动主密钥；仅当密钥库完全不存在时才创建第一把密钥。 */
+  /** 优先读取活动密钥；活动记录缺失且 keys 目录无密钥文件时才尝试首次初始化。 */
   async getActiveKey(): Promise<ActiveMasterKey> {
     await mkdir(this.keyStoreDirectory, { recursive: true });
     const activeKeyId = await this.readActiveKeyId();
@@ -68,6 +68,7 @@ class LocalMasterKeyStore implements ActiveMasterKeyProvider {
     return key;
   }
 
+  /** 活动记录只接受一个 key_id；文件缺失与记录损坏分别处理，损坏时停止初始化。 */
   private async readActiveKeyId(): Promise<string | undefined> {
     let content: string;
     try {
@@ -101,6 +102,7 @@ class LocalMasterKeyStore implements ActiveMasterKeyProvider {
     return keyId;
   }
 
+  /** 检查遗留密钥文件，避免活动记录丢失后生成新密钥掩盖原有密文的恢复需求。 */
   private async assertAbsentKeyStore(): Promise<void> {
     try {
       const entries = await readdir(this.keysDirectory);
@@ -114,6 +116,7 @@ class LocalMasterKeyStore implements ActiveMasterKeyProvider {
     }
   }
 
+  /** 以独占锁文件串行化首次初始化，先写密钥，再写活动版本引用。 */
   private async bootstrapInitialKey(): Promise<ActiveMasterKey> {
     let lock: Awaited<ReturnType<typeof open>>;
     try {
@@ -126,6 +129,7 @@ class LocalMasterKeyStore implements ActiveMasterKeyProvider {
     }
 
     try {
+      // 取得锁后重新读取活动记录，复用其他初始化者可能已经写入的版本。
       const existingKeyId = await this.readActiveKeyId();
       if (existingKeyId !== undefined) {
         return { keyId: existingKeyId, value: await this.getKey(existingKeyId) };
@@ -147,6 +151,7 @@ class LocalMasterKeyStore implements ActiveMasterKeyProvider {
     }
   }
 
+  /** 每隔 100 毫秒读取活动记录，最多尝试 50 次；等待超时后由调用方处理启动失败。 */
   private async waitForActiveKey(): Promise<ActiveMasterKey> {
     for (let attempts = 0; attempts < 50; attempts += 1) {
       const keyId = await this.readActiveKeyId();
@@ -175,7 +180,7 @@ function isFileNotFound(error: unknown): error is NodeJS.ErrnoException {
   );
 }
 
-/** 判断独占创建失败是否说明另一实例正在初始化。 */
+/** 识别独占创建时路径已存在的错误，交由等待活动记录的分支处理。 */
 function isFileAlreadyExists(error: unknown): error is NodeJS.ErrnoException {
   return (
     typeof error === "object" &&

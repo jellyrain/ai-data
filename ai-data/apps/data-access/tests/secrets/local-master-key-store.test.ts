@@ -6,8 +6,8 @@ import { describe, expect, it } from "vitest";
 
 import { LocalMasterKeyStore } from "../../src/secrets/local-master-key-store";
 
+// 每个用例创建独立临时目录，并在结束后清理；复用场景让两个实例访问同一目录。
 describe("DAS 本地主密钥库", () => {
-  // BDD 场景：首次部署尚未存在密钥库；TDD 断言：生成一把 32 字节密钥，后续启动复用同一把密钥。
   it("首次初始化生成主密钥，后续实例复用", async () => {
     const directory = await mkdtemp(join(tmpdir(), "das-key-store-"));
 
@@ -25,13 +25,13 @@ describe("DAS 本地主密钥库", () => {
     }
   });
 
-  // BDD 场景：密钥库已有活动密钥记录但密钥文件损坏；TDD 断言：DAS 拒绝启动，绝不覆盖旧密文依赖的密钥。
   it("拒绝损坏的已有主密钥", async () => {
     const directory = await mkdtemp(join(tmpdir(), "das-key-store-"));
 
     try {
       const store = new LocalMasterKeyStore(directory);
       const activeKey = await store.getActiveKey();
+      // 将已存在的 32 字节密钥改成 16 字节，触发长度检查而非缺失文件分支。
       await writeFile(join(directory, "keys", `${activeKey.keyId}.key`), Buffer.alloc(16));
 
       await expect(new LocalMasterKeyStore(directory).getActiveKey()).rejects.toThrow(

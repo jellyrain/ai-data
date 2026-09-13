@@ -4,6 +4,7 @@ import { createApp } from "../../src/app";
 import type { DasConfig } from "../../src/config/das-config";
 import type { CatalogReader } from "../../src/catalog/catalog-service";
 import type { MetadataDatabaseHealthChecker } from "@ai-data/metadata";
+import { createServiceToken, createServiceVerifier } from "../support/service-auth-fixtures";
 
 const config: DasConfig = {
   service: {
@@ -15,6 +16,7 @@ const config: DasConfig = {
   api: {
     base_url: "http://127.0.0.1:3101",
     heartbeat_path: "/internal/data-access/heartbeat",
+    registration_credential_path: "test-registration.jwt",
     jwt_verification_public_key_path: "./test-public.pem",
   },
   metadata_sqlserver: {
@@ -33,20 +35,26 @@ const config: DasConfig = {
   },
 };
 
+// 目录由服务替身返回，路由负责检查请求结构并封装响应；白名单筛选在目录服务测试中验证。
 describe("DAS 目录接口", () => {
-  // BDD 场景：API 请求一个数据源的目录；TDD 断言：返回 DAS 已筛选的统一数据集。
   it("返回指定数据源的目录", async () => {
     const app = createApp(
       config,
       createHealthChecker(),
       createCatalogReader(),
       createManagementApi(),
+      undefined,
+      undefined,
+      await createServiceVerifier(),
     );
 
     const response = await app.inject({
       method: "POST",
       url: "/internal/catalog",
       payload: { source_id: "clinical_reporting" },
+      headers: {
+        authorization: `Bearer ${await createServiceToken("POST", "/internal/catalog", { source_id: "clinical_reporting" })}`,
+      },
     });
 
     expect(response.statusCode).toBe(200);
@@ -65,19 +73,24 @@ describe("DAS 目录接口", () => {
     await app.close();
   });
 
-  // BDD 场景：调用方附带合同外字段；TDD 断言：目录接口拒绝未声明的请求结构。
   it("拒绝合同外字段", async () => {
     const app = createApp(
       config,
       createHealthChecker(),
       createCatalogReader(),
       createManagementApi(),
+      undefined,
+      undefined,
+      await createServiceVerifier(),
     );
 
     const response = await app.inject({
       method: "POST",
       url: "/internal/catalog",
       payload: { source_id: "clinical_reporting", include_disabled: true },
+      headers: {
+        authorization: `Bearer ${await createServiceToken("POST", "/internal/catalog", { source_id: "clinical_reporting", include_disabled: true })}`,
+      },
     });
 
     expect(response.statusCode).toBe(400);

@@ -12,7 +12,7 @@ type RowCondition = z.infer<typeof rowConditionSchema>;
 type TablePermission = z.infer<typeof tablePermissionSchema>;
 /** 角色对数据对象行过滤权限的类型。 */
 type RowPolicy = z.infer<typeof rowPolicySchema>;
-/** 角色对单个字段可见性权限的类型。 */
+/** 角色对单个字段可见性及允许的 DSL 操作配置。 */
 type ColumnPermission = z.infer<typeof columnPermissionSchema>;
 
 export type { ColumnPermission, RowCondition, RowPolicy, TablePermission };

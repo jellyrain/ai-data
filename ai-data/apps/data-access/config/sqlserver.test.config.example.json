@@ -1,0 +1,18 @@
+{
+  "server": "sqlserver-test.example.internal",
+  "port": 1433,
+  "database": "master",
+  "user": "integration_test",
+  "password": "replace-with-test-password",
+  "options": {
+    "encrypt": true,
+    "trust_server_certificate": false,
+    "connection_timeout_ms": 10000,
+    "request_timeout_ms": 90000,
+    "pool": {
+      "max": 3,
+      "min": 0,
+      "idle_timeout_ms": 30000
+    }
+  }
+}

@@ -1,12 +1,10 @@
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
-import {
-  aesGcmEncryptionMetadataSchema,
-  dataSourceSecretRowSchema,
-  parsePersistedJson,
-  type EncryptedDataSourceSecret,
-} from "./metadata-records";
+import { aesGcmEncryptionMetadataSchema } from "../secrets/aes-gcm-encryption-metadata";
+import { dataSourceSecretRowSchema } from "./secret-records";
+import { parsePersistedJson } from "./parse-persisted-json";
+import type { EncryptedDataSourceSecret } from "../secrets/secret-types";
 
-/** 读取数据源密文；只有 SecretResolver 允许使用该仓储。 */
+/** 持久化共享凭据密文；管理服务负责加密写入，SecretResolver 负责读取和解密。 */
 class SecretRepository {
   constructor(private readonly executor: MetadataQueryExecutor) {}
 

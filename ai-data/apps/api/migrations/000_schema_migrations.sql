@@ -1,3 +1,4 @@
+-- API 元数据库迁移使用事务级应用锁，多个实例启动时串行执行本应用的 DDL。
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
@@ -13,6 +14,7 @@ IF @migration_lock_result < 0
 
 IF OBJECT_ID(N'dbo.schema_migrations', N'U') IS NULL
 BEGIN
+  -- 记录已应用的迁移标识；applied_at 使用 SQL Server 本地时间。
   CREATE TABLE dbo.schema_migrations (
     migration_id NVARCHAR(128) NOT NULL PRIMARY KEY,
     applied_at DATETIME2(3) NOT NULL DEFAULT GETDATE()

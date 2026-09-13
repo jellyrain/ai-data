@@ -6,20 +6,29 @@ import {
 } from "@ai-data/contracts";
 
 import type { DataAccessServiceRegistration, DataAccessServiceRegistry } from "./data-access-types";
+import { parseStoredRecord } from "../metadata/parse-stored-record";
 
 /** API 元数据库中的 DAS 服务注册记录。 */
 type DataAccessServiceRow = {
+  /** 心跳上报的实例主键。 */
   service_id: string;
+  /** API 根据 TCP 来源地址及上报端口组合的回调 URL。 */
   service_url: string;
+  /** 心跳附带的版本，未上报时为 null。 */
   service_version: string | null;
+  /** 实例级状态，数据源状态另存于快照。 */
   status: "healthy" | "unhealthy";
+  /** API 接收最近心跳的时间。 */
   last_heartbeat_at: Date;
+  /** 心跳附带的诊断信息，未上报时为 null。 */
   message: string | null;
+  /** 数据源健康快照 JSON，读取时重新校验每一项。 */
   sources_json: string;
 };
 
 /** 将 DAS 心跳持久化到 API 元数据库，并按失联阈值筛选实例。 */
 class SqlDataAccessServiceRegistry implements DataAccessServiceRegistry {
+  /** 默认失联窗口为 90 秒，SQL 按数据库当前时间筛选最近接收的心跳。 */
   constructor(
     private readonly database: MetadataQueryExecutor,
     private readonly heartbeatTtlMilliseconds = 90_000,
@@ -67,7 +76,7 @@ class SqlDataAccessServiceRegistry implements DataAccessServiceRegistry {
     };
   }
 
-  /** 查询全部注册记录，并过滤服务状态和心跳超时实例。 */
+  /** 由 SQL 筛选窗口内的健康实例，再校验存储快照；损坏记录通过内部错误出口报告。 */
   async listHealthyServices(): Promise<DataAccessServiceRegistration[]> {
     const result = await this.database.execute<DataAccessServiceRow>({
       sql: "SELECT service_id, service_url, service_version, status, last_heartbeat_at, message, sources_json FROM dbo.data_access_services WHERE status = 'healthy' AND last_heartbeat_at > DATEADD(millisecond, @negative_ttl, SYSUTCDATETIME()) ORDER BY service_id",
@@ -75,29 +84,17 @@ class SqlDataAccessServiceRegistry implements DataAccessServiceRegistry {
         { name: "negative_ttl", type: "integer", value: -this.heartbeatTtlMilliseconds },
       ],
     });
-    return result.rows.flatMap((row) => {
-      try {
-        const sources = JSON.parse(row.sources_json) as unknown;
-        if (!Array.isArray(sources)) return [];
-        const parsedSources = sources.flatMap((source) => {
-          const parsed = sourceHealthSchema.safeParse(source);
-          return parsed.success ? [parsed.data] : [];
-        });
-        return [
-          {
-            serviceId: row.service_id,
-            serviceUrl: row.service_url,
-            serviceVersion: row.service_version,
-            status: row.status,
-            lastHeartbeatAt: row.last_heartbeat_at,
-            message: row.message,
-            sources: parsedSources as SourceHealth[],
-          },
-        ];
-      } catch {
-        return [];
-      }
-    });
+    return parseStoredRecord(() =>
+      result.rows.map((row) => ({
+        serviceId: row.service_id,
+        serviceUrl: row.service_url,
+        serviceVersion: row.service_version,
+        status: row.status,
+        lastHeartbeatAt: row.last_heartbeat_at,
+        message: row.message,
+        sources: sourceHealthSchema.array().parse(JSON.parse(row.sources_json)),
+      })),
+    );
   }
 }
 

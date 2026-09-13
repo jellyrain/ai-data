@@ -1,4 +1,4 @@
-import type { DataSourceConfig } from "../metadata/metadata-records";
+import type { DataSourceConfig } from "../data-sources/data-source-types";
 import type { ResolvedDataSourceSecret } from "../secrets/secret-resolver";
 import { DatabaseConnector } from "./database-connector";
 import { createDatabaseDriver } from "./database-drivers";

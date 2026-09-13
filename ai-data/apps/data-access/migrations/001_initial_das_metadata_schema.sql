@@ -1,6 +1,8 @@
+-- 迁移在本文件事务中执行，运行时错误触发事务中止。
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
+-- 多个 DAS 实例共享事务级迁移锁，避免同时初始化同一套元数据表；最多等待 60 秒。
 DECLARE @migration_lock_result INT;
 EXEC @migration_lock_result = sp_getapplock
   @Resource = N'das:metadata-schema',
@@ -11,10 +13,12 @@ EXEC @migration_lock_result = sp_getapplock
 IF @migration_lock_result < 0
   THROW 51000, 'DAS metadata schema migration lock could not be acquired.', 1;
 
+-- 已登记的版本跳过结构初始化；表结构与版本记录在同一事务中提交。
 IF NOT EXISTS (
   SELECT 1 FROM dbo.schema_migrations WHERE migration_id = N'001_initial_das_metadata_schema'
 )
 BEGIN
+  -- 共享凭据保存密文及解密元信息，key_id 指向 DAS 本地密钥文件。
   IF OBJECT_ID(N'dbo.data_source_secrets', N'U') IS NULL
   BEGIN
     CREATE TABLE dbo.data_source_secrets (
@@ -28,6 +32,7 @@ BEGIN
     );
   END;
 
+  -- 每个 source_id 独立绑定目标与资源限制，多条配置可以复用一个 secret_ref。
   IF OBJECT_ID(N'dbo.data_source_configs', N'U') IS NULL
   BEGIN
     CREATE TABLE dbo.data_source_configs (
@@ -48,6 +53,7 @@ BEGIN
     );
   END;
 
+  -- 逻辑对象在各数据源内唯一，物理映射与发现、查询开关分别维护。
   IF OBJECT_ID(N'dbo.exposed_source_objects', N'U') IS NULL
   BEGIN
     CREATE TABLE dbo.exposed_source_objects (
@@ -65,6 +71,7 @@ BEGIN
     );
   END;
 
+  -- HTTP 虚拟表保存固定请求和响应映射；JSON 列由应用读取 Schema 进一步校验。
   IF OBJECT_ID(N'dbo.api_dataset_response_mappings', N'U') IS NULL
   BEGIN
     CREATE TABLE dbo.api_dataset_response_mappings (
@@ -82,6 +89,7 @@ BEGIN
     );
   END;
 
+  -- 审计允许早期拒绝时缺失身份和运行信息，correlation_id 始终用于请求关联。
   IF OBJECT_ID(N'dbo.query_audit_logs', N'U') IS NULL
   BEGIN
     CREATE TABLE dbo.query_audit_logs (
@@ -104,6 +112,7 @@ BEGIN
       error_code NVARCHAR(128) NULL
     );
 
+    -- 支持按时间、分析运行及数据源回查查询处理记录。
     CREATE INDEX IX_query_audit_logs_occurred_at ON dbo.query_audit_logs (occurred_at DESC);
     CREATE INDEX IX_query_audit_logs_analysis_run_id ON dbo.query_audit_logs (analysis_run_id, occurred_at DESC);
     CREATE INDEX IX_query_audit_logs_source_id ON dbo.query_audit_logs (source_id, occurred_at DESC);

@@ -8,11 +8,11 @@ type AuthenticatedIdentity = {
   username: string;
   /** 身份来源提供的展示名称。 */
   displayName: string;
-  /** 可选的已验证邮箱地址。 */
+  /** 身份来源提供且已验证的邮箱；来源未提供时省略。 */
   email?: string;
 };
 
-/** 本地账号、OIDC、CAS 或 LDAP 认证适配器的统一边界。 */
+/** 认证来源扩展的接口约定，适配器负责将来源身份转换为可映射的本地登录资料。 */
 interface AuthenticationAdapter {
   /** 校验外部认证输入并转换为标准身份。 */
   authenticate(input: unknown): Promise<AuthenticatedIdentity>;

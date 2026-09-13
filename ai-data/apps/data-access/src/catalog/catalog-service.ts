@@ -2,7 +2,8 @@ import { datasetSchema, type Dataset } from "@ai-data/contracts";
 
 import type { DataSourceConnector } from "../connectors/connector";
 import type { DiscoveredDataset } from "../connectors/connector-catalog";
-import type { ExposedSourceObject } from "../metadata/metadata-records";
+import type { ExposedSourceObject } from "./catalog-types";
+import { procedureDefinitionSchema } from "./procedure-definition";
 
 /** 目录路由使用的只读目录能力。 */
 interface CatalogReader {
@@ -34,12 +35,14 @@ class CatalogService implements CatalogReader {
     const connector = await this.connectorLookup.get(sourceId);
     const discoveredDatasets = await connector.discoverCatalog();
 
+    // HTTP 目录已由虚拟表配置构造，直接采用其配置对象名作为逻辑标识。
     if (connector.kind === "http_api") {
       return discoveredDatasets.map((dataset) =>
         toDataset(sourceId, dataset, dataset.native_object_name),
       );
     }
 
+    // 数据库目录与可发现白名单取交集，以逻辑对象名返回；类型也参与匹配。
     const discoveredByPhysicalObject = new Map(
       discoveredDatasets.flatMap((dataset) => {
         const key = discoveredPhysicalObjectKey(dataset);
@@ -50,14 +53,38 @@ class CatalogService implements CatalogReader {
     return exposedObjects.flatMap((object) => {
       const key = exposedPhysicalObjectKey(object);
       const dataset = key === undefined ? undefined : discoveredByPhysicalObject.get(key);
-      return dataset === undefined
-        ? []
-        : [toDataset(sourceId, dataset, object.objectId, object.queryCapabilities)];
+      if (dataset === undefined) return [];
+      if (dataset.kind === "stored_procedure") {
+        const definition =
+          object.procedureDefinition === undefined
+            ? undefined
+            : procedureDefinitionSchema.parse(object.procedureDefinition);
+        return [
+          toDataset(
+            sourceId,
+            {
+              ...dataset,
+              columns: definition?.columns ?? [],
+              query_parameters: definition?.query_parameters ?? [],
+              has_complete_output:
+                definition !== undefined &&
+                connector.kind !== "oracle" &&
+                (connector.kind === "postgresql" || !definition.output_parameters?.length) &&
+                (connector.kind !== "postgresql" ||
+                  definition.query_parameters.length === 0 ||
+                  definition.postgresql_parameter_types !== undefined),
+            },
+            object.objectId,
+            object.queryCapabilities,
+          ),
+        ];
+      }
+      return [toDataset(sourceId, dataset, object.objectId, object.queryCapabilities)];
     });
   }
 }
 
-/** 生成数据库发现对象的物理键。 */
+/** 以类型、Schema 和名称区分物理对象；缺少 Schema 时无法参与白名单匹配。 */
 function discoveredPhysicalObjectKey(
   object: Pick<DiscoveredDataset, "kind" | "native_schema_name" | "native_object_name">,
 ): string | undefined {
@@ -73,7 +100,7 @@ function exposedPhysicalObjectKey(object: ExposedSourceObject): string | undefin
     : `${object.objectKind}:${object.nativeSchemaName}:${object.nativeObjectName}`;
 }
 
-/** 仅返回公共 Dataset 合同允许暴露的目录字段。 */
+/** 将物理发现结果转换为公共目录；显式白名单能力优先于连接器发现的能力。 */
 function toDataset(
   sourceId: string,
   discovered: DiscoveredDataset,
@@ -93,6 +120,9 @@ function toDataset(
       ? {}
       : { source_description: discovered.source_description }),
     columns: discovered.columns,
+    ...(discovered.has_complete_output === undefined
+      ? {}
+      : { has_complete_output: discovered.has_complete_output }),
     ...(queryCapabilities === undefined ? {} : { query_capabilities: queryCapabilities }),
     query_parameters: discovered.query_parameters ?? [],
     ...(discovered.freshness === undefined ? {} : { freshness: discovered.freshness }),

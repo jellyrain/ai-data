@@ -7,6 +7,7 @@ import {
 } from "../../src/connectors/executable-query";
 import { compileSqlQuery } from "../../src/connectors/sql-query-compiler";
 
+/** 组合 Join、聚合和嵌套过滤，复用于不同方言的 SQL 与参数顺序断言。 */
 function relationalQuery(): ExecutableRelationalQuery {
   const query = executableQuerySchema.parse({
     type: "relational_query",
@@ -55,13 +56,13 @@ function relationalQuery(): ExecutableRelationalQuery {
   return query;
 }
 
+// 编译结果只在内存中比较 SQL 与绑定参数；各方言共用相同 DSL 样本。
 describe("SQL 查询编译器", () => {
-  // BDD 场景：API 已将条件和 Join 解析为最终 DSL；TDD 断言：SQL Server 仅拼接受控结构，所有值使用参数绑定。
   it("编译 SQL Server 关系查询和嵌套筛选", () => {
     const result = compileSqlQuery(relationalQuery(), sqlServerDialect);
 
     expect(result.sql).toBe(
-      "SELECT TOP 50 [v].[id] AS [visit_id], COUNT([p].[id]) AS [patient_count] FROM [dbo].[visit] AS [v] INNER JOIN [dbo].[patient] AS [p] ON [v].[patient_id] = [p].[id] WHERE ([v].[department_id] = @p0 AND ([p].[status] IN (@p1, @p2) OR [p].[deleted_at] IS NULL)) GROUP BY [v].[id] ORDER BY [v].[id] DESC",
+      "SELECT TOP 51 [v].[id] AS [visit_id], COUNT([p].[id]) AS [patient_count] FROM [dbo].[visit] AS [v] INNER JOIN [dbo].[patient] AS [p] ON [v].[patient_id] = [p].[id] WHERE ([v].[department_id] = @p0 AND ([p].[status] IN (@p1, @p2) OR [p].[deleted_at] IS NULL)) GROUP BY [v].[id] ORDER BY [v].[id] DESC",
     );
     expect(result.parameters).toEqual([
       { value: "GYN", dataType: "string" },
@@ -70,13 +71,12 @@ describe("SQL 查询编译器", () => {
     ]);
   });
 
-  // BDD 场景：MySQL 需要在查询尾部限制返回行数；TDD 断言：方言差异不改变最终 DSL 的参数顺序。
   it("按 MySQL 方言生成反引号标识符和 LIMIT", () => {
     const result = compileSqlQuery(relationalQuery(), mysqlDialect);
 
     expect(result.sql).toContain("SELECT `v`.`id` AS `visit_id`");
     expect(result.sql).toContain("`p`.`status` IN (?, ?)");
-    expect(result.sql.endsWith("ORDER BY `v`.`id` DESC LIMIT 50")).toBe(true);
+    expect(result.sql.endsWith("ORDER BY `v`.`id` DESC LIMIT 51")).toBe(true);
     expect(result.parameters).toEqual([
       { value: "GYN", dataType: "string" },
       { value: "active", dataType: "string" },
@@ -84,15 +84,13 @@ describe("SQL 查询编译器", () => {
     ]);
   });
 
-  // BDD 场景：相同最终 DSL 发往 Oracle；TDD 断言：Oracle 关系别名不使用 AS，行数限制使用 FETCH。
   it("按 Oracle 方言生成关系别名和 FETCH", () => {
     const result = compileSqlQuery(relationalQuery(), oracleDialect);
 
     expect(result.sql).toContain('FROM "dbo"."visit" "v" INNER JOIN "dbo"."patient" "p"');
-    expect(result.sql.endsWith('ORDER BY "v"."id" DESC FETCH FIRST 50 ROWS ONLY')).toBe(true);
+    expect(result.sql.endsWith('ORDER BY "v"."id" DESC FETCH FIRST 51 ROWS ONLY')).toBe(true);
   });
 
-  // BDD 场景：API 传入标准日期时间文本；TDD 断言：Oracle SQL 使用固定格式转换，不依赖会话日期格式。
   it("按 Oracle 方言显式转换日期时间参数", () => {
     const query = relationalQuery();
     query.filters.items = [
@@ -104,7 +102,6 @@ describe("SQL 查询编译器", () => {
     );
   });
 
-  // BDD 场景：API 调用固定存储过程；TDD 断言：SQL Server 参数名和参数值分别进入受控调用位置与驱动绑定数组。
   it("编译固定存储过程调用", () => {
     const query = executableQuerySchema.parse({
       type: "parameterized_query",
@@ -133,7 +130,7 @@ describe("SQL 查询编译器", () => {
     });
   });
 
-  // BDD 场景：上游错误地将对象传给最终 DSL；TDD 断言：编译器拒绝无法由数据库驱动绑定的参数值。
+  // 在 Schema 解析后主动改坏值，单独检查编译器的参数类型保护。
   it("拒绝对象参数值", () => {
     const query = relationalQuery();
     query.filters.items = [

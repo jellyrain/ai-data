@@ -5,6 +5,8 @@ import {
   apiDatasetConfigSchema,
   approvedRelationSchema,
   queryParameterPolicySchema,
+  queryPermissionBindingSchema,
+  relationCardinalitySchema,
   relationColumnPairSchema,
 } from "./catalog/api-dataset";
 import {
@@ -19,6 +21,11 @@ import {
   queryValueDefinitionSchema,
 } from "./catalog/dataset";
 import { dataAccessHeartbeatSchema, sourceHealthSchema } from "./health/health";
+import {
+  dataAccessSessionSchema,
+  dataAccessHeartbeatAckSchema,
+} from "./health/data-access-session";
+import type { DataAccessSession } from "./health/data-access-session-types";
 import { contractErrorCodeSchema, contractErrorSchema } from "./errors/errors";
 import {
   describeDatasetInputSchema,
@@ -48,6 +55,8 @@ import {
   relationalQuerySchema,
 } from "./query/query-dsl";
 import { queryOperatorSchema } from "./query/query-operators";
+import { preAggregateSchema, preAggregateSelectSchema } from "./query/pre-aggregate";
+import type { PreAggregate, PreAggregateSelect } from "./query/pre-aggregate-types";
 import {
   columnPermissionSchema,
   rowConditionSchema,
@@ -55,7 +64,11 @@ import {
   tablePermissionSchema,
 } from "./permission/permission-policy";
 import { sseEventSchema } from "./sse/sse-events";
-import { queryResultColumnSchema, queryResultSchema } from "./query/query-result";
+import {
+  queryResultColumnSchema,
+  queryResultSchema,
+  queryResultTableSchema,
+} from "./query/query-result";
 import { stableStringify } from "./query/request-signature";
 import {
   dataAccessQueryRequestSchema,
@@ -65,7 +78,6 @@ import type { QueryAccessContext } from "./access/access-context-types";
 import { maskingRuleSchema, outputMaskSchema } from "./query/output-mask";
 import { base64Schema, dateSchema, dateTimeSchema, isDataValue } from "./shared/data-values";
 
-import type { z } from "zod";
 import type { DataAccessHeartbeat, SourceHealth } from "./health/health-types";
 import type { ContractError, ContractErrorCode } from "./errors/error-types";
 import type {
@@ -83,6 +95,8 @@ import type {
   ApiDatasetConfig,
   ApprovedRelation,
   QueryParameterPolicy,
+  QueryPermissionBinding,
+  RelationCardinality,
   RelationColumnPair,
 } from "./catalog/api-dataset-types";
 import type { QueryResult, QueryResultColumn } from "./query/query-result-types";
@@ -96,8 +110,8 @@ import type {
 } from "./permission/permission-policy-types";
 import type { SseEvent } from "./sse/sse-events-types";
 
-type ColumnOperation = z.infer<typeof columnOperationSchema>;
-type MaskingRule = z.infer<typeof maskingRuleSchema>;
+import type { ColumnOperation } from "./permission/column-operation-types";
+import type { MaskingRule } from "./query/output-mask-types";
 
 // 统一出口：应用只从 @ai-data/contracts 引用，不直接依赖内部文件路径。
 export {
@@ -136,13 +150,20 @@ export {
   queryDatasetOutputSchema,
   parameterizedQuerySchema,
   queryResultColumnSchema,
+  queryResultTableSchema,
   queryResultSchema,
   stableStringify,
+  dataAccessSessionSchema,
+  dataAccessHeartbeatAckSchema,
   queryParameterSchema,
   queryParameterPolicySchema,
+  queryPermissionBindingSchema,
+  preAggregateSchema,
+  preAggregateSelectSchema,
   filterConditionSchema,
   filterGroupSchema,
   relationColumnPairSchema,
+  relationCardinalitySchema,
   relationalQuerySchema,
   rowConditionSchema,
   rowPolicySchema,
@@ -154,11 +175,16 @@ export {
 };
 
 export type {
+  DataAccessSession,
   ApiDatasetColumnDescription,
   ApiDatasetConfig,
   ApiDatasetColumnPolicy,
   ApprovedRelation,
   QueryParameterPolicy,
+  QueryPermissionBinding,
+  PreAggregate,
+  PreAggregateSelect,
+  RelationCardinality,
   RelationColumnPair,
   ColumnOperation,
   ColumnPermission,

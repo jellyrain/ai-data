@@ -1,7 +1,8 @@
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
-import { queryAuditEntrySchema, type QueryAuditEntry } from "./metadata-records";
+import { queryAuditEntrySchema } from "../query-execution/query-audit";
+import type { QueryAuditEntry } from "../query-execution/query-audit-types";
 
-/** 将每次执行、拒绝、超时或失败记录到 DAS 自己的元数据库审计表。 */
+/** 接收调用方提交的查询处理事件并写入 DAS 审计表。 */
 class AuditRepository {
   constructor(private readonly executor: MetadataQueryExecutor) {}
 
@@ -72,6 +73,7 @@ class AuditRepository {
         { name: "error_code", type: "string", value: audit.errorCode ?? null },
       ],
     });
+    // BIGINT 可能由驱动返回文本；只接受可安全表示为 JavaScript 整数的正数 ID。
     const rawAuditId = result.rows[0]?.audit_id;
     const auditId =
       typeof rawAuditId === "number"

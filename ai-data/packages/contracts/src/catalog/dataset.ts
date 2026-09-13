@@ -5,7 +5,7 @@ import { dataTypeSchema, isDataValue } from "../shared/data-values";
 /** 数据目录中的对象名、字段名和关系字段引用。 */
 const identifier = z.string().regex(/^[A-Za-z_][A-Za-z0-9_.]*$/, "必须是安全标识符");
 
-/** Data 为字段或输入参数提供的统一查询值定义。 */
+/** DAS 目录中字段条件与输入参数共用的值定义，仅接受声明字段。 */
 const queryValueDefinitionSchema = z
   .object({
     /** 字段名或输入参数名。 */
@@ -22,6 +22,7 @@ const queryValueDefinitionSchema = z
     source_description: z.string().optional(),
   })
   .strict()
+  // 默认值提前按声明类型检查，避免调用方省略参数后得到类型不匹配的值。
   .superRefine((value, context) => {
     if (value.default_value !== undefined && !isDataValue(value.default_value, value.data_type)) {
       context.addIssue({
@@ -34,7 +35,7 @@ const queryValueDefinitionSchema = z
 /** Data 为数据集字段提供的基础查询条件定义。 */
 const queryConditionCapabilitySchema = queryValueDefinitionSchema;
 
-/** Data 为字段提供的聚合能力定义。 */
+/** DAS 为字段声明的聚合能力，仅接受声明字段；至少列出一种支持的函数。 */
 const aggregationCapabilitySchema = z
   .object({
     /** 可聚合字段。 */
@@ -44,7 +45,7 @@ const aggregationCapabilitySchema = z
   })
   .strict();
 
-/** 数据集的基础查询能力；不填写某项表示该项不增加限制。 */
+/** 数据集的基础查询能力，仅接受声明字段；省略某项表示该项不增加限制，空数组表示无可用项。 */
 const queryCapabilitiesSchema = z
   .object({
     /** 可用过滤条件；table/view 未填写时默认全部字段使用标准操作。 */
@@ -58,44 +59,34 @@ const queryCapabilitiesSchema = z
   })
   .strict();
 
-/** 数据集字段的标准化元数据。 */
+/** 数据集字段的标准化元数据，仅接受声明字段。 */
 const datasetColumnSchema = z
   .object({
     /** 数据源中的真实字段名。 */
     name: identifier,
-    /** 数据源字段注释或接口描述。 */
-    source_description: z
-      /** 说明只来自连接器可发现的源元数据，不代表 API 业务口径。 */
-      .string()
-      .optional(),
+    /** 连接器可发现的源字段注释或接口描述；缺少源说明时省略。 */
+    source_description: z.string().optional(),
     /** 标准化后的数据类型。 */
     data_type: dataTypeSchema,
     /** 是否允许空值。 */
     nullable: z.boolean(),
   })
-  /** 禁止目录服务返回合同之外的字段。 */
   .strict();
 
 /** 非关系型输入数据集向 API 声明的调用参数，不等同于最终返回列。 */
 const queryParameterSchema = queryValueDefinitionSchema;
 
-/** 数据源报告的数据新鲜度。 */
+/** 数据源报告的数据新鲜度，仅接受声明字段。 */
 const freshnessSchema = z
   .object({
-    /** 最近一次数据更新时间，使用东八区格式。 */
-    observed_at: z
-      /** 时间不能为空；具体格式由连接器按数据源约定返回。 */
-      .string()
-      .min(1),
-    /** 新鲜度来源。 */
-    source: z
-      /** 说明新鲜度是探测得到、接口返回、配置提供还是未知。 */
-      .enum(["database", "api", "configured", "unknown"]),
+    /** 最近数据更新时间，生产方按项目约定使用东八区文本；此处仅检查非空。 */
+    observed_at: z.string().min(1),
+    /** 更新时间的报告来源：数据库、外部接口、配置或未知。 */
+    source: z.enum(["database", "api", "configured", "unknown"]),
   })
-  /** 禁止新鲜度对象出现未定义字段。 */
   .strict();
 
-/** describe_dataset 返回的完整数据集目录。 */
+/** describe_dataset 返回的完整数据集目录，仅接受声明字段。 */
 const datasetSchema = z
   .object({
     /** 数据源配置标识，用于定位数据源。 */
@@ -112,15 +103,25 @@ const datasetSchema = z
     source_description: z.string().optional(),
     /** 当前数据集的字段元数据。 */
     columns: z.array(datasetColumnSchema),
+    /** DAS 已确认固定调用的完整输出定义时为 true；省略或 false 时不能据此执行固定调用。 */
+    has_complete_output: z.boolean().optional(),
     /** Data 提供的基础查询能力；API 可通过同名配置进一步收窄。 */
     query_capabilities: queryCapabilitiesSchema.optional(),
-    /** 存储过程或 HTTP API 的输入参数；普通表通常为空。 */
+    /** 存储过程或 HTTP API 的输入参数；省略时按空列表处理，普通表通常为空。 */
     query_parameters: z.array(queryParameterSchema).default([]),
-    /** 当前数据集的数据新鲜度。 */
+    /** 连接器能够提供时附带的数据新鲜度。 */
     freshness: freshnessSchema.optional(),
   })
-  /** 禁止完整目录出现未定义字段。 */
-  .strict();
+  .strict()
+  .superRefine((dataset, context) => {
+    if (
+      dataset.has_complete_output === true &&
+      (dataset.columns.length === 0 ||
+        new Set(dataset.columns.map((column) => column.name)).size !== dataset.columns.length)
+    ) {
+      context.addIssue({ code: "custom", message: "完整输出必须声明非空且唯一的列集合" });
+    }
+  });
 
 export {
   dataTypeSchema,

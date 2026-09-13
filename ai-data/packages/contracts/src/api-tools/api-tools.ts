@@ -3,7 +3,7 @@ import { queryDslSchema } from "../query/query-dsl";
 import { datasetSchema } from "../catalog/dataset";
 import { queryResultSchema } from "../query/query-result";
 
-/** API 提供给模型的 search_catalog 工具输入合同。 */
+/** search_catalog 的检索条件；仅接受声明字段，最多返回 100 项目录结果。 */
 const searchCatalogInputSchema = z
   .object({
     /** 要搜索的数据源配置标识。 */
@@ -13,37 +13,34 @@ const searchCatalogInputSchema = z
     /** 返回数量限制，默认 20，防止目录结果过大。 */
     limit: z.number().int().min(1).max(100).default(20),
   })
-  /** 禁止工具调用附带未定义字段。 */
   .strict();
 
-/** API 提供给模型的 search_catalog 工具输出合同。 */
+/** search_catalog 的分页目录响应，仅接受声明字段。 */
 const searchCatalogOutputSchema = z
   .object({
-    /** 当前页连接器返回的原始数据集目录。 */
+    /** 当前页的数据集目录条目，按共享数据集合同返回。 */
     items: z.array(datasetSchema),
     /** 存在下一页时返回的游标。 */
     next_cursor: z.string().optional(),
   })
-  /** 禁止目录响应出现未定义字段。 */
   .strict();
 
-/** API 提供给模型的 list_datasets 工具输入合同。 */
+/** list_datasets 的分页条件；仅接受声明字段，最多返回 100 项目录结果。 */
 const listDatasetsInputSchema = z
   .object({
     /** 要列出的数据源配置标识。 */
     source_id: z.string().min(1),
     /** 分页游标，首次请求可以省略。 */
     cursor: z.string().optional(),
-    /** 返回数量限制，默认 20。 */
+    /** 每页条目数，默认 20，最多 100，以限制目录响应体积。 */
     limit: z.number().int().min(1).max(100).default(20),
   })
-  /** 禁止列表请求出现未定义字段。 */
   .strict();
 
 /** list_datasets 返回 API 维护的目录数据集列表。 */
 const listDatasetsOutputSchema = searchCatalogOutputSchema;
 
-/** API 提供给模型的 describe_dataset 工具输入合同。 */
+/** describe_dataset 使用的数据源和对象定位信息，仅接受声明字段。 */
 const describeDatasetInputSchema = z
   .object({
     /** 要描述的数据源配置标识。 */
@@ -51,21 +48,19 @@ const describeDatasetInputSchema = z
     /** 要描述的数据源内对象引用。 */
     object_id: z.string().min(1),
   })
-  /** 禁止描述请求出现未定义字段。 */
   .strict();
 
 /** describe_dataset 返回 API 提供的数据集目录对象。 */
 const describeDatasetOutputSchema = datasetSchema;
 
-/** API 提供给模型的 query_dataset 工具输入合同，只接受结构化查询 DSL。 */
+/** query_dataset 的查询入口，仅接受声明的结构化 DSL 字段。 */
 const queryDatasetInputSchema = z
   .object({
     /** 经过 queryDslSchema 校验的结构化查询。 */
     query: queryDslSchema,
   })
-  /** 禁止查询工具输入携带自由 SQL 或其他未定义字段。 */
   .strict();
-/** query_dataset 返回标准化结果和查询证据。 */
+/** query_dataset 返回标准化列、结果行和截断等结果元数据。 */
 const queryDatasetOutputSchema = queryResultSchema;
 
 export {

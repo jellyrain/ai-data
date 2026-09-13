@@ -11,20 +11,25 @@ type DatabaseServerSecret = Exclude<ResolvedDataSourceSecret, { connectorKind: "
 
 /** 管理端读取目标库时提供的 Oracle CDB 连接入口。 */
 type DatabaseTargetDiscoveryInput = {
+  /** Oracle 发现入口使用 SID 或 Service Name；其他数据库省略。 */
   oracleConnectType?: "sid" | "service_name";
+  /** Oracle CDB 入口名称，Oracle 发现时与连接方式一同提供。 */
   oracleConnectTarget?: string;
 };
 
 /** 一项可在管理端展示并用于创建 source_id 的数据库目标。 */
 type DatabaseTarget = {
+  /** 管理端展示的目标数据库名称。 */
   name: string;
+  /** 保存数据源配置时使用的连接目标。 */
   connectTarget: string;
+  /** Oracle 目标的连接方式，其他数据库省略。 */
   connectType?: "sid" | "service_name";
 };
 
 /** 数据源管理服务读取可访问目标数据库的能力。 */
 interface DatabaseTargetDiscovery {
-  /** 返回当前登录账号能够访问的数据库目标及实际连接入口。 */
+  /** 返回服务器目录中发现的候选目标及连接入口；目标的连接可用性由后续实际连接确认。 */
   listDatabaseTargets(
     secret: DatabaseServerSecret,
     input: DatabaseTargetDiscoveryInput,
@@ -33,6 +38,7 @@ interface DatabaseTargetDiscovery {
 
 /** 使用各数据库驱动的服务器级目录读取能力发现可访问目标库。 */
 class DatabaseServerTargetDiscovery implements DatabaseTargetDiscovery {
+  /** 按凭据类型选择目录查询，发现使用的临时连接池在完成后关闭。 */
   async listDatabaseTargets(
     secret: DatabaseServerSecret,
     input: DatabaseTargetDiscoveryInput,
@@ -50,7 +56,7 @@ class DatabaseServerTargetDiscovery implements DatabaseTargetDiscovery {
   }
 }
 
-/** 列出当前 SQL Server 登录可访问的在线数据库。 */
+/** 从当前账号可见的 sys.databases 中列出在线数据库。 */
 async function listSqlServerDatabases(
   secret: Extract<DatabaseServerSecret, { connectorKind: "sqlserver" }>,
 ): Promise<DatabaseTarget[]> {
@@ -101,7 +107,7 @@ async function listMysqlDatabases(
   }
 }
 
-/** 列出当前 PostgreSQL 登录可连接的非模板数据库。 */
+/** 从 pg_database 列出允许连接的非模板数据库；此查询依据数据库状态筛选。 */
 async function listPostgresqlDatabases(
   secret: Extract<DatabaseServerSecret, { connectorKind: "postgresql" }>,
 ): Promise<DatabaseTarget[]> {
@@ -130,7 +136,7 @@ async function listPostgresqlDatabases(
   }
 }
 
-/** 通过管理员填写的 CDB SID 或服务名，列出可访问 PDB 和对应服务名。 */
+/** 通过管理员填写的 CDB 入口查询 PDB 与服务映射，每个 PDB 取排序最小的服务名。 */
 async function listOraclePluggableDatabases(
   secret: Extract<DatabaseServerSecret, { connectorKind: "oracle" }>,
   input: DatabaseTargetDiscoveryInput,

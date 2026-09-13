@@ -25,15 +25,19 @@ describe("Data Access Service 查询请求合同", () => {
     },
   };
 
-  it("接受 API 已签名的 access、query 和整体签名", () => {
+  // 本组用例检查请求结构；签名真实性需要由验签流程验证。
+  it("请求结构合法且包含签名字段时通过", () => {
     const result = dataAccessQueryRequestSchema.parse({ ...base, signature: "sig-v1-abc" });
 
     expect(result.query.source_id).toBe("clinical");
     expect(result.signature).toBe("sig-v1-abc");
   });
 
-  it("拒绝缺少整体签名或携带未知字段", () => {
+  it("请求缺少整体签名字段时拒绝", () => {
     expect(dataAccessQueryRequestSchema.safeParse(base).success).toBe(false);
+  });
+
+  it("请求携带未声明字段时拒绝", () => {
     expect(
       dataAccessQueryRequestSchema.safeParse({ ...base, signature: "sig", extra: true }).success,
     ).toBe(false);

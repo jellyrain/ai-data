@@ -1,21 +1,24 @@
 import { renderPhysicalName, type DatabaseDialect } from "./database-dialect";
 
+/** 使用方括号引用名称，将名称内部的右方括号成对转义。 */
 function quoteSqlServerIdentifier(identifier: string): string {
   return `[${identifier.replaceAll("]", "]]")}]`;
 }
 
-/** SQL Server 方言。 */
+/** SQL Server 的标识符、参数绑定和固定查询模板实现。 */
 const sqlServerDialect: DatabaseDialect = {
   kind: "sqlserver",
   quoteIdentifier: quoteSqlServerIdentifier,
   relationAliasSql: (alias: string) => ` AS ${quoteSqlServerIdentifier(alias)}`,
   parameterPlaceholder: (index: number) => `@p${index}`,
+  // 日期文本按 23（日期）和 120（秒级时间）样式显式转换。
   parameterSql: (placeholder, dataType) => {
     if (dataType === "date") return `CONVERT(date, ${placeholder}, 23)`;
     if (dataType === "datetime") return `CONVERT(datetime2, ${placeholder}, 120)`;
     return placeholder;
   },
   healthSql: () => "SELECT 1 AS das_health",
+  // 目录行统一字段别名；存储过程只发现对象名，列与参数元数据由后续目录能力补充。
   catalogSql: () => `
     SELECT
       t.TABLE_SCHEMA AS schema_name,
@@ -44,8 +47,10 @@ const sqlServerDialect: DatabaseDialect = {
     WHERE p.is_ms_shipped = 0
     ORDER BY schema_name, object_name, ordinal_position;
   `,
+  // 按参数名调用固定存储过程，值使用 @p 序号绑定。
   procedureSql: (relation, parameterNames) =>
     `EXEC ${renderPhysicalName(relation, quoteSqlServerIdentifier)} ${parameterNames.map((name, index) => `@${name} = @p${index}`).join(", ")}`,
+  // SQL Server 的行数限制放在 SELECT 后的 TOP 子句。
   limitSql: () => "",
   selectLimitSql: (limit: number) => `TOP ${limit} `,
 };

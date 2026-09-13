@@ -1,9 +1,10 @@
-import { createSign } from "node:crypto";
-import { importPKCS8, importSPKI, jwtVerify, SignJWT } from "jose";
+import { createHash, createSign } from "node:crypto";
+import { errors, importPKCS8, importSPKI, jwtVerify, SignJWT } from "jose";
 import { stableStringify, type QueryAccessContext, type QueryDsl } from "@ai-data/contracts";
 
 import type { ApiConfig } from "../config/api-config";
 import { LocalJwtKeyStore } from "./local-jwt-key-store";
+import { ApplicationError } from "../errors/application-error";
 
 /** API 与 DAS 约定的内部查询令牌来源和受众。 */
 const INTERNAL_QUERY_ISSUER = "ai-data-api:internal";
@@ -43,9 +44,13 @@ type AccessTokenInput = {
 
 /** API 调用 DAS 时使用的短时内部令牌载荷。 */
 type InternalQueryTokenInput = {
+  /** 发起查询的本地用户主键。 */
   userId: string;
+  /** 用户所属组织，用于 DAS 查询审计关联。 */
   organizationId: string;
+  /** 当前查询所属分析运行主键。 */
   analysisRunId: string;
+  /** API 生成查询访问上下文时采用的策略版本。 */
   policyVersion: number;
 };
 
@@ -58,9 +63,10 @@ class JwtService {
     private readonly signingKey: Awaited<ReturnType<typeof importPKCS8>>,
     private readonly verificationKey: Awaited<ReturnType<typeof importSPKI>>,
     private readonly signingPem: string,
+    private readonly serviceId: string,
   ) {}
 
-  /** 从 API 配置导入非对称密钥，避免业务请求处理时重复解析 PEM。 */
+  /** 配置同时提供公私钥时直接导入，否则读取本地密钥库；解析在启动阶段完成。 */
   static async create(config: ApiConfig, keyDirectory?: string): Promise<JwtService> {
     const localKeys =
       config.jwt.signing_private_key_pem && config.jwt.verification_public_key_pem
@@ -83,6 +89,7 @@ class JwtService {
       signingKey,
       verificationKey,
       localKeys.privateKeyPem,
+      config.service.service_id,
     );
   }
 
@@ -103,8 +110,9 @@ class JwtService {
       .sign(this.signingKey);
   }
 
-  /** 为单次查询签发面向 DAS 的短时内部 JWT。 */
+  /** 为当前查询签发有效期 60 秒的内部 JWT，使用独立于 Access JWT 的固定来源和受众。 */
   async signInternalQueryToken(input: InternalQueryTokenInput): Promise<string> {
+    const issuedAt = Math.floor(Date.now() / 1000);
     return new SignJWT({
       token_use: "das_query",
       org_id: input.organizationId,
@@ -115,13 +123,79 @@ class JwtService {
       .setIssuer(INTERNAL_QUERY_ISSUER)
       .setAudience(INTERNAL_QUERY_AUDIENCE)
       .setSubject(input.userId)
-      .setIssuedAt()
+      .setIssuedAt(issuedAt)
+      .setNotBefore(issuedAt)
       .setJti(crypto.randomUUID())
-      .setExpirationTime("60s")
+      .setExpirationTime(issuedAt + 60)
       .sign(this.signingKey);
   }
 
-  /** 对 access 与 query 的稳定 JSON 载荷生成 API 私钥签名。 */
+  /** 为目录和管理请求签发 60 秒令牌，绑定目标实例、用途和请求内容。 */
+  async signServiceRequest(
+    serviceId: string,
+    purpose: "das_catalog" | "das_management",
+    method: string,
+    path: string,
+    body: unknown,
+  ): Promise<string> {
+    const issuedAt = Math.floor(Date.now() / 1000);
+    const requestHash = createHash("sha256")
+      .update(stableStringify({ method, path, body: body ?? null }))
+      .digest("base64url");
+    return new SignJWT({ token_use: purpose, request_hash: requestHash })
+      .setProtectedHeader({ alg: "RS256", typ: "JWT" })
+      .setIssuer(INTERNAL_QUERY_ISSUER)
+      .setAudience(`ai-data-das:${serviceId}`)
+      .setSubject(this.serviceId)
+      .setIssuedAt(issuedAt)
+      .setNotBefore(issuedAt)
+      .setExpirationTime(issuedAt + 60)
+      .setJti(crypto.randomUUID())
+      .sign(this.signingKey);
+  }
+
+  /** 为已批准实例生成接入凭证，其生命周期由服务启用状态和凭证版本控制。 */
+  async signRegistrationCredential(serviceId: string, credentialVersion: number): Promise<string> {
+    const issuedAt = Math.floor(Date.now() / 1000);
+    return new SignJWT({ token_use: "das_registration", credential_version: credentialVersion })
+      .setProtectedHeader({ alg: "RS256", typ: "JWT" })
+      .setIssuer(INTERNAL_QUERY_ISSUER)
+      .setAudience(`ai-data-api:${this.serviceId}:registration`)
+      .setSubject(serviceId)
+      .setIssuedAt(issuedAt)
+      .setNotBefore(issuedAt)
+      .setJti(crypto.randomUUID())
+      .sign(this.signingKey);
+  }
+
+  /** 仅注册时验证实例接入签名；配置版本和启用状态由注册服务检查。 */
+  async verifyRegistrationCredential(token: string, serviceId: string): Promise<number> {
+    try {
+      const { payload } = await jwtVerify(token, this.verificationKey, {
+        issuer: INTERNAL_QUERY_ISSUER,
+        audience: `ai-data-api:${this.serviceId}:registration`,
+        subject: serviceId,
+        algorithms: ["RS256"],
+        requiredClaims: ["iat", "nbf", "jti", "token_use", "credential_version"],
+      });
+      if (
+        payload.token_use !== "das_registration" ||
+        typeof payload.jti !== "string" ||
+        !payload.jti.trim() ||
+        typeof payload.iat !== "number" ||
+        payload.iat > Math.floor(Date.now() / 1000) ||
+        typeof payload.credential_version !== "number" ||
+        !Number.isInteger(payload.credential_version) ||
+        payload.credential_version <= 0
+      )
+        throw new Error("DAS 接入凭证字段无效");
+      return payload.credential_version;
+    } catch {
+      throw new ApplicationError("AUTHENTICATION_FAILED", "DAS 接入凭证无效");
+    }
+  }
+
+  /** 对 access 与最终 query 的稳定 JSON 生成独立签名，使 DAS 能发现请求内容被修改。 */
   signQueryRequest(access: QueryAccessContext, query: QueryDsl): string {
     const signer = createSign("RSA-SHA256");
     signer.update(stableStringify({ access, query }));
@@ -140,6 +214,18 @@ class JwtService {
       issuer: this.issuer,
       audience: this.audience,
       algorithms: ["RS256"],
+    }).catch((cause: unknown) => {
+      // 只转换令牌内容和签名校验失败，密钥设施或编程异常继续交给内部错误出口。
+      if (
+        cause instanceof errors.JWTInvalid ||
+        cause instanceof errors.JWSInvalid ||
+        cause instanceof errors.JWSSignatureVerificationFailed ||
+        cause instanceof errors.JWTExpired ||
+        cause instanceof errors.JWTClaimValidationFailed ||
+        cause instanceof errors.JOSEAlgNotAllowed
+      )
+        throw new ApplicationError("AUTHENTICATION_FAILED", "登录令牌无效或已过期", { cause });
+      throw cause;
     });
 
     if (
@@ -153,7 +239,7 @@ class JwtService {
       typeof payload.iat !== "number" ||
       typeof payload.exp !== "number"
     ) {
-      throw new Error("Access JWT 缺少有效的身份字段");
+      throw new ApplicationError("AUTHENTICATION_FAILED", "登录令牌缺少有效的身份字段");
     }
 
     return {

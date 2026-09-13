@@ -20,7 +20,7 @@ class LocalJwtKeyStore {
     this.publicKeyPath = join(directory, "jwt-public.pem");
   }
 
-  /** 读取本地密钥；密钥文件不进入元数据库或启动配置。 */
+  /** 读取已有密钥；读取不完整时拒绝使用，首次创建采用独占写入保护已有文件。 */
   async getKeyPair(): Promise<JwtKeyPair> {
     await mkdir(this.directory, { recursive: true });
     const [privateKey, publicKey] = await Promise.allSettled([
@@ -45,7 +45,7 @@ class LocalJwtKeyStore {
       await writeFile(this.privateKeyPath, pair.privateKey, { flag: "wx", mode: 0o600 });
       await writeFile(this.publicKeyPath, pair.publicKey, { flag: "wx", mode: 0o644 });
     } catch {
-      // 多实例同时首次启动时，另一实例可能已经完成创建；以下读取作为最终结果。
+      // 独占写入可能遇到另一进程已创建的文件；以重新读取的磁盘内容作为结果。
     }
     try {
       return {
@@ -53,7 +53,7 @@ class LocalJwtKeyStore {
         publicKeyPem: await readFile(this.publicKeyPath, "utf8"),
       };
     } catch {
-      // 私钥已由其他实例写入而公钥尚未落盘时，从同一私钥重新导出公钥。
+      // 重读失败时尝试从落盘私钥恢复公钥；私钥仍不可读则让文件错误向上传播。
       const privateKeyPem = await readFile(this.privateKeyPath, "utf8");
       const publicKeyPem = createPublicKey(privateKeyPem)
         .export({ type: "spki", format: "pem" })

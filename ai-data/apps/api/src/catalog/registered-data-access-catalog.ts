@@ -5,11 +5,12 @@ import type {
   DataAccessServiceRegistry,
 } from "../data-access/data-access-types";
 import type { RawCatalogReader } from "./catalog-types";
+import { ApplicationError } from "../errors/application-error";
 
 /** 只从登记且健康的数据源实例读取 DAS 原始目录。 */
 class RegisteredDataAccessCatalog implements RawCatalogReader {
   constructor(
-    private readonly registry: DataAccessServiceRegistry,
+    private readonly registry: Pick<DataAccessServiceRegistry, "listHealthyServices">,
     private readonly client: DataAccessCatalogClient,
   ) {}
 
@@ -18,8 +19,8 @@ class RegisteredDataAccessCatalog implements RawCatalogReader {
     const service = (await this.registry.listHealthyServices()).find((item) =>
       item.sources.some((source) => source.source_id === sourceId && source.status === "healthy"),
     );
-    if (!service) throw new Error("没有可用的 DAS 数据源");
-    return this.client.listCatalog(service.serviceUrl, sourceId);
+    if (!service) throw new ApplicationError("DATA_SOURCE_UNAVAILABLE", "没有可用的 DAS 数据源");
+    return this.client.listCatalog(service.serviceUrl, sourceId, service.serviceId);
   }
 }
 

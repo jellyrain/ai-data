@@ -2,10 +2,11 @@ import type { DataAccessHeartbeat, SourceHealth } from "@ai-data/contracts";
 
 import type { DataAccessServiceRegistration, DataAccessServiceRegistry } from "./data-access-types";
 
-/** 在 API 进程内维护 DAS 最近心跳，便于先完成对接闭环。 */
+/** 进程内 DAS 心跳注册表，适用于隔离测试与临时实例；重启后记录清空。 */
 class InMemoryDataAccessServiceRegistry implements DataAccessServiceRegistry {
   private readonly services = new Map<string, DataAccessServiceRegistration>();
 
+  /** 默认以 90 秒为失联窗口，按 API 收到心跳的时间判断。 */
   constructor(private readonly heartbeatTtlMilliseconds = 90_000) {}
 
   /** 保存 DAS 心跳、API 推导的调用地址及其数据源健康快照。 */

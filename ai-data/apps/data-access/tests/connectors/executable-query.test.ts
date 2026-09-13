@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { executableQuerySchema, type ExecutableQuery } from "../../src/connectors/executable-query";
 
+// 使用已经具备物理映射的样本检查内部 DSL 合同，实际 SQL 生成在编译器测试中验证。
 describe("连接器最终可执行查询", () => {
-  // BDD 场景：API 已将查询限制合并到根级过滤，查询规划器完成对象映射和资源限制；TDD 断言：连接器只接收可直接编译的关系查询。
   it("接受带物理对象映射和根级最终过滤条件的关系查询", () => {
     const result = executableQuerySchema.parse({
       type: "relational_query",
@@ -41,7 +41,6 @@ describe("连接器最终可执行查询", () => {
     expect(result.row_limit).toBe(100);
   });
 
-  // BDD 场景：API 的请求载荷误传到连接器边界；TDD 断言：最终 DSL 严格拒绝 access、query 和签名等上游字段。
   it("拒绝携带 API 权限请求字段的最终查询", () => {
     expect(
       executableQuerySchema.safeParse({
@@ -60,7 +59,6 @@ describe("连接器最终可执行查询", () => {
     ).toBe(false);
   });
 
-  // BDD 场景：规划器尚未把逻辑对象映射为物理对象；TDD 断言：连接器边界拒绝无法安全编译的查询。
   it("拒绝缺少物理对象名称的最终查询", () => {
     expect(
       executableQuerySchema.safeParse({
@@ -77,7 +75,6 @@ describe("连接器最终可执行查询", () => {
     ).toBe(false);
   });
 
-  // BDD 场景：连接器调用固定参数化数据集；TDD 断言：最终参数仅保留 API 已校验的名称和值，且资源限制保持明确。
   it("接受参数化数据集的最终参数值", () => {
     const query: ExecutableQuery = executableQuerySchema.parse({
       type: "parameterized_query",

@@ -1,15 +1,12 @@
 import { z } from "zod";
 
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
-import {
-  apiDatasetFieldMappingSchema,
-  apiDatasetMappingRowSchema,
-  apiRequestParameterMappingSchema,
-  parsePersistedJson,
-  type ApiDatasetMapping,
-} from "./metadata-records";
+import { apiDatasetFieldMappingSchema, apiDatasetMappingRowSchema } from "./api-dataset-records";
+import { apiRequestParameterMappingSchema } from "../connectors/api-request-parameter-mapping";
+import { parsePersistedJson } from "./parse-persisted-json";
+import type { ApiDatasetMapping } from "../connectors/api-dataset-mapping-types";
 
-/** 读取管理员配置的 HTTP API 虚拟表定义，原始 URL、认证信息和 JSONPath 不会离开连接器内部。 */
+/** 为 HTTP 连接器读取管理员配置的请求与响应映射，认证信息由凭据解析器单独提供。 */
 class ApiDatasetRepository {
   constructor(private readonly executor: MetadataQueryExecutor) {}
 
@@ -66,7 +63,7 @@ class ApiDatasetRepository {
   }
 }
 
-/** 将数据库 JSON 配置列解析为 HTTP API 连接器需要的受信任虚拟表定义。 */
+/** 分别校验请求参数和响应字段 JSON，再转换为连接器使用的命名；响应至少配置一列。 */
 function toApiDatasetMapping(row: Record<string, unknown>): ApiDatasetMapping {
   const mapping = apiDatasetMappingRowSchema.parse(row);
   const parameterMappings = parsePersistedJson(

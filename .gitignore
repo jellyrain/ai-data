@@ -87,6 +87,9 @@ out/
 .env.local
 .env.*.local
 
+# Dedicated SQL Server integration credentials
+ai-data/apps/data-access/config/sqlserver.test.config.local.json
+
 # npm cache directory
 .npm
 *.tgz

@@ -172,11 +172,12 @@ Contracts 必须明确每个合同的数据流向，避免后续实现把单向�
 
 `dataAccessHeartbeatSchema` 定义 Data Access Service → API 的单向服务心跳。它不是业务查询结果，也不通过模型工具或 SSE 暴露给 Web。
 
-- Data Access Service 按部署配置的固定间隔向 API 注册并发送心跳；心跳至少包含 `service_id`、`service_protocol`、`service_port`、`status`、`sent_at` 和当前 `sources` 健康快照，可附带 `service_version` 与安全的 `message`。DAS 从实际监听地址识别协议，API 使用心跳 TCP 连接的远端 IP、协议和端口生成并保存内部 `service_url`；该地址不由 DAS 请求体指定。
+- Data Access Service 首次调用 `/internal/data-access/register`，在 Authorization 中提交 API 签发的实例接入凭证。API 验签并核对获准实例和凭证版本，返回 `dataAccessSessionSchema`：`service_id`、32 字节随机值的 Base64URL `session_token`（43 个字符）、正整数 `session_timeout_seconds`。正文使用 `dataAccessHeartbeatSchema`，至少包含 `service_id`、`service_protocol`、`service_port`、`status`、`sent_at` 和当前 `sources` 健康快照，可附带 `service_version` 与安全的 `message`。
+- 后续定期调用 `/internal/data-access/heartbeat`，Authorization 携带会话凭据；API 校验会话后续期，返回 `dataAccessHeartbeatAckSchema`：`service_id`、东八区 `accepted_at`。DAS 从实际监听地址识别协议，API 注册时使用 TCP 连接的远端 IP、协议和端口生成 `service_url`；心跳必须匹配该实例与地址绑定。
 - API 按 `service_id` 保存最近一次有效心跳，并使用接收时间判断存活。`status: healthy` 只表示发送方当时可以接收查询，不代表每个数据源都健康。
-- 心跳超过 API 配置的失联阈值未收到时，API 必须将该服务视为不可用并拒绝向其发送新的查询；恢复收到有效心跳后再允许调度。阈值和发送间隔属于部署配置，不写入业务合同。
+- 当前每 30 秒发送心跳，成功后会话续期 90 秒。会话超时或 API 重启后，该实例退出调度；DAS 收到 HTTP 401 后重新读取接入文件并注册，成功后恢复。API 持久化健康记录必须同时具备当前有效会话才能参与调度。
 - `sources` 中的 `sourceHealthSchema` 表示单个 `source_id` 的连接状态。单个数据源 `unhealthy` 时，API 只拒绝路由到该数据源的查询；不影响同一服务中其他健康数据源。
-- 心跳通道只传递状态和诊断文本，不携带连接串、凭据、查询结果或目录数据。心跳请求沿用 API 与 Data Access Service 的内部认证和传输安全边界。
+- 心跳正文只传递状态和诊断文本；认证凭据放在请求头。接入凭证由 API 的实例启用状态和版本控制生命周期，会话由 API 管理空闲有效期。部署配置及传输要求见 [服务接入说明](../ai-data/SERVICE-AUTH.md)。
 
 方向约定：
 
@@ -194,21 +195,39 @@ Contracts 必须明确每个合同的数据流向，避免后续实现把单向�
 - 统一数据类型是 `string`、`integer`、`decimal`、`boolean`、`date`、`datetime`、`buffer`。`date` 使用 `YYYY-MM-DD`，`datetime` 使用 `YYYY-MM-DD HH:mm:ss`，`buffer` 在 JSON 中使用 Base64 文本；无法映射的数据库原生类型归为 `string`。
 - 字段查询条件和输入参数携带真实 `data_type`；API 可通过 `query_parameter_policies` 收窄参数并提供默认值。
 - `relational_query` 用于表数据，支持过滤、Join、聚合、分组、排序和可选行数限制；`order_by` 每项包含字段和 `asc/desc` 方向。`parameterized_query` 用于存储过程或 HTTP API，只提交 `parameters` 和可选行数限制，返回字段由数据源固定，不由模型选择。
-- 当前 `relational_query.filters` 是查询级递归条件树，组使用 `logic: and | or`，`between` 的值必须是两个元素的数组。API 使用查询别名表达条件，依据对象权限、Join 类型和业务筛选语义确定执行位置：查询级条件写入 `filters`，外连接可选侧的授权限制需要表达为对象预过滤或相应 `ON` 条件，主表权限独立生效。DAS 执行 API 已确定的条件结构。
+- `relational_query.filters` 是关联完成后的查询级递归条件树；可选 `from.filters` 和 `joins[].filters` 在各自对象参与关联前执行，字段必须使用该对象的别名。三处共用 `logic: and | or` 条件组与同一类型校验；空 AND 为真，空 OR 为假，`between` 使用两个值。API 按每个别名合并业务筛选和该对象的授权范围，DAS 将对象过滤编译到派生表，保持 LEFT/RIGHT JOIN 的记录保留语义。参数化查询通过受控参数表达范围，其 `from` 不接受 `filters`。
 - API 负责字段可见性、操作能力和批准关系校验。`access.output_masks` 只包含需要在 DAS 结果出口执行的 `partial_mask` 规则。
 - `approved_relations` 是关系数组；每条关系必须有业务 `description` 和至少一个 `column_pairs`。多个字段对在执行时使用 `AND` 连接，同一对对象可以配置多条候选关系，模型只能从已批准关系中选择。
+- 每个 Join 的 `on` 必须完整匹配一个已加入对象到当前对象的批准关系；字段对顺序可变，拒绝缺少、重复、额外或混合多个候选关系的列对。左侧引用此前已加入的同一别名，右侧引用当前新别名。
 
 #### 6.3.1 关系查询的合同完善要求
 
 API 业务配置管理数据集粒度与唯一键、批准关系及关联基数、指标的去重键、聚合方式和总计规则。API 生成 DSL 时验证这些规则，确保关联后每条业务记录按指标定义参与统计；费用与处方等多个明细对象需要分别聚合时，聚合层次和最终关联均由 API 写入最终 DSL。分组间存在重复业务记录的去重指标，其总计按完整授权范围重新计算；比率指标按总分子与总分母计算。
 
-当前 Schema 的 Join `on` 表达字段等值关系，`select` 表达字段及基础聚合。对象预过滤、带值的 Join 条件或复合聚合所需的结构，在启用对应查询前须补齐共享合同、API 生成校验、DAS 编译执行和边界测试。API 对现有合同无法正确表达的查询返回明确的能力限制。DAS 的校验与编译保持收到的 DSL 语义。
+`relational_query.from` 与 `joins[]` 支持可选 `pre_aggregate: { group_by, select }`，先在各对象内分组投影，再参与外层查询。内层字段仅引用当前对象别名，每个选择项必须有唯一的单段 `as`，所有分组字段完整投影；纯分组投影可按复合键去重。对象 `filters`（含 API 注入的权限范围）在内层聚合之前执行，根 `filters` 在关联后、最终聚合前执行。每对象预聚合与最终聚合都由 DSL 明确表达，内层不应用最终行数上限。
+
+API 配置新增 `unique_keys`，每项是共同唯一的字段集合；批准关系可声明稳定 `relation_id` 及 `cardinality: one_to_one | one_to_many | many_to_one | many_to_many`。关联声称单一匹配的侧须由该侧唯一键支持。API 按真实字段来源核对原始批准字段对，并依据原始唯一键及派生分组键判断当前关联是否扩行；可能重复计算的 `sum/count/avg` 拒绝执行，重复不敏感函数按自身语义校验。配置的业务唯一性由管理员验收，API 校验字段及声明的一致性。
+
+最终排序可以引用选择项的输出别名；原始字段排序须符合当前分组约束。整个层次结构及关系选择均包含在请求签名内，DAS 保持结构并按四种数据库方言参数化编译，最外层使用 N+1 探测截断。具体配置和示例见 [分层聚合说明](../ai-data/RELATIONAL-AGGREGATION.md)。带值 ON、指标版本与总计公式、运行恢复、证据及报告合同仍按各业务阶段补齐。
 
 #### 6.3.2 参数化查询的授权合同
 
 对存在行权限限制的存储过程或 HTTP API 数据集，API 业务配置必须声明权限范围与受控参数的绑定关系，并验证数据源参数能够实际限制返回范围。API 根据当前身份计算权限参数，校验用户输入与授权范围；默认值只承担普通参数补齐。权限条件无法映射到受控参数，或参数不能保证授权范围时，API 拒绝该次查询。
 
 返回列由数据集固定。API 在发送前确认固定输出满足当前用户的列权限，并为需脱敏列生成 `access.output_masks`；当前执行合同无法保证列权限时拒绝查询。DAS 依照已签名参数和结果规则执行。
+
+参数化目录以 `has_complete_output: true` 表示存在经管理员核对的完整输出。API 保留内部原始列清单，与当前可见列逐一比较；固定输出包含不可访问列时拒绝调用。API 把审核后的 `name`、`data_type`、`nullable` 写入最终 `expected_output` 并签名，DAS 对照本地定义及实际结果校验，定义变化后原请求失效。`expected_output` 由 API 生成，模型输入不能改变审核结果。
+
+`apiDatasetConfig.query_permission_bindings` 使用 `{ field, parameter, operator: "eq" }` 声明数据源实施的字段与标量参数等值关系。API 根据原始列类型求值角色允许范围和强制条件，验证最终参数组合。只有能证明唯一值时才自动补齐权限参数；多值范围需调用方选择合法标量，当前标量合同无法表达的完整范围明确拒绝。普通参数的类型、必填与默认值来自 DAS 定义及 API 收窄策略；默认值随最终参数一起签名。
+
+#### 6.3.3 查询结果的标准化与边界校验
+
+DAS 根据驱动字段元数据或 HTTP 字段配置转换单元格，再通过公共 `queryResultSchema` 验证。结果列名必须唯一，每行字段必须与列定义完全一致，`row_count` 等于当前 `rows.length`。单元格允许 `null`；HTTP 字段配置为不可空时，缺失值与 `null` 均在转换入口拒绝。空结果保留驱动或配置提供的列定义。
+
+- `integer` 使用安全整数，`decimal` 使用有限 JSON number。文本或 bigint 转数值时检查有效数字及目标类型范围，无法保持十进制文本数值的转换明确失败；当前合同不提供高精度十进制文本类型。驱动已转换为 number 的值只能验证收到的数值，源数据库精度仍需结合驱动集成验收。PostgreSQL `money` 含本地化货币格式，目录和结果按 `string` 保留原文本；`numeric` / `decimal` 按数值类型转换。
+- `boolean` 归一为 JSON 布尔值；`buffer` 归一为 Base64 文本，空二进制对应空字符串。未知原生类型按可转换的字符串表达返回，转换失败时报告字段和目标类型。
+- `date` 使用 `YYYY-MM-DD`，`datetime` 使用秒精度的 `YYYY-MM-DD HH:mm:ss`。带时区的时刻转为东八区；无时区的数据库日期时间保留业务墙钟值。MySQL 的 `TIMESTAMP` 按每次借用连接时设置的东八区会话返回，`DATETIME` 保留字段值。纯时间类型使用 `string`：SQL Server 的 Date 编码还原为原始墙钟 `HH:mm:ss`，其余驱动返回的时间文本保持源值。
+- DAS 内部结果与公共查询结果共用 Schema；SSE 的 `table` 数据共用列与行校验，所有 SSE 事件根对象拒绝未知字段。
 
 ### 6.4 运行、澄清与事件关联合同
 
@@ -230,6 +249,28 @@ API 业务配置管理数据集粒度与唯一键、批准关系及关联基数�
 - Skill 提供通用分析方法与可选案例；模型依据运行时指标知识、目录和查询证据选择下一步。API/工具承担确定性计算、权限和状态控制，并持久化步骤、假设、查询及证据引用。分析路径随证据形成，具体方法通过真实案例持续完善。
 - 报表模板按当前访问者权限执行。历史报告快照的访问同时要求报告权限和覆盖快照完整数据范围的权限；表格、图表、文字结论、证据及导出遵循相同授权检查。
 - 保存快照时记录其数据范围与字段授权依据，供后续读取校验。访问者权限不足，或系统无法确认覆盖范围时，拒绝原快照访问；可按访问者权限创建新的执行结果，原快照保持历史记录。
+
+### 6.6 API HTTP 错误响应
+
+API 的业务接口和框架错误出口统一返回 `{ code, message, request_id }`。共享合同中 `request_id` 为可选字段，API 错误出口始终填写当前请求标识。健康探针的状态响应沿用各自的诊断结构。
+
+| 错误码                                                                  | API HTTP 状态 |
+| ----------------------------------------------------------------------- | ------------- |
+| INVALID_INPUT、UNSUPPORTED_QUERY、QUERY_LIMIT_EXCEEDED                  | 400           |
+| AUTHENTICATION_FAILED                                                   | 401           |
+| UNAUTHORIZED、UNAUTHORIZED_OBJECT、UNAUTHORIZED_COLUMN、POLICY_REJECTED | 403           |
+| NOT_FOUND                                                               | 404           |
+| CANCELLED                                                               | 409           |
+| RATE_LIMITED                                                            | 429           |
+| INTERNAL_ERROR                                                          | 500           |
+| DATA_SOURCE_UNAVAILABLE                                                 | 503           |
+| QUERY_TIMEOUT                                                           | 504           |
+
+客户端按错误码判断处理方式，`message` 是适合公开的人类可读说明。未识别异常使用通用内部错误响应；原始异常及转换时的 `cause` 保留在服务端，内部故障日志携带请求 ID。
+
+DAS 客户端保留已识别的业务错误码并生成公开说明；DAS 内部认证失败归为 API 服务故障。数据库保存的 JSON 或 DAS 成功响应不符合合同，均归为内部错误。用户创建过程的未分类异常同样返回内部错误。
+
+当前 API 已将分散的 `INVALID_ARGUMENT`、`UNAUTHENTICATED`、`FORBIDDEN`、`DATA_ACCESS_UNAVAILABLE` 分别统一为 `INVALID_INPUT`、`AUTHENTICATION_FAILED`、`UNAUTHORIZED`、`DATA_SOURCE_UNAVAILABLE`；调用方应使用上表处理响应。
 
 ## 7. 开发约定
 

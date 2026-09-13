@@ -16,9 +16,9 @@ interface MetadataConnectionConfig {
     encrypt: boolean;
     /** 是否信任受控环境中的自签名证书。 */
     trust_server_certificate: boolean;
-    /** 建立连接的最长等待时间。 */
+    /** 建立连接的最长等待时间，单位毫秒。 */
     connection_timeout_ms: number;
-    /** 单条元数据 SQL 的最长执行时间。 */
+    /** 单条元数据 SQL 的最长执行时间，单位毫秒。 */
     request_timeout_ms: number;
     /** 连接池容量和空闲回收配置。 */
     pool: {
@@ -26,17 +26,18 @@ interface MetadataConnectionConfig {
       max: number;
       /** 连接池最小预热连接数。 */
       min: number;
-      /** 空闲连接回收时间。 */
+      /** 空闲连接回收时间，单位毫秒。 */
       idle_timeout_ms: number;
     };
   };
 }
 
-/** 元数据库参数化 SQL 所支持的基础值类型。 */
+/** 元数据库绑定类型；date 对应 SQL Server datetime2，包含日期与时间。 */
 type MetadataParameterType = "string" | "integer" | "bigint" | "boolean" | "binary" | "date";
 
-/** SQL 参数名称，不包含驱动绑定时使用的前缀。 */
+/** 所有元数据库绑定参数共有的定位信息。 */
 interface MetadataParameterBase {
+  /** SQL 模板中的参数名，省略 @ 等绑定前缀。 */
   name: string;
 }
 

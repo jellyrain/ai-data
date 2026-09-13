@@ -2,10 +2,8 @@ import { randomBytes } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
 
-import type {
-  DataSourceConfig,
-  EncryptedDataSourceSecret,
-} from "../../src/metadata/metadata-records";
+import type { DataSourceConfig } from "../../src/data-sources/data-source-types";
+import type { EncryptedDataSourceSecret } from "../../src/secrets/secret-types";
 import { Aes256GcmSecretCipher } from "../../src/secrets/aes-256-gcm-secret-cipher";
 import { SecretResolver } from "../../src/secrets/secret-resolver";
 
@@ -21,8 +19,8 @@ const sourceConfig: DataSourceConfig = {
   costLimit: 50000,
 };
 
+// 使用真实加解密器配合密文仓储与主密钥替身，检查一份数据源配置对应的凭据解析。
 describe("数据源凭据解析器", () => {
-  // BDD 场景：两个 SQL Server 数据源共用一个服务器账号；TDD 断言：共享密文只包含连接端点和登录凭据。
   it("解密并校验可复用的数据库凭据", async () => {
     const key = randomBytes(32);
     const resolver = new SecretResolver(
@@ -50,7 +48,6 @@ describe("数据源凭据解析器", () => {
     });
   });
 
-  // BDD 场景：管理员把 MySQL 凭据误绑定到 SQL Server 配置；TDD 断言：类型不匹配时拒绝，且错误不包含明文密码。
   it("拒绝与数据源连接器类型不匹配的凭据", async () => {
     const key = randomBytes(32);
     const resolver = new SecretResolver(
@@ -73,7 +70,7 @@ describe("数据源凭据解析器", () => {
     await expect(resolver.resolve(sourceConfig)).rejects.not.toThrow("do-not-disclose");
   });
 
-  // BDD 场景：Oracle 数据源绑定一个 SID；TDD 断言：连接目标在 source_id 配置中，密文可复用于同一服务器的其他目标。
+  // SID 放在数据源配置中；本例只解析一份 Oracle 凭据，核对返回的服务器登录字段。
   it("解析不含连接目标的 Oracle 共享凭据", async () => {
     const key = randomBytes(32);
     const oracleConfig: DataSourceConfig = {

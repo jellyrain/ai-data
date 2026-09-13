@@ -6,14 +6,14 @@ const scrypt = promisify(scryptCallback);
 /** 密码派生结果长度，单位为字节。 */
 const keyLength = 64;
 
-/** 使用 Node.js scrypt 生成可存储的密码派生值。 */
+/** 使用独立的 16 字节随机盐派生密码摘要，按 scrypt$盐$摘要保存编码结果。 */
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16);
   const derivedKey = (await scrypt(password, salt, keyLength)) as Buffer;
   return `scrypt$${salt.toString("base64url")}$${derivedKey.toString("base64url")}`;
 }
 
-/** 校验密码派生值，使用定长比较避免直接比较密文内容。 */
+/** 按保存的盐和摘要长度重新派生密码值，再使用时序安全比较；不支持的编码返回 false。 */
 async function verifyPassword(password: string, encoded: string): Promise<boolean> {
   const [, saltText, hashText] = encoded.split("$");
   if (encoded.split("$")[0] !== "scrypt" || !saltText || !hashText) return false;

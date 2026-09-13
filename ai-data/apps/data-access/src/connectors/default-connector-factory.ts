@@ -1,4 +1,4 @@
-import type { DataSourceConfig } from "../metadata/metadata-records";
+import type { DataSourceConfig } from "../data-sources/data-source-types";
 import type { ApiDatasetMappingLookup } from "./http-api-connector";
 import type { DataSourceConnectorFactory } from "../data-sources/data-source-manager";
 import type { ResolvedDataSourceSecret } from "../secrets/secret-resolver";

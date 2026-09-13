@@ -5,6 +5,7 @@ import type { CatalogReader } from "../../src/catalog/catalog-service";
 import type { DasConfig } from "../../src/config/das-config";
 import type { MetadataDatabaseHealthChecker } from "@ai-data/metadata";
 import type { DataSourceManagementApi } from "../../src/routes/data-source-management-route";
+import { createServiceToken, createServiceVerifier } from "../support/service-auth-fixtures";
 
 const config: DasConfig = {
   service: {
@@ -16,6 +17,7 @@ const config: DasConfig = {
   api: {
     base_url: "http://127.0.0.1:3101",
     heartbeat_path: "/internal/data-access/heartbeat",
+    registration_credential_path: "test-registration.jwt",
     jwt_verification_public_key_path: "./test-public.pem",
   },
   metadata_sqlserver: {
@@ -34,24 +36,35 @@ const config: DasConfig = {
   },
 };
 
+// 管理服务由替身提供，用例检查路由转发、响应结构及失败消息转换。
 describe("DAS 数据源管理接口", () => {
-  // BDD 场景：API 管理端读取共享凭据可访问的目标库；TDD 断言：路由将受控请求交给管理服务并返回数据库名称。
   it("返回共享凭据可访问的目标数据库", async () => {
     const calls: unknown[] = [];
-    const app = createApp(config, createHealthChecker(), createCatalogReader(), {
-      ...createManagementApi(),
-      async discoverDatabaseTargets(input) {
-        calls.push(input);
-        return {
-          databases: [{ name: "clinical_reporting", connect_target: "clinical_reporting" }],
-        };
+    const app = createApp(
+      config,
+      createHealthChecker(),
+      createCatalogReader(),
+      {
+        ...createManagementApi(),
+        async discoverDatabaseTargets(input) {
+          calls.push(input);
+          return {
+            databases: [{ name: "clinical_reporting", connect_target: "clinical_reporting" }],
+          };
+        },
       },
-    });
+      undefined,
+      undefined,
+      await createServiceVerifier(),
+    );
 
     const response = await app.inject({
       method: "POST",
       url: "/internal/admin/database-targets",
       payload: { secret_ref: "hospital-sqlserver-reader", connector_kind: "sqlserver" },
+      headers: {
+        authorization: `Bearer ${await createServiceToken("POST", "/internal/admin/database-targets", { secret_ref: "hospital-sqlserver-reader", connector_kind: "sqlserver" })}`,
+      },
     });
 
     expect(response.statusCode).toBe(200);
@@ -64,19 +77,29 @@ describe("DAS 数据源管理接口", () => {
     await app.close();
   });
 
-  // BDD 场景：管理调用无法完成；TDD 断言：接口不返回业务数据源驱动错误或连接信息。
   it("管理失败时返回稳定错误消息", async () => {
-    const app = createApp(config, createHealthChecker(), createCatalogReader(), {
-      ...createManagementApi(),
-      async discoverDatabaseTargets() {
-        throw new Error("driver failed at 10.0.0.15");
+    const app = createApp(
+      config,
+      createHealthChecker(),
+      createCatalogReader(),
+      {
+        ...createManagementApi(),
+        async discoverDatabaseTargets() {
+          throw new Error("driver failed at 10.0.0.15");
+        },
       },
-    });
+      undefined,
+      undefined,
+      await createServiceVerifier(),
+    );
 
     const response = await app.inject({
       method: "POST",
       url: "/internal/admin/database-targets",
       payload: { secret_ref: "hospital-sqlserver-reader", connector_kind: "sqlserver" },
+      headers: {
+        authorization: `Bearer ${await createServiceToken("POST", "/internal/admin/database-targets", { secret_ref: "hospital-sqlserver-reader", connector_kind: "sqlserver" })}`,
+      },
     });
 
     expect(response.statusCode).toBe(400);

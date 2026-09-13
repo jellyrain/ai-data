@@ -1,7 +1,8 @@
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
-import { dataSourceConfigRowSchema, type DataSourceConfig } from "./metadata-records";
+import { dataSourceConfigRowSchema } from "./data-source-records";
+import type { DataSourceConfig } from "../data-sources/data-source-types";
 
-/** 读取 DAS 本地数据源运行配置，不读取或解密任何外部数据源凭据。 */
+/** 读写数据源目标与资源配置，凭据通过 secret_ref 关联独立密文记录。 */
 class DataSourceRepository {
   constructor(private readonly executor: MetadataQueryExecutor) {}
 
@@ -34,6 +35,7 @@ class DataSourceRepository {
       return undefined;
     }
 
+    // 先校验持久化行，再将数据库 NULL 转成运行时可选属性。
     const config = dataSourceConfigRowSchema.parse(row);
     return {
       sourceId: config.source_id,

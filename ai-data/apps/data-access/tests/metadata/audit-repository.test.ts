@@ -8,8 +8,8 @@ import type {
 
 import { AuditRepository } from "../../src/metadata/audit-repository";
 
+// 审计 ID 由执行器替身返回，断言检查 SQL 模板、JSON 序列化与参数绑定。
 describe("查询审计仓储", () => {
-  // BDD 场景：DAS 拒绝一次查询；TDD 断言：审计事件使用参数化写入，并返回数据库生成的递增审计 ID。
   it("写入拒绝事件且不把审计内容拼接进 SQL", async () => {
     const statements: MetadataStatement[] = [];
     const repository = new AuditRepository(createExecutor([{ audit_id: 101 }], statements));

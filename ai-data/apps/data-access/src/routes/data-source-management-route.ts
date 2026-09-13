@@ -1,5 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { sendInvalidInput } from "./contract-error";
+import { internalServiceAuth } from "./internal-auth";
+import type { InternalServiceVerifier } from "../auth/internal-service-verifier";
 
 /** 数据源管理路由需要的最小服务能力。 */
 interface DataSourceManagementApi {
@@ -25,8 +27,10 @@ interface DataSourceManagementApi {
 function registerDataSourceManagementRoutes(
   app: FastifyInstance,
   managementService: DataSourceManagementApi,
+  verifier?: Pick<InternalServiceVerifier, "verify">,
 ): void {
-  app.post("/internal/admin/data-source-secrets", async (request, reply) => {
+  const options = { preHandler: internalServiceAuth("das_management", verifier) };
+  app.post("/internal/admin/data-source-secrets", options, async (request, reply) => {
     try {
       return reply.send(await managementService.saveSharedCredentials(request.body));
     } catch (error) {
@@ -34,7 +38,7 @@ function registerDataSourceManagementRoutes(
     }
   });
 
-  app.post("/internal/admin/database-targets", async (request, reply) => {
+  app.post("/internal/admin/database-targets", options, async (request, reply) => {
     try {
       return reply.send(await managementService.discoverDatabaseTargets(request.body));
     } catch (error) {
@@ -42,7 +46,7 @@ function registerDataSourceManagementRoutes(
     }
   });
 
-  app.put("/internal/admin/data-sources", async (request, reply) => {
+  app.put("/internal/admin/data-sources", options, async (request, reply) => {
     try {
       return reply.send(await managementService.saveDataSource(request.body));
     } catch (error) {
@@ -50,7 +54,7 @@ function registerDataSourceManagementRoutes(
     }
   });
 
-  app.post("/internal/admin/data-source-objects/discover", async (request, reply) => {
+  app.post("/internal/admin/data-source-objects/discover", options, async (request, reply) => {
     try {
       return reply.send(await managementService.discoverSourceObjects(request.body));
     } catch (error) {
@@ -58,7 +62,7 @@ function registerDataSourceManagementRoutes(
     }
   });
 
-  app.put("/internal/admin/data-source-objects", async (request, reply) => {
+  app.put("/internal/admin/data-source-objects", options, async (request, reply) => {
     try {
       return reply.send(await managementService.replaceSourceObjects(request.body));
     } catch (error) {

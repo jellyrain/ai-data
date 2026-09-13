@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { QueryPlanner, QueryPlanningError } from "../../src/query-planning/query-planner";
-import type { DataSourceConfig, ExposedSourceObject } from "../../src/metadata/metadata-records";
+import type { DataSourceConfig } from "../../src/data-sources/data-source-types";
+import type { ExposedSourceObject } from "../../src/catalog/catalog-types";
 
 const sourceConfig: DataSourceConfig = {
   sourceId: "clinical",
@@ -15,6 +16,7 @@ const sourceConfig: DataSourceConfig = {
   costLimit: 1000,
 };
 
+/** 将测试逻辑对象映射到固定 dbo Schema，便于核对规划后的物理名称。 */
 function exposedObject(
   objectId: string,
   objectKind: ExposedSourceObject["objectKind"] = "table",
@@ -28,9 +30,25 @@ function exposedObject(
     isDiscoverable: true,
     isQueryable: true,
     queryCapabilities: {},
+    ...(objectKind === "stored_procedure"
+      ? {
+          procedureDefinition: {
+            query_parameters: [
+              {
+                name: "department_id",
+                data_type: "string" as const,
+                required: true,
+                allowed_ops: ["eq" as const],
+              },
+            ],
+            columns: [{ name: "id", data_type: "integer" as const, nullable: false }],
+          },
+        }
+      : {}),
   };
 }
 
+/** 构造内存目录与可注入校验器，默认模拟已通过请求校验。 */
 function createPlanner(
   objects: ExposedSourceObject[],
   verify: () => Promise<void> = async () => undefined,
@@ -45,6 +63,7 @@ function createPlanner(
   );
 }
 
+/** 提供结构合法的审计上下文，日期仅用于载荷解析。 */
 function access() {
   return {
     user_id: "user-001",
@@ -56,8 +75,9 @@ function access() {
   };
 }
 
+// 通过注入的校验器控制验签结果，重点检查规划映射及本地资源上限。
 describe("查询规划器", () => {
-  // BDD 场景：请求签名无效；TDD 断言：DAS 不读取本地数据源或对象映射。
+  // 注入校验器异常，检查规划调用将该失败返回给调用方。
   it("在映射前拒绝验签失败的请求", async () => {
     const planner = createPlanner([exposedObject("clinical.visit")], async () => {
       throw new Error("签名无效");
@@ -77,9 +97,9 @@ describe("查询规划器", () => {
     ).rejects.toThrow("签名无效");
   });
 
-  // BDD 场景：API 已将授权范围合并到 filters 并签名；TDD 断言：DAS 仅映射物理对象并收紧本地限制。
   it("映射物理对象并保留 API 已合并的过滤条件", async () => {
     const planner = createPlanner([exposedObject("clinical.visit")]);
+    // 请求 200 行，数据源只允许 100 行；规划后应保留过滤值并采用较小上限。
     const result = await planner.plan({
       access: access(),
       query: {
@@ -116,7 +136,6 @@ describe("查询规划器", () => {
     }
   });
 
-  // BDD 场景：API 已完成 Join 业务校验并签名交给 DAS；TDD 断言：DAS 只验证别名结构并映射 Join 的物理对象。
   it("保留 API 已签名的 Join 条件", async () => {
     const planner = createPlanner([
       exposedObject("clinical.visit"),
@@ -150,7 +169,6 @@ describe("查询规划器", () => {
     }
   });
 
-  // BDD 场景：DSL 引用未在 DAS 本地白名单启用的对象；TDD 断言：DAS 拒绝物理映射。
   it("拒绝未配置为可查询的对象", async () => {
     const planner = createPlanner([exposedObject("clinical.patient")]);
     await expect(
@@ -167,7 +185,6 @@ describe("查询规划器", () => {
     ).rejects.toThrow("对象未配置为可查询: clinical.visit");
   });
 
-  // BDD 场景：API 已提供完成的存储过程参数；TDD 断言：DAS 保留参数值并仅标记为通用绑定类型。
   it("映射 API 已完成校验的固定调用参数", async () => {
     const planner = createPlanner([exposedObject("clinical.get_visits", "stored_procedure")]);
     const result = await planner.plan({
@@ -177,6 +194,7 @@ describe("查询规划器", () => {
         source_id: "clinical",
         from: { object_id: "clinical.get_visits", alias: "g" },
         parameters: [{ name: "department_id", data_type: "string", value: "GYN" }],
+        expected_output: [{ name: "id", data_type: "integer", nullable: false }],
       },
       signature: "signed-request",
     });
@@ -189,7 +207,6 @@ describe("查询规划器", () => {
     }
   });
 
-  // BDD 场景：上游请求包含重名参数；TDD 断言：DAS 在参数绑定前拒绝歧义输入。
   it("拒绝重复参数名", async () => {
     const planner = createPlanner([exposedObject("clinical.get_visits", "stored_procedure")]);
     await expect(

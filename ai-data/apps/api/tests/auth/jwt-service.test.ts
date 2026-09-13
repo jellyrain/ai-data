@@ -1,10 +1,12 @@
 import { generateKeyPairSync } from "node:crypto";
+import { importSPKI, jwtVerify } from "jose";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { JwtService } from "../../src/auth/jwt-service";
 import type { ApiConfig } from "../../src/config/api-config";
 
+// 用临时密钥执行真实 RS256 签发与验签，覆盖篡改后签名被拒绝的行为。
 const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 
 const config = {
@@ -39,7 +41,39 @@ const config = {
 } satisfies ApiConfig;
 
 describe("API JWT 服务", () => {
-  // BDD 场景：已建立本地会话；TDD 断言：签发的令牌包含内部身份和会话定位字段。
+  afterEach(() => vi.useRealTimers());
+
+  it("内部查询令牌包含必需身份和时间字段，生效后持续 60 秒", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-13T04:00:00Z"));
+    const service = await JwtService.create(config);
+    const token = await service.signInternalQueryToken({
+      userId: "user-001",
+      organizationId: "org-001",
+      analysisRunId: "run-001",
+      policyVersion: 3,
+    });
+    const key = await importSPKI(config.jwt.verification_public_key_pem, "RS256");
+    const { payload } = await jwtVerify(token, key, {
+      issuer: "ai-data-api:internal",
+      audience: "ai-data-api:das",
+      algorithms: ["RS256"],
+      requiredClaims: ["iat", "nbf", "exp", "jti"],
+    });
+    const issuedAt = Math.floor(Date.now() / 1000);
+    expect(payload).toMatchObject({
+      sub: "user-001",
+      org_id: "org-001",
+      analysis_run_id: "run-001",
+      policy_version: 3,
+      token_use: "das_query",
+      iat: issuedAt,
+      nbf: issuedAt,
+      exp: issuedAt + 60,
+      jti: expect.any(String),
+    });
+  });
+
   it("签发并校验 Access JWT", async () => {
     const service = await JwtService.create(config);
     const token = await service.signAccessToken({
@@ -57,7 +91,6 @@ describe("API JWT 服务", () => {
     expect(claims.authz_version).toBe(3);
   });
 
-  // BDD 场景：客户端篡改令牌内容；TDD 断言：非 API 私钥签发的令牌被拒绝。
   it("拒绝被篡改的 Access JWT", async () => {
     const service = await JwtService.create(config);
     const token = await service.signAccessToken({
@@ -69,6 +102,9 @@ describe("API JWT 服务", () => {
     const [header, payload, signature] = token.split(".");
     const tamperedToken = `${header}.${payload}.${signature.startsWith("a") ? "b" : "a"}${signature.slice(1)}`;
 
-    await expect(service.verifyAccessToken(tamperedToken)).rejects.toThrow();
+    await expect(service.verifyAccessToken(tamperedToken)).rejects.toMatchObject({
+      code: "AUTHENTICATION_FAILED",
+      cause: expect.any(Error),
+    });
   });
 });

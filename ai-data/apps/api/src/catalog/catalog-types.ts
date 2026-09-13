@@ -24,11 +24,11 @@ interface CatalogPermissionRepository {
   saveColumnPermission(sourceId: string, permission: ColumnPermission): Promise<void>;
   /** 保存或覆盖角色在一个对象上的行策略。 */
   saveRowPolicy(sourceId: string, policy: RowPolicy): Promise<void>;
-  /** 读取当前角色集合的对象权限。 */
+  /** 读取当前角色集合在指定数据源的对象权限，allow/deny 合并由业务目录服务处理。 */
   listObjectPermissions(roleIds: string[], sourceId: string): Promise<TablePermission[]>;
   /** 读取当前角色集合的字段权限。 */
   listColumnPermissions(roleIds: string[], sourceId: string): Promise<ColumnPermission[]>;
-  /** 读取当前角色集合的行策略。 */
+  /** 读取当前角色集合的行策略，条件注入由查询转换阶段处理。 */
   listRowPolicies(roleIds: string[], sourceId: string): Promise<RowPolicy[]>;
 }
 

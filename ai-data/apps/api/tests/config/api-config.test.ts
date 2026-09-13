@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { loadApiConfig, parseApiConfig, parseApiEnvironment } from "../../src/config/api-config";
 
+/** 独立环境变量输入，测试配置转换规则，不修改测试进程的实际环境。 */
 const validEnvironment = {
   NODE_ENV: "test",
   API_PORT: "3000",
@@ -22,7 +23,6 @@ const validEnvironment = {
 };
 
 describe("API 启动配置", () => {
-  // BDD 场景：部署使用 JSON 启动配置；TDD 断言：示例文件可被同一 Schema 加载。
   it("加载 JSON 配置文件", async () => {
     const config = loadApiConfig(
       fileURLToPath(new URL("../../config/api.config.example.json", import.meta.url)),
@@ -33,12 +33,27 @@ describe("API 启动配置", () => {
     expect(config.jwt.access_token_ttl_seconds).toBe(900);
   });
 
-  // BDD 场景：配置文本损坏；TDD 断言：解析错误带有配置文件上下文。
   it("拒绝非法 JSON 配置", () => {
     expect(() => parseApiConfig("{")).toThrow("API 配置文件不是合法 JSON");
   });
 
-  // BDD 场景：API 在测试环境启动；TDD 断言：环境变量转换为受控配置。
+  it.each(["duplicate", "invalid-version"])("拒绝 %s 实例接入配置", (scenario) => {
+    const config = parseApiEnvironment(validEnvironment);
+    const service = {
+      service_id: "das",
+      credential_version: scenario === "invalid-version" ? 0 : 1,
+      enabled: true,
+    };
+    expect(() =>
+      parseApiConfig(
+        JSON.stringify({
+          ...config,
+          trusted_data_access_services: scenario === "duplicate" ? [service, service] : [service],
+        }),
+      ),
+    ).toThrow();
+  });
+
   it("解析服务和元数据库配置", () => {
     const config = parseApiEnvironment(validEnvironment);
 
@@ -46,14 +61,12 @@ describe("API 启动配置", () => {
     expect(config.metadata_sqlserver.options.pool.max).toBe(10);
   });
 
-  // BDD 场景：部署缺少元数据库凭据；TDD 断言：配置加载立即失败。
   it("拒绝缺失元数据库必填项", () => {
     const environment = { ...validEnvironment, META_SQLSERVER_PASSWORD: "" };
 
     expect(() => parseApiEnvironment(environment)).toThrow("META_SQLSERVER_PASSWORD 不能为空");
   });
 
-  // BDD 场景：连接池最小连接数超过最大连接数；TDD 断言：配置边界被拒绝。
   it("拒绝无效连接池范围", () => {
     const environment = {
       ...validEnvironment,

@@ -1,20 +1,19 @@
 import { z } from "zod";
 
 import type { DiscoveredDataset } from "../connectors/connector-catalog";
-import {
-  type EncryptedDataSourceSecret,
-  type DataSourceConfig,
-  type ExposedSourceObject,
-} from "../metadata/metadata-records";
-import { Aes256GcmSecretCipher } from "../secrets/aes-256-gcm-secret-cipher";
+import type { EncryptedDataSourceSecret } from "../secrets/secret-types";
+import type { DataSourceConfig } from "./data-source-types";
+import type { ExposedSourceObject } from "../catalog/catalog-types";
+import { type Aes256GcmSecretCipher } from "../secrets/aes-256-gcm-secret-cipher";
 import type { ActiveMasterKeyProvider } from "../secrets/local-master-key-store";
 import type { DataSourceSecretResolver } from "../secrets/secret-resolver";
 import type { DatabaseTargetDiscovery } from "./database-target-discovery";
+import { procedureDefinitionSchema } from "../catalog/procedure-definition";
 
 /** 数据库连接器可保存的共享凭据类型。 */
 const databaseConnectorKindSchema = z.enum(["sqlserver", "mysql", "postgresql", "oracle"]);
 
-/** 管理端保存一套可由多个 source_id 复用的数据库服务器凭据。 */
+/** 管理端保存一套可由多个 source_id 复用的数据库服务器凭据，仅接受声明字段。 */
 const sharedDatabaseCredentialsSchema = z
   .object({
     /** 多个目标库可复用的加密凭据引用。 */
@@ -25,14 +24,14 @@ const sharedDatabaseCredentialsSchema = z
     host: z.string().min(1),
     /** 数据库服务器 TCP 端口。 */
     port: z.number().int().min(1).max(65535),
-    /** 只读登录账号。 */
+    /** 部署方授予只读权限的数据库账号；本层仅接收账号名称。 */
     user: z.string().min(1),
     /** 只在加密写入和连接创建期间使用的登录密码。 */
     password: z.string().min(1),
   })
   .strict();
 
-/** 管理端按共享凭据发现可绑定目标库的请求。 */
+/** 管理端按共享凭据发现可绑定目标库的请求，仅接受声明字段。 */
 const databaseTargetDiscoveryRequestSchema = z
   .object({
     /** 已保存的共享凭据引用。 */
@@ -45,6 +44,7 @@ const databaseTargetDiscoveryRequestSchema = z
     oracle_connect_target: z.string().min(1).optional(),
   })
   .strict()
+  // Oracle 发现要求成对提供 CDB 连接方式和目标；其他类型省略这两个字段。
   .superRefine((value, context) => {
     const hasOracleTarget =
       value.oracle_connect_type !== undefined || value.oracle_connect_target !== undefined;
@@ -65,7 +65,7 @@ const databaseTargetDiscoveryRequestSchema = z
     }
   });
 
-/** 管理端保存一个只绑定单一目标数据库或 Oracle 连接目标的数据源。 */
+/** 管理端保存一个只绑定单一目标数据库或 Oracle 连接目标的数据源，仅接受声明字段。 */
 const dataSourceManagementConfigSchema = z
   .object({
     /** 单一目标数据库的运行数据源标识。 */
@@ -78,9 +78,9 @@ const dataSourceManagementConfigSchema = z
     target_database: z.string().min(1).optional(),
     /** Oracle 目标使用 SID 或 Service Name。 */
     oracle_connect_type: z.enum(["sid", "service_name"]).optional(),
-    /** Oracle 目标的 SID 或 Service Name。 */
+    /** Oracle 目标的 SID 或 Service Name；与连接方式成对提供，其他类型省略。 */
     oracle_connect_target: z.string().min(1).optional(),
-    /** 是否允许创建当前 source_id 的运行时连接器。 */
+    /** 是否允许创建运行时连接器；省略时默认启用。 */
     is_enabled: z.boolean().default(true),
     /** 单次请求允许占用业务连接的最长时间，单位毫秒。 */
     timeout_ms: z.number().int().min(100).max(120000),
@@ -90,11 +90,12 @@ const dataSourceManagementConfigSchema = z
     concurrency_limit: z.number().int().min(1).max(1000),
     /** 当前 source_id 单次响应允许返回的最大行数。 */
     row_limit: z.number().int().min(1).max(5000),
-    /** 查询规划器可使用的成本预算。 */
-    cost_limit: z.number().int().positive(),
+    /** 兼容历史配置的成本字段；新配置可省略，该值不参与执行控制。 */
+    cost_limit: z.number().int().positive().optional(),
   })
   .strict()
   .superRefine((value, context) => {
+    // Oracle 使用连接方式与目标；其余数据库使用 target_database，两组配置互斥。
     if (value.connector_kind === "oracle") {
       if (value.oracle_connect_type === undefined || value.oracle_connect_target === undefined) {
         context.addIssue({
@@ -127,7 +128,7 @@ const dataSourceManagementConfigSchema = z
     }
   });
 
-/** 管理端请求展开一个已保存 source_id 的完整业务对象目录。 */
+/** 管理端请求展开一个已保存 source_id 的完整业务对象目录，仅接受声明字段。 */
 const sourceObjectDiscoveryRequestSchema = z
   .object({
     /** 需要展开完整对象目录的已保存数据源。 */
@@ -135,20 +136,22 @@ const sourceObjectDiscoveryRequestSchema = z
   })
   .strict();
 
-/** 管理端提交的对象白名单选择项。 */
+/** 管理端提交的对象白名单选择项，仅接受声明字段。 */
 const sourceObjectSelectionSchema = z
   .object({
     /** 管理端从当前数据源目录中勾选的对象标识。 */
     object_id: z.string().min(1),
+    /** 管理员核对的过程完整签名；省略时仅允许发现该过程。 */
+    procedure_definition: procedureDefinitionSchema.optional(),
   })
   .strict();
 
-/** 管理端替换一个 source_id 的 API 对象白名单。 */
+/** 管理端替换一个 source_id 的 API 对象白名单，仅接受声明字段。 */
 const sourceObjectSelectionRequestSchema = z
   .object({
     /** 要替换白名单的已保存数据源。 */
     source_id: z.string().min(1),
-    /** 本次应暴露给 API 的完整对象集合。 */
+    /** 本次应暴露的完整对象集合；空列表表示清空白名单。 */
     objects: z.array(sourceObjectSelectionSchema),
   })
   .strict();
@@ -278,7 +281,7 @@ class DataSourceManagementService {
       connectionPoolLimit: value.connection_pool_limit,
       concurrencyLimit: value.concurrency_limit,
       rowLimit: value.row_limit,
-      costLimit: value.cost_limit,
+      costLimit: value.cost_limit ?? 1,
     };
     await this.configWriter.upsert(config, value.is_enabled);
     await this.runtime.invalidate(config.sourceId);
@@ -301,12 +304,19 @@ class DataSourceManagementService {
       throw new Error("对象白名单不能重复选择同一对象");
     }
 
+    // 保存前重新发现目录，使用服务器返回的物理映射，防止旧选择指向已变化的对象。
     const available = await this.discoverSourceObjects({ source_id: request.source_id });
     const availableByObjectId = new Map(available.items.map((item) => [item.object_id, item]));
     const objects = [...selectedObjectIds].map((objectId) => {
       const object = availableByObjectId.get(objectId);
       if (object === undefined) {
         throw new Error(`对象不属于当前数据源目录: ${objectId}`);
+      }
+      const definition = request.objects.find(
+        (item) => item.object_id === objectId,
+      )?.procedure_definition;
+      if (definition !== undefined && object.kind !== "stored_procedure") {
+        throw new Error("只有存储过程可以配置过程定义");
       }
       return {
         sourceId: request.source_id,
@@ -317,8 +327,9 @@ class DataSourceManagementService {
           : { nativeSchemaName: object.native_schema_name }),
         nativeObjectName: object.native_object_name,
         isDiscoverable: true,
-        isQueryable: true,
+        isQueryable: object.kind !== "stored_procedure" || definition !== undefined,
         queryCapabilities: {},
+        ...(definition === undefined ? {} : { procedureDefinition: definition }),
       } satisfies ExposedSourceObject;
     });
     await this.exposedObjectWriter.replaceForSource(request.source_id, objects);
@@ -326,7 +337,7 @@ class DataSourceManagementService {
   }
 }
 
-/** 为凭据解析器构造仅用于验证连接器类型的最小配置。 */
+/** 为共享凭据解析构造临时配置；这些资源值只用于满足类型形态，不创建业务连接器。 */
 function toResolutionConfig(
   request: z.infer<typeof databaseTargetDiscoveryRequestSchema>,
 ): DataSourceConfig {

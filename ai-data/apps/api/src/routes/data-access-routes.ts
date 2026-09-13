@@ -1,13 +1,31 @@
-import type { FastifyInstance } from "fastify";
-import { dataAccessHeartbeatSchema } from "@ai-data/contracts";
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { dataAccessHeartbeatSchema, dataAccessSessionSchema } from "@ai-data/contracts";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import { ApplicationError } from "../errors/application-error";
+import { sendInvalidInput } from "./contract-error";
 
-import type {
-  DataAccessCatalogClient,
-  DataAccessServiceRegistry,
-} from "../data-access/data-access-types";
+import type { ApiAuthService, ApiDependencies } from "../app-types";
+import { bearerToken } from "./auth-routes";
+import { managementOperations } from "../data-access/data-access-management-client";
 
-/** 从心跳 TCP 连接的远端地址和 DAS 上报端口生成 API 的内部调用地址。 */
+dayjs.extend(utc);
+
+/** 实例接入凭证涉及服务信任配置，领取仅限系统管理员。 */
+async function requireServiceAdmin(
+  request: FastifyRequest,
+  auth: ApiAuthService,
+  credentials = false,
+): Promise<void> {
+  const context = await auth.loadContext(bearerToken(request));
+  if (
+    !context.roles.includes("system_admin") &&
+    (credentials || !context.permissions.includes("data-access:manage"))
+  )
+    throw new ApplicationError("UNAUTHORIZED", "无数据访问服务管理权限");
+}
+
+/** 从心跳连接地址和 DAS 上报端口生成回调 URL；处理 IPv4 映射地址、IPv6 回环与作用域后缀。 */
 function deriveDataAccessServiceUrl(
   remoteAddress: string | undefined,
   servicePort: number,
@@ -24,33 +42,78 @@ function deriveDataAccessServiceUrl(
     : `${serviceProtocol}://${address}:${servicePort}`;
 }
 
-/** 注册 DAS 心跳接收和目录读取接口。 */
+/** 装配实例接入、会话心跳及由 API 授权的诊断和管理入口。 */
 function registerDataAccessRoutes(
   app: FastifyInstance,
-  registry: DataAccessServiceRegistry,
-  catalogClient: DataAccessCatalogClient,
+  dataAccess: ApiDependencies["dataAccess"],
+  auth: ApiAuthService,
 ): void {
-  /** DAS 定时调用此接口，API 不信任请求中的用户身份字段。 */
-  app.post("/internal/data-access/heartbeat", async (request, reply) => {
-    const parsed = dataAccessHeartbeatSchema.safeParse(request.body);
-    if (!parsed.success)
-      return reply.code(400).send({ code: "INVALID_INPUT", message: "DAS 心跳格式无效" });
-    const serviceUrl = deriveDataAccessServiceUrl(
-      request.socket.remoteAddress,
-      parsed.data.service_port,
-      parsed.data.service_protocol,
-    );
-    if (!serviceUrl)
-      return reply.code(400).send({ code: "INVALID_INPUT", message: "无法识别 DAS 心跳来源地址" });
-    const registration = await registry.registerHeartbeat(parsed.data, serviceUrl);
-    return reply.send({
-      service_id: registration.serviceId,
-      accepted_at: dayjs(registration.lastHeartbeatAt).format("YYYY-MM-DD HH:mm:ss"),
+  const { registry, catalogClient, managementClient } = dataAccess;
+  // 注册绑定实际来源地址、端口和协议；心跳逐次核对该绑定。
+  const receive =
+    (registration: boolean) => async (request: FastifyRequest, reply: FastifyReply) => {
+      const token = bearerToken(request);
+      const parsed = dataAccessHeartbeatSchema.safeParse(request.body);
+      if (!parsed.success) return sendInvalidInput(reply, request, "DAS 心跳格式无效");
+      const serviceUrl = deriveDataAccessServiceUrl(
+        request.socket.remoteAddress,
+        parsed.data.service_port,
+        parsed.data.service_protocol,
+      );
+      if (!serviceUrl) return sendInvalidInput(reply, request, "无法识别 DAS 心跳来源地址");
+      if (registration) {
+        const session = await registry.register(parsed.data, serviceUrl, token);
+        reply.header("cache-control", "no-store");
+        return reply.send(dataAccessSessionSchema.parse(session));
+      }
+      await registry.heartbeat(parsed.data, serviceUrl, token);
+      return reply.send({
+        service_id: parsed.data.service_id,
+        accepted_at: dayjs().utcOffset(8).format("YYYY-MM-DD HH:mm:ss"),
+      });
+    };
+  app.post("/internal/data-access/register", receive(true));
+  app.post("/internal/data-access/heartbeat", receive(false));
+
+  app.post<{ Params: { serviceId: string } }>(
+    "/admin/data-access/services/:serviceId/credential",
+    async (request, reply) => {
+      await requireServiceAdmin(request, auth, true);
+      const credential = await registry.issueCredential(request.params.serviceId);
+      return reply
+        .header("cache-control", "no-store")
+        .send({ service_id: request.params.serviceId, credential });
+    },
+  );
+
+  for (const operation of Object.keys(managementOperations) as Array<
+    keyof typeof managementOperations
+  >) {
+    app.route<{ Params: { serviceId: string } }>({
+      method: managementOperations[operation].method,
+      url: `/admin/data-access/services/:serviceId/${operation}`,
+      handler: async (request, reply) => {
+        await requireServiceAdmin(request, auth);
+        const service = (await registry.listHealthyServices()).find(
+          (item) => item.serviceId === request.params.serviceId,
+        );
+        if (!service)
+          throw new ApplicationError("DATA_SOURCE_UNAVAILABLE", "DAS 实例尚未注册或不可用");
+        return reply.send(
+          await managementClient.execute(
+            service.serviceId,
+            service.serviceUrl,
+            operation,
+            request.body,
+          ),
+        );
+      },
     });
-  });
+  }
 
   /** 返回 API 当前登记的健康 DAS 实例，供管理端诊断。 */
-  app.get("/internal/data-access/services", async (_request, reply) => {
+  app.get("/internal/data-access/services", async (request, reply) => {
+    await requireServiceAdmin(request, auth);
     const services = await registry.listHealthyServices();
     return reply.send({
       items: services.map((service) => ({
@@ -58,7 +121,9 @@ function registerDataAccessRoutes(
         service_url: service.serviceUrl,
         service_version: service.serviceVersion,
         status: service.status,
-        last_heartbeat_at: dayjs(service.lastHeartbeatAt).format("YYYY-MM-DD HH:mm:ss"),
+        last_heartbeat_at: dayjs(service.lastHeartbeatAt)
+          .utcOffset(8)
+          .format("YYYY-MM-DD HH:mm:ss"),
         sources: service.sources,
       })),
     });
@@ -68,20 +133,22 @@ function registerDataAccessRoutes(
   app.get<{ Params: { sourceId: string } }>(
     "/internal/data-access/catalog/:sourceId",
     async (request, reply) => {
+      await requireServiceAdmin(request, auth);
       const services = await registry.listHealthyServices();
       const service = services.find((item) =>
         item.sources.some(
           (source) => source.source_id === request.params.sourceId && source.status === "healthy",
         ),
       );
-      if (!service)
-        return reply
-          .code(503)
-          .send({ code: "DATA_ACCESS_UNAVAILABLE", message: "没有可用的 DAS 数据源" });
+      if (!service) throw new ApplicationError("DATA_SOURCE_UNAVAILABLE", "没有可用的 DAS 数据源");
       return reply.send({
         source_id: request.params.sourceId,
         service_id: service.serviceId,
-        items: await catalogClient.listCatalog(service.serviceUrl, request.params.sourceId),
+        items: await catalogClient.listCatalog(
+          service.serviceUrl,
+          request.params.sourceId,
+          service.serviceId,
+        ),
       });
     },
   );

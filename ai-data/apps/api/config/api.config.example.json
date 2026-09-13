@@ -24,6 +24,9 @@
       }
     }
   },
+  "trusted_data_access_services": [
+    { "service_id": "data-access-service", "credential_version": 1, "enabled": true }
+  ],
   "jwt": {
     "issuer": "ai-data-api",
     "audience": "ai-data-api",

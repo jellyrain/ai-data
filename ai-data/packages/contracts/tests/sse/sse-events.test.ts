@@ -8,8 +8,28 @@ const baseEvent = {
   sequence: 0,
 };
 
+// 所有变体复用相同的会话、运行和序号；这些用例检查载荷结构，事件写入负责运行内排序。
 describe("SSE 事件合同", () => {
-  // BDD 场景：服务端推送所有支持的流式事件；TDD 断言：每种事件变体都能通过联合合同。
+  it("拒绝事件根对象的未知字段", () => {
+    expect(
+      sseEventSchema.safeParse({ ...baseEvent, type: "run_started", extra: true }).success,
+    ).toBe(false);
+  });
+
+  it.each([
+    { columns: [{ name: "id", data_type: "integer" }], rows: [{ id: "12" }] },
+    { columns: [{ name: "id", data_type: "integer" }], rows: [{ id: 12, extra: 1 }] },
+    { columns: [{ name: "id", data_type: "integer" }], rows: [{}] },
+    {
+      columns: [
+        { name: "id", data_type: "integer" },
+        { name: "id", data_type: "integer" },
+      ],
+      rows: [],
+    },
+  ])("表格事件复用列与结果行一致性约束 %#", (table) => {
+    expect(sseEventSchema.safeParse({ ...baseEvent, type: "table", ...table }).success).toBe(false);
+  });
   it("接受所有支持的事件类型", () => {
     const events = [
       { ...baseEvent, type: "run_started" },
@@ -66,7 +86,6 @@ describe("SSE 事件合同", () => {
     }
   });
 
-  // BDD 场景：客户端收到未知事件或负序号；TDD 断言：联合类型和公共字段校验必须失败。
   it("拒绝未知事件类型和非法公共字段", () => {
     expect(sseEventSchema.safeParse({ ...baseEvent, type: "unknown" }).success).toBe(false);
 
@@ -79,7 +98,6 @@ describe("SSE 事件合同", () => {
     ).toBe(false);
   });
 
-  // BDD 场景：澄清事件返回空选项 ID；TDD 断言：前端选项必须具备非空标识。
   it("要求选项具有有效标识", () => {
     expect(
       sseEventSchema.safeParse({

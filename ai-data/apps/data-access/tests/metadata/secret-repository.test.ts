@@ -8,8 +8,8 @@ import type {
 
 import { SecretRepository } from "../../src/metadata/secret-repository";
 
+// 使用固定密文占位内容检查仓储映射和参数绑定，密码学往返由 cipher 测试验证。
 describe("数据源密文仓储", () => {
-  // BDD 场景：凭据解析器需要读取一条已存数据源密文；TDD 断言：仓储参数化读取密文并解析 AES-GCM 元数据。
   it("按 secret_ref 读取 AES-GCM 密文", async () => {
     const statements: MetadataStatement[] = [];
     const repository = new SecretRepository(
@@ -43,14 +43,12 @@ describe("数据源密文仓储", () => {
     ]);
   });
 
-  // BDD 场景：密钥引用不存在；TDD 断言：仓储不构造空密文，而由调用方决定拒绝策略。
   it("找不到密文时返回 undefined", async () => {
     const repository = new SecretRepository(createExecutor([]));
 
     await expect(repository.findBySecretRef("missing-secret")).resolves.toBeUndefined();
   });
 
-  // BDD 场景：管理员更新一套共享凭据；TDD 断言：密文及其密钥版本通过参数化语句保存。
   it("保存或更新 AES-GCM 密文", async () => {
     const statements: MetadataStatement[] = [];
     const repository = new SecretRepository(createExecutor([], statements));

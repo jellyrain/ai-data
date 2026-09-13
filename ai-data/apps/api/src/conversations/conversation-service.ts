@@ -1,26 +1,12 @@
+import type { AuthContext } from "../auth/auth-types";
 import type {
   AnalysisRun,
-  AuthContext,
   Conversation,
+  ConversationDetail,
   ConversationMessage,
   ConversationRepository,
-} from "../auth/auth-types";
-
-/** 会话详情及其按序排列的消息。 */
-type ConversationDetail = {
-  /** 当前身份可访问的会话。 */
-  conversation: Conversation;
-  /** 会话内全部已持久化消息。 */
-  messages: ConversationMessage[];
-};
-
-/** 用户消息持久化后创建分析运行的结果。 */
-type SubmittedMessage = {
-  /** 已追加到会话的用户消息。 */
-  message: ConversationMessage;
-  /** 供 Harness 后续执行的分析运行。 */
-  analysisRun: AnalysisRun;
-};
+  SubmittedMessage,
+} from "./conversation-types";
 
 /** 使用当前可信身份上下文维护会话、用户消息和分析运行。 */
 class ConversationService {
@@ -58,7 +44,7 @@ class ConversationService {
     return { conversation, messages: await this.repository.listMessages(conversation.id) };
   }
 
-  /** 追加用户消息，并创建供后续 Harness 执行的分析运行。 */
+  /** 校验会话归属及 active 状态后，依次保存用户消息与待执行分析运行。 */
   async submitUserMessage(
     context: AuthContext,
     conversationId: string,
@@ -87,6 +73,7 @@ class ConversationService {
       completedAt: null,
       createdAt: now,
     };
+    // 消息和运行分别写入仓储；序号取当前消息数，串行推进由上层运行流程协调。
     await this.repository.appendMessage(message);
     await this.repository.createAnalysisRun(analysisRun);
     return { message, analysisRun };
@@ -94,4 +81,3 @@ class ConversationService {
 }
 
 export { ConversationService };
-export type { ConversationDetail, SubmittedMessage };

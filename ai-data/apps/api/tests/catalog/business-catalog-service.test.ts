@@ -34,6 +34,7 @@ const rawCatalog: RawCatalogReader = {
   ],
 };
 
+/** 固定目录配置与角色权限，姓名列拒绝访问，科室行策略供查询阶段使用。 */
 class MemoryCatalogRepository implements ApiDatasetConfigRepository, CatalogPermissionRepository {
   async save() {}
   async find() {
@@ -80,7 +81,6 @@ class MemoryCatalogRepository implements ApiDatasetConfigRepository, CatalogPerm
 }
 
 describe("业务目录服务", () => {
-  // BDD 场景：临床角色只获准访问就诊表且患者姓名受限；TDD 断言：目录只返回允许字段和强制行策略。
   it("合并业务说明并按角色过滤对象和字段", async () => {
     const service = new BusinessCatalogService(
       rawCatalog,
@@ -96,9 +96,12 @@ describe("业务目录服务", () => {
       { name: "department", data_type: "string", nullable: false, source_description: "就诊科室" },
     ]);
     expect(items[0].rowPolicies).toHaveLength(1);
+    expect(items[0].rawColumns).toEqual([
+      { name: "patient_name", data_type: "string", nullable: false },
+      { name: "department", data_type: "string", nullable: false },
+    ]);
   });
 
-  // BDD 场景：用户按业务关键词查找数据集；TDD 断言：搜索只在授权后的目录执行。
   it("仅在授权目录中搜索业务说明", async () => {
     const repository = new MemoryCatalogRepository();
     const service = new BusinessCatalogService(rawCatalog, repository, repository);

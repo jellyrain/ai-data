@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { dataAccessHeartbeatSchema, sourceHealthSchema } from "../../src/health/health";
 
+// 健康状态由报告方填入；此处检查数据源快照与服务心跳的载荷形态。
 describe("数据源健康与服务心跳合同", () => {
   it("接受单个数据源健康状态", () => {
     expect(

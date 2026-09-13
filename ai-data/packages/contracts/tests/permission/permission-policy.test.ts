@@ -7,8 +7,8 @@ import {
   tablePermissionSchema,
 } from "../../src/permission/permission-policy";
 
+// 这些用例检查策略记录的配置约束，角色合并和实际权限计算由业务层用例覆盖。
 describe("权限策略合同", () => {
-  // BDD 场景：角色配置表、列和 API 权限计算上下文行策略；TDD 断言：三类合法策略均可解析。
   it("接受表权限、列权限和行权限", () => {
     expect(
       tablePermissionSchema.parse({
@@ -51,7 +51,6 @@ describe("权限策略合同", () => {
     ).toMatchObject({ role_id: "gyne_director" });
   });
 
-  // BDD 场景：普通比较缺少或重复配置值来源；TDD 断言：value 与 value_from 必须二选一。
   it("要求普通比较条件恰好有一个值来源", () => {
     expect(() => rowConditionSchema.parse({ field: "status", op: "eq" })).toThrow();
 
@@ -65,7 +64,6 @@ describe("权限策略合同", () => {
     ).toThrow();
   });
 
-  // BDD 场景：使用 is_null 或 not_null 判断空值；TDD 断言：空值操作不能携带比较值。
   it("不允许空值判断携带 value", () => {
     expect(() =>
       rowConditionSchema.parse({ field: "discharged_at", op: "is_null", value: null }),
@@ -90,7 +88,6 @@ describe("权限策略合同", () => {
     ).toThrow();
   });
 
-  // BDD 场景：策略包含 SQL 片段或未定义字段；TDD 断言：权限合同必须阻断注入和越权字段。
   it("拒绝不安全对象引用和未知策略字段", () => {
     expect(() =>
       tablePermissionSchema.parse({

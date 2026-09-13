@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { queryDslSchema } from "../../src/query/query-dsl";
 
+// 本组检查 DSL 结构与取值规则；对象、字段的实际可用性在目录与规划流程中确认。
 describe("查询 DSL 合同", () => {
-  // BDD 场景：客户端只提供最小合法查询；TDD 断言：schema 自动补齐可选数组默认值。
   it("接受最小关系查询并补齐默认值", () => {
     const result = queryDslSchema.parse({
       type: "relational_query",
@@ -20,7 +20,6 @@ describe("查询 DSL 合同", () => {
     expect(result.order_by).toEqual([]);
   });
 
-  // BDD 场景：Agent 生成带 Join、筛选和聚合的查询；TDD 断言：完整 DSL 能通过合同校验。
   it("接受连接、筛选、聚合、分组、排序和行数上限", () => {
     const result = queryDslSchema.parse({
       type: "relational_query",
@@ -64,7 +63,6 @@ describe("查询 DSL 合同", () => {
     expect(result.joins).toHaveLength(1);
   });
 
-  // BDD 场景：请求包含空选择、SQL 片段或越界 limit；TDD 断言：危险输入必须被拒绝。
   it("拒绝缺少选择项、不安全标识符和非法行数上限", () => {
     expect(() =>
       queryDslSchema.parse({
@@ -105,7 +103,6 @@ describe("查询 DSL 合同", () => {
     ).toThrow();
   });
 
-  // BDD 场景：Join 没有字段关联；TDD 断言：必须拒绝可能产生笛卡尔积的连接。
   it("拒绝没有等值条件的连接", () => {
     expect(() =>
       queryDslSchema.parse({
@@ -141,6 +138,39 @@ describe("查询 DSL 合同", () => {
 
     expect(result.parameters).toHaveLength(2);
     expect(result.parameters[0]?.name).toBe("admission_date_from");
+  });
+
+  it("接受 API 已审核的固定输出声明", () => {
+    const expected_output = [{ name: "department", data_type: "string", nullable: false }];
+    expect(
+      queryDslSchema.parse({
+        type: "parameterized_query",
+        source_id: "clinical",
+        from: { object_id: "report", alias: "r" },
+        expected_output,
+      }),
+    ).toMatchObject({ expected_output });
+  });
+
+  it.each([
+    { expected_output: [] },
+    { expected_output: [{ name: "dept", nullable: false }] },
+    { expected_output: [{ name: "dept", data_type: "string", nullable: false, hidden: true }] },
+    {
+      expected_output: [
+        { name: "dept", data_type: "string", nullable: false },
+        { name: "dept", data_type: "string", nullable: false },
+      ],
+    },
+  ])("拒绝空、无效或重复的固定输出声明 $expected_output", ({ expected_output }) => {
+    expect(
+      queryDslSchema.safeParse({
+        type: "parameterized_query",
+        source_id: "clinical",
+        from: { object_id: "report", alias: "r" },
+        expected_output,
+      }).success,
+    ).toBe(false);
   });
 
   it("接受 between 范围条件", () => {
@@ -194,7 +224,6 @@ describe("查询 DSL 合同", () => {
     expect(result.order_by[0]?.direction).toBe("desc");
   });
 
-  // BDD 场景：API 根据目录确认日期时间和二进制参数；TDD 断言：格式与声明类型必须一致。
   it("校验日期时间和 Base64 参数类型", () => {
     expect(
       queryDslSchema.safeParse({

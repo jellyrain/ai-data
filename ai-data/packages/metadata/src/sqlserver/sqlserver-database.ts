@@ -39,8 +39,16 @@ class SqlServerMetadataDatabase implements MetadataDatabaseHealthChecker, Metada
       await pool.connect();
       return new SqlServerMetadataDatabase(pool);
     } catch (error) {
-      await pool.close();
-      throw error;
+      let failure = error;
+      try {
+        await pool.close();
+      } catch (closeError) {
+        // 清理失败时仍保留首次连接失败的原因，便于定位配置或网络问题。
+        failure = new AggregateError([error, closeError], "元数据库连接失败且连接池清理失败", {
+          cause: error,
+        });
+      }
+      throw failure;
     }
   }
 
@@ -60,6 +68,7 @@ class SqlServerMetadataDatabase implements MetadataDatabaseHealthChecker, Metada
   ): Promise<MetadataQueryResult<T>> {
     const request = this.pool.request();
 
+    // 仓储显式给出绑定类型，使 null 等值也能按预期数据库类型传入。
     for (const parameter of statement.parameters) {
       switch (parameter.type) {
         case "string":
@@ -84,6 +93,7 @@ class SqlServerMetadataDatabase implements MetadataDatabaseHealthChecker, Metada
     }
 
     const result = await request.query<T>(statement.sql);
+    // 写入语句可能不产生记录集，统一为空列表以简化仓储读取。
     return { rows: result.recordset ?? [], rowsAffected: result.rowsAffected };
   }
 

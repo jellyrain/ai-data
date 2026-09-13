@@ -1,6 +1,6 @@
 import type { DataAccessHeartbeat, Dataset, SourceHealth } from "@ai-data/contracts";
 
-/** API 保存的一条 DAS 实例注册状态。 */
+/** API 接收心跳后保存的 DAS 实例和数据源状态快照。 */
 type DataAccessServiceRegistration = {
   /** DAS 实例标识。 */
   serviceId: string;
@@ -18,7 +18,7 @@ type DataAccessServiceRegistration = {
   sources: SourceHealth[];
 };
 
-/** API 目录读取所需的 DAS 注册查询能力。 */
+/** API 心跳路由和 DAS 客户端所需的实例注册与发现能力。 */
 interface DataAccessServiceRegistry {
   /** 以最新心跳和 API 从连接地址推导的服务地址替换一个 DAS 实例及其数据源状态。 */
   registerHeartbeat(
@@ -29,10 +29,10 @@ interface DataAccessServiceRegistry {
   listHealthyServices(): Promise<DataAccessServiceRegistration[]>;
 }
 
-/** DAS 目录 Client 的最小调用边界。 */
+/** API 获取 DAS 物理目录所需的最小客户端能力。 */
 interface DataAccessCatalogClient {
   /** 从指定 DAS 实例读取一个数据源的标准化目录。 */
-  listCatalog(serviceUrl: string, sourceId: string): Promise<Dataset[]>;
+  listCatalog(serviceUrl: string, sourceId: string, serviceId: string): Promise<Dataset[]>;
 }
 
 export type { DataAccessCatalogClient, DataAccessServiceRegistration, DataAccessServiceRegistry };

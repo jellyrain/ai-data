@@ -2,7 +2,7 @@ import { z } from "zod";
 import { columnOperationSchema } from "./column-operation";
 import { queryOperatorSchema } from "../query/query-operators";
 
-/** 权限策略允许引用的 API 权限计算上下文字段路径。 */
+/** 权限上下文引用的路径格式；实际可读取的字段由 API 的上下文解析逻辑决定。 */
 const permissionContextPath = z
   .string()
   .regex(/^permission_context\.[a-z_][a-z0-9_]*$/, "只能引用 permission_context 下的白名单字段");
@@ -18,7 +18,8 @@ const policyLiteral = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 
 /**
  * 一条表级行过滤条件。
- * value 和 value_from 二选一，不能同时提供。
+ * 空值判断省略取值；普通比较在固定值与上下文引用中二选一。
+ * between 必须提供两个固定端点。对象仅接受声明字段。
  */
 const rowConditionSchema = z
   .object({
@@ -28,10 +29,10 @@ const rowConditionSchema = z
     /** 权限条件操作符。 */
     op: policyOperator,
 
-    /** 固定过滤值，例如 "completed" 或 1。 */
+    /** 固定过滤值，例如 "completed" 或 1；通过 value_from 取值或判断空值时省略。 */
     value: z.union([policyLiteral, z.array(policyLiteral)]).optional(),
 
-    /** 从 API 的权限计算上下文读取值，例如 permission_context.department_ids。 */
+    /** 普通比较可从 API 权限上下文取值，例如 permission_context.department_ids；此时省略 value。 */
     value_from: permissionContextPath.optional(),
   })
   .strict()
@@ -65,7 +66,7 @@ const rowConditionSchema = z
     }
   });
 
-/** 角色对表或视图的读取权限。 */
+/** 角色对表或视图的读取权限记录，仅接受声明字段。 */
 const tablePermissionSchema = z
   .object({
     /** 角色 ID。 */
@@ -79,7 +80,7 @@ const tablePermissionSchema = z
   })
   .strict();
 
-/** 角色对某个对象的行过滤权限。 */
+/** 角色对某个对象的行过滤规则，仅接受声明字段。 */
 const rowPolicySchema = z
   .object({
     /** 角色 ID。 */
@@ -96,7 +97,7 @@ const rowPolicySchema = z
   })
   .strict();
 
-/** 角色对单个字段的可见性和 DSL 操作权限。 */
+/** 角色对单个字段的可见性和 DSL 操作权限，仅接受声明字段。 */
 const columnPermissionSchema = z
   .object({
     /** 角色 ID。 */
@@ -114,6 +115,7 @@ const columnPermissionSchema = z
     operations: z.array(columnOperationSchema).min(1).optional(),
   })
   .strict()
+  // deny 拒绝整个字段，不能再附加局部操作列表。
   .superRefine((permission, context) => {
     if (permission.effect === "deny" && permission.operations !== undefined) {
       context.addIssue({

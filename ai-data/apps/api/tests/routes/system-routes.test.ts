@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
+import Fastify from "fastify";
 
 import type { MetadataDatabaseHealthChecker } from "@ai-data/metadata";
 
-import { createApp } from "../../src/app";
+import { registerSystemRoutes } from "../../src/routes/system-routes";
+import { registerContractErrorHandler } from "../../src/routes/contract-error";
 import type { ApiConfig } from "../../src/config/api-config";
 
+/** 探针测试使用的完整启动配置，只消费服务标识和健康检查结果。 */
 const config: ApiConfig = {
   node_env: "test",
   service: {
@@ -36,14 +39,22 @@ const config: ApiConfig = {
   },
 };
 
+/** 固定数据库探针结果，隔离系统路由响应与数据库连接实现。 */
 function createHealthChecker(status: "healthy" | "unhealthy"): MetadataDatabaseHealthChecker {
   return { checkHealth: async () => status };
 }
 
+/** 系统模块只装配探针所需的配置和数据库健康能力。 */
+function createSystemApp(status: "healthy" | "unhealthy") {
+  const app = Fastify();
+  registerContractErrorHandler(app);
+  registerSystemRoutes(app, config, createHealthChecker(status));
+  return app;
+}
+
 describe("API 系统路由", () => {
-  // BDD 场景：负载均衡器探测 API；TDD 断言：存活接口不依赖数据库。
   it("返回健康和版本信息", async () => {
-    const app = await createApp(config, createHealthChecker("unhealthy"));
+    const app = createSystemApp("unhealthy");
 
     const health = await app.inject({ method: "GET", url: "/health" });
     const version = await app.inject({ method: "GET", url: "/version" });
@@ -54,9 +65,8 @@ describe("API 系统路由", () => {
     await app.close();
   });
 
-  // BDD 场景：元数据库不可用；TDD 断言：就绪接口返回 503。
   it("在元数据库不健康时拒绝就绪", async () => {
-    const app = await createApp(config, createHealthChecker("unhealthy"));
+    const app = createSystemApp("unhealthy");
 
     const response = await app.inject({ method: "GET", url: "/ready" });
 
@@ -68,9 +78,8 @@ describe("API 系统路由", () => {
     await app.close();
   });
 
-  // BDD 场景：客户端发送未知路径；TDD 断言：统一错误出口包含请求 ID。
   it("返回带请求 ID 的错误响应", async () => {
-    const app = await createApp(config, createHealthChecker("healthy"));
+    const app = createSystemApp("healthy");
 
     const response = await app.inject({
       method: "GET",
@@ -78,6 +87,7 @@ describe("API 系统路由", () => {
     });
 
     expect(response.statusCode).toBe(404);
+    expect(response.json()).toMatchObject({ code: "NOT_FOUND", request_id: expect.any(String) });
     await app.close();
   });
 });

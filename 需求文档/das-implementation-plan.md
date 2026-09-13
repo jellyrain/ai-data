@@ -9,11 +9,13 @@
 
 Data Access Service（DAS）对 API 查询请求无会话状态，但持久化自己的运行元数据与查询审计。API 完成关联、指标统计、条件位置、参数和权限处理，生成最终可执行 DSL；DAS 的查询链路固定为校验、执行、匿名化/脱敏和返回。
 
-- `das.config.json`：DAS 启动所需配置，包括 API 地址、JWT 验签公钥、DAS 元数据库连接和实例参数。
+- `das.config.json`：DAS 启动所需配置，包括 API 地址、JWT 验签公钥与实例接入凭证文件路径、DAS 元数据库连接和实例参数。
 - DAS 元数据 SQL Server：数据源配置、对象暴露白名单、HTTP API 虚拟表定义、加密密文和审计日志。
 - API：用户认证、管理员权限、访问凭证、权限策略计算，以及 API 与 DAS 的内部调用。
 - AI BI Web：提供 DAS 管理页面；浏览器不直接访问 DAS 元数据库或业务数据源。
 - 数据源连接器：访问业务 SQL Server、MySQL、PostgreSQL、Oracle 或 HTTP API。
+
+实例接入使用 API 预先签发的凭证文件：首次注册验签后，DAS 保存 API 返回的随机会话，每 30 秒携带会话上报健康状态。会话空闲有效期为 90 秒；收到 HTTP 401 后重新读取文件并注册。目录和全部五类管理接口在业务调用前验证 API 的 60 秒 JWT，检查目标实例、用途和请求摘要。用户管理权限由 API 的管理代理检查。配置及生命周期见 [服务接入说明](../ai-data/SERVICE-AUTH.md)。
 
 ## 2. 总体流程
 
@@ -190,6 +192,18 @@ interface DataSourceConnector {
 
 已实现首建 SQL 中的 HTTP API 固定请求定义，并完成四个仓储及其参数化读写测试。所有 DAS 自有元数据库实现收敛在 `apps/data-access/src/metadata/`；`MetadataDatabase` 提供受限参数化执行器，底层连接池不向路由或业务连接器暴露。
 
+按 S-02 收拢后的数据定义与使用边界如下，路径均相对于 `apps/data-access/src/`：
+
+| 职责 | 读取或边界 Schema | 运行时类型 |
+| ---- | ----------------- | ---------- |
+| 数据源配置 | `metadata/data-source-records.ts`，连接器枚举归 `data-sources/connector-kind.ts` | `data-sources/data-source-types.ts` |
+| 加密凭据 | `metadata/secret-records.ts`，IV 与认证标签归 `secrets/aes-gcm-encryption-metadata.ts` | `secrets/secret-types.ts` |
+| 对象暴露 | `metadata/exposed-object-records.ts` | `catalog/catalog-types.ts` |
+| HTTP 虚拟表映射 | `metadata/api-dataset-records.ts`，请求参数映射归 `connectors/api-request-parameter-mapping.ts` | `connectors/api-dataset-mapping-types.ts` |
+| 查询审计事件 | `query-execution/query-audit.ts` | `query-execution/query-audit-types.ts` |
+
+仓储先校验数据库行和持久化 JSON，再显式转换为业务对象。共享 JSON 解析函数位于 `metadata/parse-persisted-json.ts`；对象、字段及参数使用的安全标识符 Schema 位于 `catalog/catalog-identifier.ts`。
+
 ### 第 3 步：密钥和运行时数据源管理（已完成）
 
 - 定义 `SecretResolver`，将 `secret_ref` 解析为连接器专属连接配置。
@@ -257,7 +271,7 @@ SQL Server 使用 `sys.databases`、MySQL 使用 `SHOW DATABASES`、PostgreSQL �
 
 已实现的 `QueryPlanner` 承担执行映射：通过 `QueryRequestSignatureVerifier` 验证 API 签名，读取 DAS 本地对象白名单和已启用数据源配置，将逻辑 DSL 映射为 `ExecutableQuery`，并将 `limit` 收紧至数据源 `row_limit`、采用配置的 `timeout_ms`。`access` 承载审计关联和 API 已计算的输出脱敏规则。对象权限、批准关系、统计规则及参数授权的业务处理归 API，DAS 按收到的结构校验和执行。
 
-当前实现覆盖既有 DSL 的基础执行映射。2026-09-11 设计基线中需要对象预过滤、带值 Join 条件或复合聚合的场景，待共享合同、API 生成校验和 DAS 编译执行共同补齐后验收。验收包括外连接未匹配记录保留、主对象权限生效、多明细聚合结果正确，以及不支持结构被明确拒绝。
+当前执行映射保留主对象和关联对象的 `filters`，只允许引用所属别名；四种数据库方言将对象过滤编译为参数化派生表，关联后的筛选继续作为查询级 WHERE。LEFT/RIGHT JOIN 已覆盖授权匹配、仅未授权匹配和无匹配三类记录。带值 ON、多明细分层聚合及统计总计语义仍在后续合同完善范围内。
 
 ### 第 7 步：连接器执行和审计
 
@@ -265,6 +279,14 @@ SQL Server 使用 `sys.databases`、MySQL 使用 `SHOW DATABASES`、PostgreSQL �
 - HTTP API 连接器将已审核参数映射至固定请求定义，并按虚拟表映射输出统一表格。
 - 成功、拒绝、超时和失败均写入 `query_audit_logs`。
 - 对 `access.output_masks` 指定的字符串结果列执行部分脱敏后，返回统一结果、列元数据和新鲜度。
+
+查询 HTTP 边界通过 `AuditedQueryService` 串联验签、执行和最终审计，启动时同时装配执行服务、验签器及 `AuditRepository`。格式拒绝也进入审计；尚未验签的载荷身份不写入记录。审计失败时停止返回结果。
+
+每源资源闸门管理有限排队、并发、总执行预算及关闭排空；API 请求断开会取消对 DAS 的调用，DAS 再向具体驱动传播取消。名额在底层工作完成清理后归还。资源校验以可执行的超时、并发和等待容量为依据，历史 `cost_limit` 为兼容字段。
+
+参数化对象的完整定义与升级步骤见 [参数化查询配置](../ai-data/PARAMETERIZED-QUERIES.md)。关系查询输出与参数化固定输出分别验收；固定输出经过 API 审核和签名后，还需与 DAS 本地定义及实际结果一致。
+
+关系查询的 `pre_aggregate` 在对象过滤之后、参与关联之前执行。规划器核对派生字段及层次作用域，四种方言编译每对象分组与最终外层聚合，只有最外层使用 N+1 返回行数探测。API 提供的唯一键和基数负责统计校验，DAS 保持既定语义。配置与验收例子见 [分层聚合说明](../ai-data/RELATIONAL-AGGREGATION.md)。
 
 ## 7. 首批代码文件
 

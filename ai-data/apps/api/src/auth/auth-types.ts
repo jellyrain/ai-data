@@ -17,7 +17,7 @@ type AuthUser = {
   passwordHash: string | null;
   /** 账号状态。 */
   status: UserStatus;
-  /** 权限版本，用于令牌和缓存失效。 */
+  /** 签发令牌时记录的授权版本；加载未缓存身份时与当前版本比较。 */
   authorizationVersion: number;
 };
 
@@ -37,6 +37,11 @@ type AuthContext = {
   permissions: string[];
   /** 当前有效数据行策略。 */
   dataPolicies: DataPolicy[];
+  /** 由 API 本地授权来源提供的范围白名单；浏览器和模型不能提供这些值。 */
+  permissionContext?: {
+    /** 当前可信部门标识范围，未配置时相关上下文策略拒绝执行。 */
+    department_ids?: string[];
+  };
 };
 
 /** 登录后创建的服务端会话。 */
@@ -55,7 +60,7 @@ type AuthSession = {
 
 /** 认证仓储需要的用户和会话读写能力。 */
 interface AuthRepository {
-  /** 按组织内唯一登录名读取本地用户。 */
+  /** 按登录名读取用户；该查询入口未接收组织标识。 */
   findUserByUsername(username: string): Promise<AuthUser | null>;
   /** 按用户主键读取本地用户。 */
   findUserById(userId: string): Promise<AuthUser | null>;
@@ -63,7 +68,7 @@ interface AuthRepository {
   findSessionById(sessionId: string): Promise<AuthSession | null>;
   /** 持久化新建的 Refresh Token 会话。 */
   createSession(session: AuthSession): Promise<void>;
-  /** 原子替换 Refresh Token 哈希并延长会话有效期。 */
+  /** 更新未撤销会话的令牌哈希和有效期，再读取当前会话。 */
   rotateSession(
     sessionId: string,
     refreshTokenHash: string,
@@ -74,9 +79,12 @@ interface AuthRepository {
   /** 汇总用户通过角色和个人例外获得的当前授权。 */
   loadAuthorization(
     userId: string,
-  ): Promise<Pick<AuthContext, "roles" | "roleIds" | "permissions" | "dataPolicies">>;
+  ): Promise<
+    Pick<AuthContext, "roles" | "roleIds" | "permissions" | "dataPolicies" | "permissionContext">
+  >;
 }
 
+/** 管理员创建用户时交给仓储的资料与初始授权绑定。 */
 type CreateUserInput = {
   /** 新用户稳定标识。 */
   id: string;
@@ -115,108 +123,17 @@ interface UserAdminRepository extends AuthRepository {
   }): Promise<void>;
   /** 在指定组织创建用户并绑定角色和个别例外范围。 */
   createUser(input: CreateUserInput): Promise<AuthUser>;
-  /** 按组织列出用户，返回值不得包含密码信息。 */
+  /** 按组织列出内部用户资料；路由负责选取可公开字段。 */
   listUsers(organizationId: string): Promise<AuthUser[]>;
   /** 更新组织内用户状态并递增授权版本。 */
   updateUserStatus(userId: string, organizationId: string, status: UserStatus): Promise<boolean>;
 }
 
-/** API 会话、消息和分析运行的持久化能力。 */
-interface ConversationRepository {
-  /** 创建当前用户所属组织的会话。 */
-  createConversation(conversation: Conversation): Promise<void>;
-  /** 查询当前用户可访问的会话。 */
-  findConversation(
-    conversationId: string,
-    userId: string,
-    organizationId: string,
-  ): Promise<Conversation | null>;
-  /** 列出当前用户的会话。 */
-  listConversations(userId: string, organizationId: string): Promise<Conversation[]>;
-  /** 追加一条按序消息。 */
-  appendMessage(message: ConversationMessage): Promise<void>;
-  /** 读取会话消息。 */
-  listMessages(conversationId: string): Promise<ConversationMessage[]>;
-  /** 创建分析运行。 */
-  createAnalysisRun(run: AnalysisRun): Promise<void>;
-  /** 更新分析运行状态。 */
-  updateAnalysisRun(
-    runId: string,
-    userId: string,
-    organizationId: string,
-    status: AnalysisRunStatus,
-    error?: { code: string; message: string },
-  ): Promise<boolean>;
-}
-
-type Conversation = {
-  /** 会话主键。 */
-  id: string;
-  /** 会话所属组织。 */
-  organizationId: string;
-  /** 会话创建用户。 */
-  userId: string;
-  /** 用户可读的会话标题。 */
-  title: string | null;
-  /** 会话当前状态。 */
-  status: "active" | "archived";
-  /** 创建时间。 */
-  createdAt: Date;
-  /** 最后更新时间。 */
-  updatedAt: Date;
-};
-
-type ConversationMessage = {
-  /** 消息主键。 */
-  id: string;
-  /** 所属会话。 */
-  conversationId: string;
-  /** 消息来源角色。 */
-  role: "user" | "assistant" | "system" | "tool";
-  /** 消息正文。 */
-  content: string;
-  /** 会话内递增序号。 */
-  sequence: number;
-  /** 创建时间。 */
-  createdAt: Date;
-};
-
-/** 分析运行从创建到终态的受控状态集合。 */
-type AnalysisRunStatus = "created" | "running" | "completed" | "failed" | "cancelled";
-
-type AnalysisRun = {
-  /** 分析运行主键。 */
-  id: string;
-  /** 所属会话。 */
-  conversationId: string;
-  /** 所属组织。 */
-  organizationId: string;
-  /** 发起用户。 */
-  userId: string;
-  /** 当前运行状态。 */
-  status: AnalysisRunStatus;
-  /** 稳定失败码。 */
-  errorCode: string | null;
-  /** 面向用户的失败说明。 */
-  errorMessage: string | null;
-  /** 实际开始时间。 */
-  startedAt: Date | null;
-  /** 结束时间。 */
-  completedAt: Date | null;
-  /** 创建时间。 */
-  createdAt: Date;
-};
-
 export type {
-  AnalysisRun,
-  AnalysisRunStatus,
   AuthContext,
   AuthRepository,
   AuthSession,
   AuthUser,
-  Conversation,
-  ConversationMessage,
-  ConversationRepository,
   CreateUserInput,
   UserAdminRepository,
   UserStatus,

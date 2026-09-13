@@ -20,6 +20,8 @@ interface DiscoveredDataset {
   source_description?: string;
   /** 已标准化的数据列。 */
   columns: DatasetColumn[];
+  /** 连接器已验证固定输出定义完整时为 true；未确认时省略或为 false。 */
+  has_complete_output?: boolean;
   /** 连接器可发现或虚拟表配置声明的基础查询能力。 */
   query_capabilities?: QueryCapabilities;
   /** 存储过程或 HTTP API 虚拟表的固定输入参数定义。 */

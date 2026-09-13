@@ -15,6 +15,7 @@ const config: DasConfig = {
   api: {
     base_url: "http://127.0.0.1:3101",
     heartbeat_path: "/internal/data-access/heartbeat",
+    registration_credential_path: "test-registration.jwt",
     jwt_verification_public_key_path: "./test-public.pem",
   },
   metadata_sqlserver: {
@@ -46,8 +47,8 @@ function createHealthChecker(status: "healthy" | "unhealthy"): MetadataDatabaseH
   };
 }
 
+// 注入元数据库健康状态，检查路由响应；这里的状态不代表所有业务数据源均已连通。
 describe("DAS 健康检查路由", () => {
-  // BDD 场景：DAS 元数据库正常；TDD 断言：服务可以接收后续内部请求。
   it("元数据库健康时返回 200", async () => {
     const app = createApp(
       config,
@@ -69,7 +70,6 @@ describe("DAS 健康检查路由", () => {
     await app.close();
   });
 
-  // BDD 场景：DAS 元数据库不可用；TDD 断言：服务拒绝被调度为可用实例。
   it("元数据库不可用时返回 503", async () => {
     const app = createApp(
       config,

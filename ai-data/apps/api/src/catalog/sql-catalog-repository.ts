@@ -9,29 +9,52 @@ import {
   type TablePermission,
 } from "@ai-data/contracts";
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
+import { parseStoredRecord } from "../metadata/parse-stored-record";
 
 import type { ApiDatasetConfigRepository, CatalogPermissionRepository } from "./catalog-types";
 
 /** API 元数据库中保存的 JSON 配置记录。 */
-type JsonConfigRow = { config_json: string };
+type JsonConfigRow = {
+  /** 完整 ApiDatasetConfig 的持久化 JSON。 */
+  config_json: string;
+};
 /** API 元数据库中保存的对象权限记录。 */
-type ObjectPermissionRow = { role_id: string; object_id: string; effect: "allow" | "deny" };
+type ObjectPermissionRow = {
+  /** 授权角色主键。 */
+  role_id: string;
+  /** 数据源内的数据对象标识。 */
+  object_id: string;
+  /** 角色对对象的允许或拒绝决定。 */
+  effect: "allow" | "deny";
+};
 /** API 元数据库中保存的字段权限记录。 */
 type ColumnPermissionRow = {
+  /** 字段权限所属角色主键。 */
   role_id: string;
+  /** 数据源内的数据对象标识。 */
   object_id: string;
+  /** 持久化列名，读取后映射为合同中的 column。 */
   column_name: string;
+  /** 角色对该列的允许或拒绝决定。 */
   effect: "allow" | "deny";
+  /** 操作列表 JSON；数据库 NULL 读取为省略此字段。 */
   operations_json: string | null;
 };
 /** API 元数据库中保存的行策略记录。 */
-type RowPolicyRow = { role_id: string; object_id: string; condition_json: string };
+type RowPolicyRow = {
+  /** 策略所属角色主键。 */
+  role_id: string;
+  /** 策略作用的数据对象。 */
+  object_id: string;
+  /** 单条行过滤条件的 JSON。 */
+  condition_json: string;
+};
 
 /** 使用参数化 SQL 保存 API 业务目录配置和角色目录权限。 */
 class SqlCatalogRepository implements ApiDatasetConfigRepository, CatalogPermissionRepository {
   constructor(private readonly database: MetadataQueryExecutor) {}
 
-  /** 保存数据集业务配置 JSON。 */
+  /** 按数据源与对象更新配置，不存在时插入；JSON 保存完整的当前配置。 */
   async save(config: ApiDatasetConfig): Promise<void> {
     await this.database.execute({
       sql: `UPDATE dbo.api_dataset_configs SET config_json = @config_json, updated_at = SYSUTCDATETIME()
@@ -56,7 +79,9 @@ class SqlCatalogRepository implements ApiDatasetConfigRepository, CatalogPermiss
       ],
     });
     return result.rows[0]
-      ? apiDatasetConfigSchema.parse(JSON.parse(result.rows[0].config_json))
+      ? parseStoredRecord(() =>
+          apiDatasetConfigSchema.parse(JSON.parse(result.rows[0].config_json)),
+        )
       : null;
   }
 
@@ -66,7 +91,9 @@ class SqlCatalogRepository implements ApiDatasetConfigRepository, CatalogPermiss
       sql: "SELECT config_json FROM dbo.api_dataset_configs WHERE source_id = @source_id",
       parameters: [{ name: "source_id", type: "string", value: sourceId }],
     });
-    return result.rows.map((row) => apiDatasetConfigSchema.parse(JSON.parse(row.config_json)));
+    return parseStoredRecord(() =>
+      result.rows.map((row) => apiDatasetConfigSchema.parse(JSON.parse(row.config_json))),
+    );
   }
 
   /** 保存角色对象访问决定。 */
@@ -137,10 +164,10 @@ class SqlCatalogRepository implements ApiDatasetConfigRepository, CatalogPermiss
         })),
       ],
     });
-    return result.rows.map((row) => tablePermissionSchema.parse(row));
+    return parseStoredRecord(() => result.rows.map((row) => tablePermissionSchema.parse(row)));
   }
 
-  /** 读取命中角色的字段权限。 */
+  /** 读取角色字段权限并转换数据库列名；数据库 NULL 表示未提供操作列表。 */
   async listColumnPermissions(roleIds: string[], sourceId: string): Promise<ColumnPermission[]> {
     if (roleIds.length === 0) return [];
     const result = await this.database.execute<ColumnPermissionRow>({
@@ -155,18 +182,20 @@ class SqlCatalogRepository implements ApiDatasetConfigRepository, CatalogPermiss
         })),
       ],
     });
-    return result.rows.map((row) =>
-      columnPermissionSchema.parse({
-        role_id: row.role_id,
-        object_id: row.object_id,
-        column: row.column_name,
-        effect: row.effect,
-        ...(row.operations_json === null ? {} : { operations: JSON.parse(row.operations_json) }),
-      }),
+    return parseStoredRecord(() =>
+      result.rows.map((row) =>
+        columnPermissionSchema.parse({
+          role_id: row.role_id,
+          object_id: row.object_id,
+          column: row.column_name,
+          effect: row.effect,
+          ...(row.operations_json === null ? {} : { operations: JSON.parse(row.operations_json) }),
+        }),
+      ),
     );
   }
 
-  /** 读取命中角色的行策略。 */
+  /** 读取角色行条件，转换为 effect=allow 的行策略合同。 */
   async listRowPolicies(roleIds: string[], sourceId: string): Promise<RowPolicy[]> {
     if (roleIds.length === 0) return [];
     const result = await this.database.execute<RowPolicyRow>({
@@ -181,13 +210,15 @@ class SqlCatalogRepository implements ApiDatasetConfigRepository, CatalogPermiss
         })),
       ],
     });
-    return result.rows.map((row) =>
-      rowPolicySchema.parse({
-        role_id: row.role_id,
-        object_id: row.object_id,
-        effect: "allow",
-        condition: JSON.parse(row.condition_json),
-      }),
+    return parseStoredRecord(() =>
+      result.rows.map((row) =>
+        rowPolicySchema.parse({
+          role_id: row.role_id,
+          object_id: row.object_id,
+          effect: "allow",
+          condition: JSON.parse(row.condition_json),
+        }),
+      ),
     );
   }
 }

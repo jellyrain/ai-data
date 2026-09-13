@@ -1,12 +1,13 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 
-import { AuthService } from "../auth/auth-service";
+import { ApplicationError } from "../errors/application-error";
+import type { ApiAuthService } from "../app-types";
 import type { AuthContext } from "../auth/auth-types";
 import { hashPassword } from "../auth/password";
 import { bearerToken } from "./auth-routes";
 
-/** 管理员创建用户请求体。 */
+/** 管理员创建用户输入，拒绝未知字段；组织归属从当前身份取得。 */
 const createUserSchema = z
   .object({
     /** 组织内唯一登录名。 */
@@ -15,9 +16,9 @@ const createUserSchema = z
     display_name: z.string().min(1),
     /** 初始密码，服务端保存为派生哈希。 */
     password: z.string().min(8),
-    /** 要绑定的角色标识。 */
+    /** 初始角色标识；省略时不建立角色绑定。 */
     role_ids: z.array(z.string().min(1)).default([]),
-    /** 仅用于个别例外的数据范围标识。常规范围由角色继承。 */
+    /** 初始用户例外范围；省略时仅使用角色继承的数据范围。 */
     exception_data_scope_ids: z.array(z.string().min(1)).default([]),
   })
   .strict();
@@ -25,72 +26,49 @@ const createUserSchema = z
 /** 校验当前身份是否具备用户管理权限。 */
 function requireAdmin(context: AuthContext): void {
   if (!context.permissions.includes("user:manage") && !context.roles.includes("system_admin"))
-    throw new Error("无用户管理权限");
+    throw new ApplicationError("UNAUTHORIZED", "无用户管理权限");
 }
 
 /** 从请求令牌加载当前用户上下文。 */
 async function currentContext(
   request: FastifyRequest,
-  authService: AuthService,
+  authService: ApiAuthService,
 ): Promise<AuthContext> {
   return authService.loadContext(bearerToken(request));
 }
 
 /** 注册管理员用户维护接口。 */
-function registerUserAdminRoutes(app: FastifyInstance, authService: AuthService): void {
+function registerUserAdminRoutes(app: FastifyInstance, authService: ApiAuthService): void {
   app.post("/admin/users", async (request, reply) => {
-    try {
-      const context = await currentContext(request, authService);
-      requireAdmin(context);
-      const input = createUserSchema.parse(request.body);
-      const user = await authService.createManagedUser({
-        id: crypto.randomUUID(),
-        organizationId: context.organizationId,
-        username: input.username,
-        displayName: input.display_name,
-        passwordHash: await hashPassword(input.password),
-        roleIds: input.role_ids,
-        exceptionDataScopeIds: input.exception_data_scope_ids,
-      });
-      return reply.code(201).send(publicUser(user));
-    } catch (error) {
-      if (error instanceof z.ZodError)
-        return reply.code(400).send({ code: "INVALID_ARGUMENT", message: "用户参数无效" });
-      if (
-        error instanceof Error &&
-        ["缺少登录令牌", "登录会话无效", "无用户管理权限"].includes(error.message)
-      )
-        return reply.code(403).send({ code: "FORBIDDEN", message: error.message });
-      return reply.code(409).send({ code: "USER_CREATE_FAILED", message: "用户创建失败" });
-    }
+    const context = await currentContext(request, authService);
+    requireAdmin(context);
+    const input = createUserSchema.parse(request.body);
+    const user = await authService.createManagedUser({
+      id: crypto.randomUUID(),
+      organizationId: context.organizationId,
+      username: input.username,
+      displayName: input.display_name,
+      passwordHash: await hashPassword(input.password),
+      roleIds: input.role_ids,
+      exceptionDataScopeIds: input.exception_data_scope_ids,
+    });
+    return reply.code(201).send(publicUser(user));
   });
 
   app.get("/admin/users", async (request, reply) => {
-    try {
-      const context = await currentContext(request, authService);
-      requireAdmin(context);
-      const users = await authService.listManagedUsers(context.organizationId);
-      return reply.send({ items: users.map(publicUser) });
-    } catch (error) {
-      return reply
-        .code(403)
-        .send({ code: "FORBIDDEN", message: error instanceof Error ? error.message : "无权限" });
-    }
+    const context = await currentContext(request, authService);
+    requireAdmin(context);
+    const users = await authService.listManagedUsers(context.organizationId);
+    return reply.send({ items: users.map(publicUser) });
   });
 
   app.get("/admin/users/:id", async (request, reply) => {
-    try {
-      const context = await currentContext(request, authService);
-      requireAdmin(context);
-      const user = await authService.findManagedUser((request.params as { id: string }).id);
-      if (!user || user.organizationId !== context.organizationId)
-        return reply.code(404).send({ code: "NOT_FOUND", message: "用户不存在" });
-      return reply.send(publicUser(user));
-    } catch (error) {
-      return reply
-        .code(403)
-        .send({ code: "FORBIDDEN", message: error instanceof Error ? error.message : "无权限" });
-    }
+    const context = await currentContext(request, authService);
+    requireAdmin(context);
+    const user = await authService.findManagedUser((request.params as { id: string }).id);
+    if (!user || user.organizationId !== context.organizationId)
+      throw new ApplicationError("NOT_FOUND", "用户不存在");
+    return reply.send(publicUser(user));
   });
 
   for (const [action, status] of [
@@ -98,21 +76,15 @@ function registerUserAdminRoutes(app: FastifyInstance, authService: AuthService)
     ["enable", "active"],
   ] as const) {
     app.post(`/admin/users/:id/${action}`, async (request, reply) => {
-      try {
-        const context = await currentContext(request, authService);
-        requireAdmin(context);
-        const updated = await authService.updateManagedUserStatus(
-          (request.params as { id: string }).id,
-          context.organizationId,
-          status,
-        );
-        if (!updated) return reply.code(404).send({ code: "NOT_FOUND", message: "用户不存在" });
-        return reply.code(204).send();
-      } catch (error) {
-        return reply
-          .code(403)
-          .send({ code: "FORBIDDEN", message: error instanceof Error ? error.message : "无权限" });
-      }
+      const context = await currentContext(request, authService);
+      requireAdmin(context);
+      const updated = await authService.updateManagedUserStatus(
+        (request.params as { id: string }).id,
+        context.organizationId,
+        status,
+      );
+      if (!updated) throw new ApplicationError("NOT_FOUND", "用户不存在");
+      return reply.code(204).send();
     });
   }
 }

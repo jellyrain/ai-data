@@ -1,11 +1,14 @@
+# 应用与共享包都通过 Workspace 管理依赖。
 packages:
   - apps/*
   - packages/*
 
+# 允许这两个依赖运行安装构建脚本，供打包工具及数据库驱动使用。
 allowBuilds:
   esbuild: true
   oracledb: true
 
+# 各包通过 catalog: 引用公共依赖版本，在此集中维护。
 catalog:
   "@eslint/js": ^10.0.1
   "@types/node": ^26.2.0

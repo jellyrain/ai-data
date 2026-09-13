@@ -10,7 +10,7 @@ function sendInvalidInput(
   return reply.code(400).send({ code: "INVALID_INPUT", message, request_id: request.id });
 }
 
-/** 注册未被业务路由转换的 Fastify 运行时错误出口。 */
+/** 统一未被路由处理的错误：结构错误返回 400，其余错误记录日志并返回通用 500。 */
 function registerContractErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler((error, request, reply) => {
     if (error instanceof ZodError) {

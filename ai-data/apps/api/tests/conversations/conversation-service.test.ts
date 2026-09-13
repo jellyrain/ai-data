@@ -5,9 +5,10 @@ import type {
   Conversation,
   ConversationMessage,
   ConversationRepository,
-} from "../../src/auth/auth-types";
+} from "../../src/conversations/conversation-types";
 import { ConversationService } from "../../src/conversations/conversation-service";
 
+/** 内存仓储模拟会话归属过滤，保留消息与运行供断言其关联关系。 */
 class MemoryConversationRepository implements ConversationRepository {
   conversations: Conversation[] = [];
   messages: ConversationMessage[] = [];
@@ -48,7 +49,6 @@ class MemoryConversationRepository implements ConversationRepository {
 }
 
 describe("会话服务", () => {
-  // BDD 场景：已登录用户发起一个问题；TDD 断言：消息与待执行分析运行关联到同一可信会话。
   it("创建会话并提交用户消息", async () => {
     const repository = new MemoryConversationRepository();
     const service = new ConversationService(repository);
@@ -68,7 +68,6 @@ describe("会话服务", () => {
     expect(repository.runs[0]?.status).toBe("created");
   });
 
-  // BDD 场景：另一用户猜测会话标识；TDD 断言：服务不返回其他用户的会话。
   it("隔离其他用户的会话", async () => {
     const repository = new MemoryConversationRepository();
     const service = new ConversationService(repository);

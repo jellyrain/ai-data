@@ -2,17 +2,17 @@ import type { AuthContext } from "./auth-types";
 
 /** 进程内缓存的一条身份上下文及其失效时间。 */
 type CacheEntry = {
-  /** 已通过会话和权限版本校验的身份上下文。 */
+  /** 写入时已由认证服务加载的身份与权限快照。 */
   context: AuthContext;
   /** 缓存失效时间戳，单位为毫秒。 */
   expiresAt: number;
 };
 
-/** 进程内身份上下文缓存；部署到多实例时替换为共享缓存实现。 */
+/** 单实例身份上下文缓存，默认存活 60 秒；主动失效只作用于当前进程。 */
 class AuthContextCache {
   private readonly entries = new Map<string, CacheEntry>();
   constructor(private readonly ttlMilliseconds = 60_000) {}
-  /** 读取未过期的会话身份上下文。 */
+  /** 读取会话快照；过期条目在本次读取时移除。 */
   get(sessionId: string): AuthContext | null {
     const entry = this.entries.get(sessionId);
     if (!entry) return null;

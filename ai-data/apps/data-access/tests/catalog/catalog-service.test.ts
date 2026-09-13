@@ -4,8 +4,8 @@ import { CatalogService } from "../../src/catalog/catalog-service";
 import type { DataSourceConnector } from "../../src/connectors/connector";
 import type { DiscoveredDataset } from "../../src/connectors/connector-catalog";
 
+// 连接器提供原始发现结果，白名单提供逻辑映射；两者由独立替身返回以核对目录交集。
 describe("DAS 目录服务", () => {
-  // BDD 场景：业务数据库发现多个物理对象；TDD 断言：目录只返回 DAS 白名单中精确映射的对象。
   it("将数据库目录与暴露对象白名单取交集", async () => {
     const service = new CatalogService(
       createConnectorLookup("sqlserver", [
@@ -50,7 +50,6 @@ describe("DAS 目录服务", () => {
     ]);
   });
 
-  // BDD 场景：HTTP 数据源由管理员定义虚拟表；TDD 断言：目录直接返回虚拟表定义的统一结构。
   it("返回 HTTP API 虚拟表目录", async () => {
     const service = new CatalogService(
       createConnectorLookup("http_api", [

@@ -8,15 +8,18 @@ import type { MetadataBatchExecutor } from "@ai-data/metadata";
 /** 测试目录与应用根目录下的实际 SQL 迁移文件。 */
 const migrationsDirectory = fileURLToPath(new URL("../../migrations", import.meta.url));
 
+// 加载应用实际发布的 SQL 文件，以记录批次的执行器检查顺序；本组不执行数据库 DDL。
 describe("DAS 元数据表迁移", () => {
-  // BDD 场景：部署人员审阅独立 SQL 迁移；TDD 断言：迁移按版本文件名排序加载。
   it("按文件名顺序加载外置 SQL 迁移", () => {
     expect(
       loadSqlServerMigrations(migrationsDirectory).map((migration) => migration.fileName),
-    ).toEqual(["000_schema_migrations.sql", "001_initial_das_metadata_schema.sql"]);
+    ).toEqual([
+      "000_schema_migrations.sql",
+      "001_initial_das_metadata_schema.sql",
+      "002_procedure_definitions.sql",
+    ]);
   });
 
-  // BDD 场景：DAS 启动；TDD 断言：所有 SQL 文件依次交给数据库执行器。
   it("按顺序执行所有外置 SQL 迁移", async () => {
     const executedBatches: string[] = [];
     const executor: MetadataBatchExecutor = {
@@ -27,9 +30,10 @@ describe("DAS 元数据表迁移", () => {
 
     await applySqlServerMigrations(executor, migrationsDirectory);
 
-    expect(executedBatches).toHaveLength(2);
+    expect(executedBatches).toHaveLength(3);
     expect(executedBatches[0]).toContain("CREATE TABLE dbo.schema_migrations");
     expect(executedBatches[1]).toContain("CREATE TABLE dbo.data_source_configs");
     expect(executedBatches[1]).toContain("CREATE TABLE dbo.query_audit_logs");
+    expect(executedBatches[2]).toContain("ADD procedure_definition_json NVARCHAR(MAX) NULL");
   });
 });

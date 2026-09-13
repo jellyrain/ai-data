@@ -34,7 +34,7 @@ class Aes256GcmSecretCipher {
     };
   }
 
-  /** 验证认证标签后恢复完整明文，密文遭篡改时不返回部分结果。 */
+  /** 完成解密及标签认证后才返回完整明文；认证失败时抛出统一错误。 */
   decrypt(encrypted: AesGcmEncryptedPayload, key: Buffer): Buffer {
     assertMasterKey(key);
     const iv = Buffer.from(encrypted.metadata.iv_hex, "hex");
@@ -46,6 +46,7 @@ class Aes256GcmSecretCipher {
     try {
       const decipher = createDecipheriv("aes-256-gcm", key, iv);
       decipher.setAuthTag(authTag);
+      // final 执行认证检查；在它成功前不向调用方返回 update 产生的中间明文。
       return Buffer.concat([decipher.update(encrypted.encryptedPayload), decipher.final()]);
     } catch {
       throw new Error("AES-256-GCM 密文无法通过认证");

@@ -2,8 +2,24 @@ import { describe, expect, it } from "vitest";
 
 import { datasetSchema } from "../../src/catalog/dataset";
 
+// 目录样本同时携带字段、输入参数默认值与过滤能力，用于检查这些元数据能被完整读取。
 describe("数据目录合同", () => {
-  // BDD 场景：目录返回表、字段注释和关系候选；TDD 断言：完整目录对象可以通过校验。
+  it("完整固定输出须有非空且唯一的列集合", () => {
+    const base = {
+      source_id: "clinical",
+      object_id: "report",
+      name: "report",
+      kind: "stored_procedure",
+      has_complete_output: true,
+    };
+    const column = { name: "id", data_type: "integer", nullable: false };
+    expect(datasetSchema.parse({ ...base, columns: [column] }).has_complete_output).toBe(true);
+    expect(datasetSchema.safeParse({ ...base, columns: [] }).success).toBe(false);
+    expect(datasetSchema.safeParse({ ...base, columns: [column, column] }).success).toBe(false);
+    expect(
+      datasetSchema.parse({ ...base, has_complete_output: false, columns: [] }).has_complete_output,
+    ).toBe(false);
+  });
   it("接受带字段和关系信息的数据集描述", () => {
     const result = datasetSchema.parse({
       source_id: "clinical",
@@ -46,7 +62,6 @@ describe("数据目录合同", () => {
     expect(result.query_capabilities?.filter_conditions?.[0]?.name).toBe("visit_id");
   });
 
-  // BDD 场景：目录对象缺少字段类型；TDD 断言：不完整元数据必须拒绝。
   it("拒绝缺少字段类型的目录对象", () => {
     expect(
       datasetSchema.safeParse({
@@ -59,7 +74,6 @@ describe("数据目录合同", () => {
     ).toBe(false);
   });
 
-  // BDD 场景：调用方尝试把展示层别名写入纯目录；TDD 断言：目录合同拒绝 label 字段。
   it("拒绝字段展示别名", () => {
     expect(
       datasetSchema.safeParse({
