@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { queryResultSchema, stableStringify } from "@ai-data/contracts";
 
 import type { ApiAuthService, ApiQueryAuthorization, ApiQueryClient } from "../app-types";
 import { bearerToken } from "./auth-routes";
@@ -24,7 +25,26 @@ function registerQueryRoutes(
       const authorized = await authorization.authorize(request.body, context);
       const result = await client.execute(authorized, { signal: controller.signal });
       if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "数据查询已取消");
-      return reply.send(result);
+      const current = await authorization.authorize(
+        request.body,
+        await authService.refreshContext(context),
+        authorized.request.access.analysis_run_id,
+      );
+      if (
+        stableStringify(current.request.query) !== stableStringify(authorized.request.query) ||
+        stableStringify(current.request.access.output_masks) !==
+          stableStringify(authorized.request.access.output_masks)
+      )
+        throw new ApplicationError("POLICY_REJECTED", "查询期间数据权限已变化，请重新查询");
+      if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "数据查询已取消");
+      return reply.header("cache-control", "no-store").send(
+        queryResultSchema.parse({
+          ...result,
+          delivery: result.truncated
+            ? { status: "truncated", total_row_count: null }
+            : { status: "complete", total_row_count: result.row_count },
+        }),
+      );
     } finally {
       request.raw.removeListener("aborted", disconnect);
       reply.raw.removeListener("close", disconnect);

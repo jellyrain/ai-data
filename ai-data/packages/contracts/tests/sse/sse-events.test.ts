@@ -10,6 +10,22 @@ const baseEvent = {
 
 // 所有变体复用相同的会话、运行和序号；这些用例检查载荷结构，事件写入负责运行内排序。
 describe("SSE 事件合同", () => {
+  it("压缩事件关联条目并校验状态与真实业务时间", () => {
+    const event = {
+      ...baseEvent,
+      type: "context_compaction",
+      item_id: "compact-1",
+      status: "started",
+      occurred_at: "2026-09-15 16:00:00",
+    };
+    expect(sseEventSchema.safeParse(event).success).toBe(true);
+    expect(sseEventSchema.safeParse({ ...event, status: "completed" }).success).toBe(true);
+    expect(sseEventSchema.safeParse({ ...event, status: "unknown" }).success).toBe(false);
+    expect(sseEventSchema.safeParse({ ...event, item_id: "" }).success).toBe(false);
+    expect(sseEventSchema.safeParse({ ...event, occurred_at: "2026-02-30 16:00:00" }).success).toBe(
+      false,
+    );
+  });
   it("拒绝事件根对象的未知字段", () => {
     expect(
       sseEventSchema.safeParse({ ...baseEvent, type: "run_started", extra: true }).success,

@@ -1,4 +1,5 @@
 import { PassThrough } from "node:stream";
+import { EventEmitter } from "node:events";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import mssql from "mssql";
 import type * as pg from "pg";
@@ -30,12 +31,22 @@ vi.mock("mssql", async (original) => {
           return this;
         }
         request() {
-          return {
+          const request = Object.assign(new EventEmitter(), {
+            stream: false,
             input() {},
+            cancel() {},
             async query() {
+              if (request.stream) {
+                const result = state.result.recordset as Array<Record<string, unknown>> & {
+                  columns: Record<string, unknown>;
+                };
+                request.emit("recordset", result.columns);
+                for (const row of result) request.emit("row", row);
+              }
               return state.result;
             },
-          };
+          });
+          return request;
         }
         async close() {}
       },

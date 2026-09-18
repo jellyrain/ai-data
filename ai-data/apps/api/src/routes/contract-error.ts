@@ -18,6 +18,7 @@ const errorStatus = {
   RATE_LIMITED: 429,
   NOT_FOUND: 404,
   CANCELLED: 409,
+  CONFLICT: 409,
   INTERNAL_ERROR: 500,
 } satisfies Record<ContractErrorCode, number>;
 

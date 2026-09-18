@@ -4,12 +4,18 @@ import type { DataSourceConnectorFactory } from "../data-sources/data-source-man
 import type { ResolvedDataSourceSecret } from "../secrets/secret-resolver";
 import { DatabaseConnectorFactory } from "./database-connector-factory";
 import { HttpApiConnector } from "./http-api-connector";
+import type { DasConfig } from "../config/das-config";
 
 /** DAS 默认连接器工厂，按数据源类型分派数据库或 HTTP API 实现。 */
 class DefaultConnectorFactory implements DataSourceConnectorFactory {
-  private readonly databaseFactory = new DatabaseConnectorFactory();
+  private readonly databaseFactory: DatabaseConnectorFactory;
 
-  constructor(private readonly apiDatasetMappingLookup: ApiDatasetMappingLookup) {}
+  constructor(
+    private readonly apiDatasetMappingLookup: ApiDatasetMappingLookup,
+    sqlServerTransports: DasConfig["sqlserver_transports"] = {},
+  ) {
+    this.databaseFactory = new DatabaseConnectorFactory(sqlServerTransports);
+  }
 
   /** 创建对应类型的独立连接器实例。 */
   async create(config: DataSourceConfig, secret: ResolvedDataSourceSecret) {

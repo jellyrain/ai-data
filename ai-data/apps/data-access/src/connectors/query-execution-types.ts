@@ -6,6 +6,8 @@ interface ConnectorExecutionOptions {
 /** 排队和执行使用的总时间预算，单位毫秒。 */
 interface QueryExecutionOptions extends ConnectorExecutionOptions {
   timeoutMs?: number;
+  /** 业务查询保留最终结果及一行截断探针，目录查询省略。 */
+  resultBudget?: { maxRows: number; maxBytes: number };
 }
 
 /** 资源闸门交给执行任务的信号与剩余时间。 */

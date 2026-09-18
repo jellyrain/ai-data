@@ -240,7 +240,7 @@ describe("对象内预聚合合同", () => {
     ).toBe(false);
   });
 
-  it("预聚合查询的最终行数上限仍为 5000", () => {
-    expect(queryDslSchema.safeParse({ ...query, limit: 5001 }).success).toBe(false);
+  it("预聚合查询的最终行数同样受十万行硬上限控制", () => {
+    expect(queryDslSchema.safeParse({ ...query, limit: 100001 }).success).toBe(false);
   });
 });

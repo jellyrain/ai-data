@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import type { AuthContext } from "./auth-types";
 
 /** 进程内缓存的一条身份上下文及其失效时间。 */
@@ -16,7 +17,7 @@ class AuthContextCache {
   get(sessionId: string): AuthContext | null {
     const entry = this.entries.get(sessionId);
     if (!entry) return null;
-    if (entry.expiresAt <= Date.now()) {
+    if (!dayjs(entry.expiresAt).isAfter(dayjs())) {
       this.entries.delete(sessionId);
       return null;
     }
@@ -24,7 +25,10 @@ class AuthContextCache {
   }
   /** 写入会话身份上下文并设置过期时间。 */
   set(sessionId: string, context: AuthContext): void {
-    this.entries.set(sessionId, { context, expiresAt: Date.now() + this.ttlMilliseconds });
+    this.entries.set(sessionId, {
+      context,
+      expiresAt: dayjs().add(this.ttlMilliseconds, "millisecond").valueOf(),
+    });
   }
   /** 删除指定会话的身份上下文。 */
   delete(sessionId: string): void {

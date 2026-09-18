@@ -25,15 +25,50 @@ class QueryAuthorizationService {
   constructor(
     private readonly catalog: BusinessCatalogService,
     private readonly jwt: JwtService,
-    private readonly policyVersion = 1,
+    private readonly policyVersion:
+      number | ((context: AuthContext, sourceId: string) => Promise<number>) = 1,
   ) {}
 
   /** 按查询类型执行当前校验分支，将转换后的 DSL 与访问上下文一起签名。 */
   async authorize(
     input: unknown,
     context: AuthContext,
-    analysisRunId = crypto.randomUUID(),
+    analysisRunId: string = crypto.randomUUID(),
   ): Promise<AuthorizedQuery> {
+    const { query: authorizedQuery, outputMasks } = await this.preview(input, context);
+    const policyVersion =
+      typeof this.policyVersion === "number"
+        ? this.policyVersion
+        : await this.policyVersion(context, authorizedQuery.source_id);
+    const access: QueryAccessContext = {
+      user_id: context.userId,
+      organization_id: context.organizationId,
+      analysis_run_id: analysisRunId,
+      policy_version: policyVersion,
+      expires_at: dayjs().utcOffset(8).add(55, "second").format("YYYY-MM-DD HH:mm:ss"),
+      output_masks: outputMasks,
+    };
+    const token = await this.jwt.signInternalQueryToken({
+      userId: context.userId,
+      organizationId: context.organizationId,
+      analysisRunId,
+      policyVersion,
+    });
+    return {
+      request: {
+        access,
+        query: authorizedQuery,
+        signature: this.jwt.signQueryRequest(access, authorizedQuery),
+      },
+      token,
+    };
+  }
+
+  /** 权限预览复用执行时的转换，返回查询条件和脱敏规则。 */
+  async preview(
+    input: unknown,
+    context: AuthContext,
+  ): Promise<{ query: QueryDsl; outputMasks: QueryAccessContext["output_masks"] }> {
     const parsed = dataAccessQueryRequestSchema.shape.query.safeParse(input);
     if (!parsed.success) throw new QueryAuthorizationError("查询 DSL 格式无效", "INVALID_INPUT");
     const query = parsed.data;
@@ -59,29 +94,7 @@ class QueryAuthorizationService {
       outputMasks = result.outputMasks;
     }
 
-    const access: QueryAccessContext = {
-      user_id: context.userId,
-      organization_id: context.organizationId,
-      analysis_run_id: analysisRunId,
-      policy_version: this.policyVersion,
-      // 请求比 60 秒内部 JWT 提前 5 秒过期，为传输和验签留出时间差。
-      expires_at: dayjs().utcOffset(8).add(55, "second").format("YYYY-MM-DD HH:mm:ss"),
-      output_masks: outputMasks,
-    };
-    const token = await this.jwt.signInternalQueryToken({
-      userId: context.userId,
-      organizationId: context.organizationId,
-      analysisRunId,
-      policyVersion: this.policyVersion,
-    });
-    return {
-      request: {
-        access,
-        query: authorizedQuery,
-        signature: this.jwt.signQueryRequest(access, authorizedQuery),
-      },
-      token,
-    };
+    return { query: authorizedQuery, outputMasks };
   }
 
   /** 按别名收集当前可见对象及业务配置，拒绝重复别名和不可见的关联对象。 */

@@ -108,6 +108,7 @@ describe("连接器端到端资源限制", () => {
     expect(driver.query).toHaveBeenCalledWith(expect.any(String), [], {
       signal: expect.any(AbortSignal),
       timeoutMs: expect.any(Number),
+      resultBudget: { maxRows: 11, maxBytes: 32 * 1024 * 1024 },
     });
     const closing = connector.close();
     expect(await runningOutcome).toMatchObject({ code: "DATA_SOURCE_UNAVAILABLE" });

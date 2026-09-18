@@ -8,4 +8,5 @@ apps/data-access/config/das.config.json
 apps/api/config/api.config.json
 apps/data-access/secrets/
 apps/api/secrets/
+/secrets/
 *.log

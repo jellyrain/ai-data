@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import type { QueryExecutionOptions } from "./query-execution-types";
 import { QueryResourceError, queryAbortError } from "./query-resource-error";
 
@@ -16,7 +17,7 @@ class DatabaseQueryControl {
     timeoutMs: number,
   ) {
     const budget = Math.min(options.timeoutMs ?? timeoutMs, timeoutMs);
-    this.deadline = Date.now() + budget;
+    this.deadline = dayjs().add(budget, "millisecond").valueOf();
     this.signal = this.controller.signal;
     this.onExternalAbort = () => this.controller.abort(queryAbortError(options.signal!));
     this.timer = setTimeout(
@@ -32,11 +33,11 @@ class DatabaseQueryControl {
   /** 每次借出连接或开始新原生请求前重新检查剩余时间。 */
   get remainingMs(): number {
     this.throwIfCancelled();
-    return Math.max(1, this.deadline - Date.now());
+    return Math.max(1, dayjs(this.deadline).diff(dayjs()));
   }
 
   throwIfCancelled(): void {
-    if (!this.signal.aborted && Date.now() >= this.deadline)
+    if (!this.signal.aborted && !dayjs().isBefore(this.deadline))
       this.controller.abort(new QueryResourceError("QUERY_TIMEOUT"));
     if (this.signal.aborted) throw queryAbortError(this.signal);
   }

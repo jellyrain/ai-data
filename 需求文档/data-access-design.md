@@ -3,7 +3,7 @@
 版本：v0.2  
 状态：MVP 设计基线已确认，实现按开发清单验收  
 设计基线日期：2026-09-11  
-关联文档：[technical-design.md](./technical-design.md) · [contracts.md](./contracts.md) · [dependencies.md](./dependencies.md)
+关联文档：[technical-design.md](./technical-design.md) · [contracts.md](./contracts.md) · [dependencies.md](./dependencies.md) · [result-delivery-and-export.md](./result-delivery-and-export.md)
 
 ## 1. 定位
 
@@ -22,13 +22,13 @@ Authorization: Bearer <短时 JWT>
 
 ## 2. 职责边界
 
-| 组件                  | 负责内容                                                                                                                                  |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| API                   | 登录认证、角色权限、关联关系和指标统计规则配置，完成业务校验及查询构建，生成并签名最终可执行 DSL。                                        |
-| Codex Harness         | 依据 Skill、指标知识、API Catalog 和查询证据动态决定分析路径，调用 API 工具。                                                             |
-| Data Access Service   | 管理 `das.config.json`、SQL Server 元数据与审计；验签、映射本地对象白名单、收紧资源限制、编译执行 DSL，并在结果出口执行已签名的脱敏规则。 |
-| 数据源连接器          | 声明能力、编译并执行具体数据源请求。                                                                                                      |
-| SQL Server / 外部 API | 保存或提供业务数据并执行各自的只读请求。                                                                                                  |
+| 组件                         | 负责内容                                                                                                                                  |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| API                          | 登录认证、角色权限、关联关系和指标统计规则配置，完成业务校验及查询构建，生成并签名最终可执行 DSL。                                        |
+| 模型运行时 / AnalysisHarness | 依据 Skill、指标知识、API Catalog 和查询证据动态决定分析路径，通过 API 执行器调用受控工具。                                               |
+| Data Access Service          | 管理 `das.config.json`、SQL Server 元数据与审计；验签、映射本地对象白名单、收紧资源限制、编译执行 DSL，并在结果出口执行已签名的脱敏规则。 |
+| 数据源连接器                 | 声明能力、编译并执行具体数据源请求。                                                                                                      |
+| SQL Server / 外部 API        | 保存或提供业务数据并执行各自的只读请求。                                                                                                  |
 
 浏览器和 Agent 都不能直连业务数据源。Agent 也不能自行声明用户、角色、可读对象或行过滤条件。
 
@@ -52,7 +52,7 @@ DAS 的唯一启动配置文件 `das.config.json` 至少包含：
 api_base_url               # API Host 和内部调用根地址
 api_endpoints              # 心跳、目录同步等内部端点
 jwt_verification_public_key # API 签发 JWT 的验签公钥
-metadata_sqlserver         # DAS 元数据 SQL Server 的连接配置或 secret_ref
+metadata_sqlserver         # DAS 元数据 SQL Server 的本地启动连接配置
 tls_and_instance           # TLS、服务实例标识和非敏感运行参数
 ```
 
@@ -65,7 +65,7 @@ api_dataset_response_mappings # HTTP API 虚拟表的固定请求、行路径、
 query_audit_logs           # DAS 实际执行、拒绝、超时和失败的审计事件
 ```
 
-API 对接地址和 JWT 验签公钥必须在 DAS 连接元数据数据库前可用，因此只由 `das.config.json` 加载，而不从数据库读取。配置文件中的敏感连接值通过密钥系统或 `secret_ref` 引用，不写入普通配置文件。DAS 的对象暴露白名单仅限定 API 可以发现和请求的物理对象，不替代 API 对最终用户计算的对象、字段和行级权限。
+API 对接地址和 JWT 验签公钥必须在 DAS 连接元数据数据库前可用，因此由 `das.config.json` 加载。API 与 DAS 的元数据库启动凭据分别保存在本地 `api.config.json` 和 `das.config.json` 的 `metadata_sqlserver` 中，包含必填 `password`；文件由部署账号权限保护并排除在 Git 之外。业务数据源凭据通过 DAS 密钥系统和 `secret_ref` 管理。DAS 的对象暴露白名单仅限定 API 可以发现和请求的物理对象，不替代 API 对最终用户计算的对象、字段和行级权限。
 
 Data Access Service 在每次请求中验证 API 签发的短时访问凭证与请求签名。API 读取用户、角色和权限策略，完成对象、字段、Join、参数与权限校验，按查询别名和关联语义确定条件位置及受控参数。DAS 信任这份已签名的最终 DSL，按自身对象白名单和资源限制编译执行。Catalog 由 API 管理并提供给模型；DAS 只执行 API 在 `access.output_masks` 中给出的结果脱敏规则。
 
@@ -248,7 +248,7 @@ DAS 按最终 DSL 的位置和结构编译执行。实际 SQL 的物理对象、
 用户请求
 -> API 完成认证、加载角色和原始权限策略
 -> API 创建 analysis_run，加载原始权限策略
--> Codex Harness 根据 Skill、当前目录、指标知识和查询证据提出查询意图
+-> 模型运行时根据 Skill、当前目录、指标知识和查询证据提出查询意图
 -> API 完成关联、统计、参数和权限处理，生成最终可执行 DSL；写入审计和脱敏 access，计算 signature
 -> Data Access Service 校验 JWT、signature 与完整内部请求
 -> Data Access Service 根据 source_id 选择受保护数据源配置
@@ -310,7 +310,9 @@ source_id
 
 每个数据源统一控制查询并发和排队：活动上限与等待容量均使用 `concurrency_limit`，队列满时返回明确的繁忙错误，调用方可重试。`timeout_ms` 覆盖进入连接器后的排队和执行；取消沿 API HTTP 请求、DAS 查询与驱动传播，已中断请求的晚到结果不再交付。中断后并发名额保留到驱动完成清理，数据源关闭时拒绝等待任务、取消在途任务并等待连接归还。
 
-SQL Server 使用请求取消，MySQL 与 PostgreSQL 关闭本次借用连接，Oracle 使用调用超时与中断能力，HTTP 请求使用取消信号。驱动取消的真实数据库效果仍需部署环境验收。`row_limit` 控制单次响应数量，超过时明确标记 `truncated`；大批量完整明细的分页或导出作为后续查询交付能力。`cost_limit` 仅兼容历史配置，新配置可省略，不参与执行控制。
+SQL Server 使用请求取消，MySQL 与 PostgreSQL 关闭本次借用连接，Oracle 使用调用超时与中断能力，HTTP 请求使用取消信号。真实数据库效果按对应环境验收记录跟踪。`row_limit` 控制单次响应数量，超过时明确标记 `truncated`。`cost_limit` 仅兼容历史配置，新配置可省略，不参与执行控制。
+
+2026-09-14 确认的[结果交付设计](./result-delivery-and-export.md)已完成本轮 API/DAS 实现：行数硬上限为 100,000，标准化结果预算为 32 MiB，数据源时间预算继续使用已配置的 `timeout_ms`；结果包含显式完整性。`row_count` 为实际交付条数，完整结果才能据此计算精确总行数和总页数。DAS 31 项 SQL Server 集成通过，具体链路与场景见[验收记录](./result-delivery-and-export.md#85-本轮验收记录2026-09-14)；浏览器本地分页、虚拟滚动和三种文件生成按后续阶段实施。
 
 以下情况必须拒绝执行：
 

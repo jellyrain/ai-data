@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { MAX_QUERY_TABLE_BYTES } from "@ai-data/contracts";
 
 import type { DataSourceConfig } from "../data-sources/data-source-types";
 import type { ConnectorKind, DataSourceConnector } from "./connector";
@@ -16,6 +17,7 @@ import type {
   QueryExecutionOptions,
 } from "./query-execution-types";
 import { QueryResourceGate } from "./query-resource-gate";
+import { assertResultBudget } from "./result-budget";
 
 /** 数据库驱动返回的一行记录。 */
 type DatabaseRow = Record<string, unknown>;
@@ -132,7 +134,10 @@ class DatabaseConnector implements DataSourceConnector {
       throw new Error("存储过程缺少可执行的固定输出定义或原生调用支持");
     }
     const compiled = compileSqlQuery(query, this.dialect);
-    const result = await this.driver.query(compiled.sql, compiled.parameters, options);
+    const result = await this.driver.query(compiled.sql, compiled.parameters, {
+      ...options,
+      resultBudget: { maxRows: query.row_limit + 1, maxBytes: MAX_QUERY_TABLE_BYTES },
+    });
     if (query.type === "parameterized_query") {
       const expected = query.fixed_output!;
       const actual = result.columns;
@@ -200,6 +205,7 @@ class DatabaseConnector implements DataSourceConnector {
         }),
       );
     });
+    assertResultBudget({ columns, rows });
     return connectorExecutionResultSchema.parse({
       columns,
       rows,

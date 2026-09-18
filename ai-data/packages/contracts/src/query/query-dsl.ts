@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_QUERY_ROWS } from "./query-limits";
 import { datasetColumnSchema } from "../catalog/dataset";
 import { queryOperatorSchema } from "./query-operators";
 import { dataTypeSchema, isDataValue } from "../shared/data-values";
@@ -105,6 +106,8 @@ const joinSchema = z
 
     /** API 目录中已批准关系的标识；省略时由 API 按字段等值条件匹配关系。 */
     relation_id: identifier.min(1, "relation_id 不能为空").optional(),
+    /** 完整批准关系之外的带值匹配条件；只引用当前及此前加入的对象，在 ON 阶段执行。 */
+    on_filters: filterGroupSchema.optional(),
 
     /** 此对象参与关联前执行的过滤；只引用自身别名，省略时使用完整对象输入。 */
     filters: filterGroupSchema.optional(),
@@ -194,8 +197,8 @@ const relationalQuerySchema = z
     group_by: z.array(identifier).default([]),
     /** 排序字段和方向；省略时不指定结果顺序。 */
     order_by: z.array(orderBySchema).default([]),
-    /** 显式结果行数上限，合同最多接受 5000；省略时交由执行侧的数据源上限控制。 */
-    limit: z.number().int().min(1).max(5000).optional(),
+    /** 显式结果行数上限，合同最多接受十万行；省略时交由执行侧的数据源上限控制。 */
+    limit: z.number().int().min(1).max(MAX_QUERY_ROWS).optional(),
   })
   .strict();
 
@@ -239,8 +242,8 @@ const parameterizedQuerySchema = z
           context.addIssue({ code: "custom", message: "固定输出列名不能重复" });
       })
       .optional(),
-    /** 显式结果行数上限，合同最多接受 5000；省略时交由执行侧的数据源上限控制。 */
-    limit: z.number().int().min(1).max(5000).optional(),
+    /** 显式结果行数上限，合同最多接受十万行；省略时交由执行侧的数据源上限控制。 */
+    limit: z.number().int().min(1).max(MAX_QUERY_ROWS).optional(),
   })
   .strict();
 

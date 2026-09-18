@@ -1,3 +1,4 @@
+import { MAX_QUERY_ROWS } from "@ai-data/contracts";
 import {
   datasetColumnSchema,
   dataTypeSchema,
@@ -115,6 +116,8 @@ type ExecutableFilteredRelation = z.infer<typeof executableFilteredRelationSchem
 /** 已映射物理对象的 Join 定义；连接对象与 on 字段对均拒绝未知字段。 */
 const executableJoinSchema = z
   .object({
+    /** 批准列对之外的带值 ON 条件，仅使用当前连接作用域。 */
+    on_filters: executableFilterGroupSchema.optional(),
     /** 当前只支持可安全编译的标准 Join 类型。 */
     type: z.enum(["inner", "left", "right"]),
     /** 参与 Join 的已映射关系。 */
@@ -168,8 +171,8 @@ const executableRelationalQuerySchema = z
     source_id: z.string().min(1),
     /** 数据源配置的超时，单位毫秒，允许 100 毫秒至 120 秒；由驱动或客户端落实。 */
     timeout_ms: z.number().int().min(100).max(120000),
-    /** 按请求和数据源配置取较小值后的返回上限，最多 5000 行。 */
-    row_limit: z.number().int().min(1).max(5000),
+    /** 按请求和数据源配置取较小值后的返回上限，最多十万行。 */
+    row_limit: z.number().int().min(1).max(MAX_QUERY_ROWS),
     /** 主对象物理映射。 */
     from: executableFilteredRelationSchema,
     /** Join 对象物理映射。 */
@@ -230,6 +233,10 @@ const executableRelationalQuerySchema = z
         assertField(condition.left, preceding);
         assertField(condition.right, current);
       }
+      if (join.on_filters)
+        validateFilterScope(join.on_filters, (field) =>
+          assertField(field, new Map([...preceding, ...current])),
+        );
     }
     validateFilterScope(query.filters, (field) => assertField(field, scopes));
     const outputs = new Set(query.select.map((selection) => selection.as));
@@ -283,8 +290,8 @@ const executableParameterizedQuerySchema = z
     source_id: z.string().min(1),
     /** 数据源配置的超时，单位毫秒，允许 100 毫秒至 120 秒；由驱动或客户端落实。 */
     timeout_ms: z.number().int().min(100).max(120000),
-    /** 按请求和数据源配置取较小值后的返回上限，最多 5000 行。 */
-    row_limit: z.number().int().min(1).max(5000),
+    /** 按请求和数据源配置取较小值后的返回上限，最多十万行。 */
+    row_limit: z.number().int().min(1).max(MAX_QUERY_ROWS),
     /** 已映射到固定存储过程或 API 虚拟表的对象。 */
     from: executableRelationSchema,
     /** API 已完成业务校验的调用参数。 */

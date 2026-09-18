@@ -12,6 +12,7 @@
     "registration_credential_path": "../secrets/api-registration.jwt",
     "jwt_verification_public_key_path": "../../api/secrets/jwt-public.pem"
   },
+  "sqlserver_transports": {},
   "metadata_sqlserver": {
     "server": "127.0.0.1",
     "port": 1433,

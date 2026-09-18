@@ -1,5 +1,17 @@
 import { z } from "zod";
 import { dataTypeSchema, isDataValue } from "../shared/data-values";
+import { MAX_QUERY_ROWS } from "./query-limits";
+
+/** 完整返回才有精确总行数；截断结果的 row_count 仅代表当前已交付行数。 */
+const queryResultDeliverySchema = z.discriminatedUnion("status", [
+  z
+    .object({
+      status: z.literal("complete"),
+      total_row_count: z.number().int().min(0).max(MAX_QUERY_ROWS),
+    })
+    .strict(),
+  z.object({ status: z.literal("truncated"), total_row_count: z.null() }).strict(),
+]);
 
 /** 查询结果列的标准化元数据，仅接受声明字段。 */
 const queryResultColumnSchema = z
@@ -17,7 +29,7 @@ const queryResultTableSchema = z
     /** 返回列定义。 */
     columns: z.array(queryResultColumnSchema),
     /** 结果行，键为列名，值由连接器标准化。 */
-    rows: z.array(z.record(z.string(), z.unknown())),
+    rows: z.array(z.record(z.string(), z.unknown())).max(MAX_QUERY_ROWS),
   })
   .strict()
   .superRefine((table, context) => {
@@ -67,12 +79,31 @@ const queryResultSchema = queryResultTableSchema
     row_count: z.number().int().nonnegative(),
     /** 是否因 limit 或连接器限制截断。 */
     truncated: z.boolean(),
+    /** 新响应的完整性说明；可省略以读取历史证据和旧版 DAS 响应。 */
+    delivery: queryResultDeliverySchema.optional(),
     /** 数据新鲜度说明，可由连接器提供。 */
     freshness: z.string().optional(),
   })
   .refine((result) => result.row_count === result.rows.length, {
     path: ["row_count"],
     message: "row_count 必须等于当前返回的 rows 数量",
-  });
+  })
+  .refine(
+    (result) =>
+      !result.delivery ||
+      (result.truncated
+        ? result.delivery.status === "truncated"
+        : result.delivery.status === "complete" &&
+          result.delivery.total_row_count === result.row_count),
+    {
+      path: ["delivery"],
+      message: "结果完整性及总行数必须与当前表格一致",
+    },
+  );
 
-export { queryResultColumnSchema, queryResultSchema, queryResultTableSchema };
+export {
+  queryResultColumnSchema,
+  queryResultSchema,
+  queryResultTableSchema,
+  queryResultDeliverySchema,
+};

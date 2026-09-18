@@ -60,6 +60,7 @@ node_modules/
 *.log
 
 # Runtime data
+/secrets/
 *.pid
 *.pid.lock
 

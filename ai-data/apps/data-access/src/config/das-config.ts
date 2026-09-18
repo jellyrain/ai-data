@@ -43,6 +43,20 @@ const dasConfigSchema = z
           .min(1, "api.jwt_verification_public_key_path 不能为空"),
       })
       .strict(),
+    /** 按 source_id 配置业务 SQL Server 链路；省略的源默认加密并验证服务器证书。 */
+    sqlserver_transports: z
+      .record(
+        z.string().min(1, "source_id 不能为空").max(128),
+        z
+          .object({
+            /** 当前业务数据源是否启用传输加密。 */
+            encrypt: z.boolean(),
+            /** 当前业务数据源是否信任其服务器证书，由部署方按证书配置选择。 */
+            trust_server_certificate: z.boolean(),
+          })
+          .strict(),
+      )
+      .optional(),
     /** DAS 自己的 SQL Server 元数据和审计数据库连接配置。 */
     metadata_sqlserver: z
       .object({

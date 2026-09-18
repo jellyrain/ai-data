@@ -2,6 +2,7 @@ import type { ConnectorExecutionResult } from "../connectors/connector-result";
 import type { DataSourceConnector } from "../connectors/connector";
 import { applyOutputMasks } from "./result-masker";
 import type { QueryPlanner } from "../query-planning/query-planner";
+import { assertResultBudget } from "../connectors/result-budget";
 
 /** 查询执行阶段按 source_id 获取已缓存业务连接器的能力。 */
 interface QueryConnectorLookup {
@@ -28,7 +29,14 @@ class QueryExecutionService {
     options?.signal?.throwIfAborted();
     const result = await connector.execute(planned.query, options);
     options?.signal?.throwIfAborted();
-    return applyOutputMasks(result, planned.access);
+    const masked = applyOutputMasks(result, planned.access);
+    assertResultBudget(masked);
+    return {
+      ...masked,
+      delivery: masked.truncated
+        ? { status: "truncated", total_row_count: null }
+        : { status: "complete", total_row_count: masked.row_count },
+    };
   }
 }
 

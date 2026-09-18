@@ -1,4 +1,4 @@
-import { queryResultSchema, type QueryResult } from "@ai-data/contracts";
+import { queryResultSchema, MAX_QUERY_RESPONSE_BYTES, type QueryResult } from "@ai-data/contracts";
 import type { DataAccessServiceRegistry } from "./data-access-types";
 import type { AuthorizedQuery } from "../query/query-authorization-service";
 import { ApplicationError } from "../errors/application-error";
@@ -26,6 +26,7 @@ class DataAccessQueryClient {
       input.token,
       "POST",
       options?.signal,
+      { maxBytes: MAX_QUERY_RESPONSE_BYTES, timeoutMs: 135000 },
     );
   }
 }

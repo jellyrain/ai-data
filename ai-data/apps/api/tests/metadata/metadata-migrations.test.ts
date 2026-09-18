@@ -15,6 +15,12 @@ describe("API 元数据库迁移", () => {
     expect(migrations.map((migration) => migration.fileName)).toEqual([
       "000_schema_migrations.sql",
       "001_initial_auth_schema.sql",
+      "002_department_scopes.sql",
+      "003_analysis_runtime.sql",
+      "004_metrics_and_reports.sql",
+      "005_catalog_policy_versions.sql",
+      "006_analysis_dispatch.sql",
+      "007_codex_threads.sql",
     ]);
     expect(migrations[0]?.sql).toContain("CREATE TABLE dbo.schema_migrations");
     expect(migrations[1]?.sql).toContain("CREATE TABLE dbo.users");

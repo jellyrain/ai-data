@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import type {
   ActiveQueryOptions,
   QueryExecutionOptions,
@@ -45,7 +46,7 @@ class QueryResourceGate {
     const timeoutMs = Math.min(options.timeoutMs ?? this.config.timeoutMs, this.config.timeoutMs);
     if (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
       return Promise.reject(new QueryResourceError("QUERY_TIMEOUT"));
-    const deadline = Date.now() + timeoutMs;
+    const deadline = dayjs().add(timeoutMs, "millisecond").valueOf();
     return new Promise<T>((resolve, reject) => {
       const controller = new AbortController();
       let settled = false;
@@ -65,7 +66,7 @@ class QueryResourceGate {
         },
         start: () => {
           if (settled) return;
-          const remainingMs = deadline - Date.now();
+          const remainingMs = dayjs(deadline).diff(dayjs());
           if (remainingMs <= 0) {
             entry.abort(new QueryResourceError("QUERY_TIMEOUT"));
             return;
@@ -74,7 +75,7 @@ class QueryResourceGate {
           void (async () => {
             try {
               const result = await task({ signal: controller.signal, timeoutMs: remainingMs });
-              if (!settled && Date.now() >= deadline)
+              if (!settled && !dayjs().isBefore(deadline))
                 entry.abort(new QueryResourceError("QUERY_TIMEOUT"));
               if (!settled) {
                 settled = true;

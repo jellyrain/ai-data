@@ -9,6 +9,22 @@ import type { DataAccessQueryClient } from "./data-access/data-access-query-clie
 import type { QueryAuthorizationService } from "./query/query-authorization-service";
 import type { DataAccessSessionService } from "./data-access/data-access-session-service";
 import type { DataAccessManagementClient } from "./data-access/data-access-management-client";
+import type { AnalysisRunService } from "./analysis-runs/analysis-run-service";
+import type { MetricService } from "./metrics/metric-service";
+import type { ReportService } from "./reports/report-service";
+import type { CatalogAdminService } from "./catalog-admin/catalog-admin-service";
+import type { AnalysisDispatcher } from "./runtime/runtime-types";
+import type { SqlRuntimeRepository } from "./runtime/sql-runtime-repository";
+
+/** 分析运行、指标执行和报告的 HTTP 服务边界。 */
+type ApiAnalysisServices = {
+  runs: Pick<
+    AnalysisRunService,
+    "get" | "events" | "evidence" | "steps" | "answer" | "cancel" | "execute"
+  >;
+  metrics: Pick<MetricService, "publish" | "list" | "get" | "execute">;
+  reports: Pick<ReportService, "save" | "get">;
+};
 
 /** HTTP 认证及用户管理所需的公开能力；服务实现的私有状态不进入装配边界。 */
 type ApiAuthService = Pick<
@@ -17,10 +33,12 @@ type ApiAuthService = Pick<
   | "refresh"
   | "logout"
   | "loadContext"
+  | "refreshContext"
   | "createManagedUser"
   | "listManagedUsers"
   | "findManagedUser"
   | "updateManagedUserStatus"
+  | "updateManagedUserDepartments"
 >;
 /** 会话路由使用的读写能力。 */
 type ApiConversationService = Pick<
@@ -47,6 +65,7 @@ type ApiDependencies = {
   auth: ApiAuthService;
   /** 会话、消息和分析运行服务。 */
   conversations: ApiConversationService;
+  analysis: ApiAnalysisServices;
   /** DAS 实例发现与物理目录读取。 */
   dataAccess: {
     registry: Pick<
@@ -57,7 +76,26 @@ type ApiDependencies = {
     managementClient: Pick<DataAccessManagementClient, "execute">;
   };
   /** 业务目录服务及角色权限持久化。 */
-  catalog: { service: ApiCatalogService; permissions: CatalogPermissionRepository };
+  catalog: {
+    service: ApiCatalogService;
+    permissions: CatalogPermissionRepository;
+    admin: Pick<
+      CatalogAdminService,
+      | "saveObjectPermission"
+      | "saveColumnPermission"
+      | "saveRowPolicy"
+      | "listVersions"
+      | "getVersion"
+      | "previewQuery"
+    >;
+  };
+  /** 启用模型分析时必须装配调度器及审计读取能力。 */
+  runtime?: {
+    start(): Promise<void>;
+    close(): Promise<void>;
+    dispatcher: AnalysisDispatcher;
+    repository: Pick<SqlRuntimeRepository, "listAudits">;
+  };
   /** 查询授权与内部查询执行。 */
   query: { authorization: ApiQueryAuthorization; client: ApiQueryClient };
 };
@@ -69,4 +107,5 @@ export type {
   ApiCatalogService,
   ApiQueryAuthorization,
   ApiQueryClient,
+  ApiAnalysisServices,
 };

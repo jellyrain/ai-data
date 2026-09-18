@@ -11,3 +11,4 @@ export type {
   MetadataQueryResult,
   MetadataStatement,
 } from "./metadata-types";
+export type { MetadataTransactionalExecutor } from "./metadata-types";

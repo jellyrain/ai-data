@@ -2,6 +2,7 @@ import { z } from "zod";
 import { queryDslSchema } from "../query/query-dsl";
 import { datasetSchema } from "../catalog/dataset";
 import { queryResultSchema } from "../query/query-result";
+import { saveReportInputSchema, savedReportSchema } from "../reports/report";
 
 /** search_catalog 的检索条件；仅接受声明字段，最多返回 100 项目录结果。 */
 const searchCatalogInputSchema = z
@@ -63,7 +64,13 @@ const queryDatasetInputSchema = z
 /** query_dataset 返回标准化列、结果行和截断等结果元数据。 */
 const queryDatasetOutputSchema = queryResultSchema;
 
+/** save_report 通过 API 关联运行证据并生成版本化快照。 */
+const saveReportToolInputSchema = saveReportInputSchema;
+const saveReportToolOutputSchema = savedReportSchema;
+
 export {
+  saveReportToolInputSchema,
+  saveReportToolOutputSchema,
   describeDatasetInputSchema,
   describeDatasetOutputSchema,
   listDatasetsInputSchema,

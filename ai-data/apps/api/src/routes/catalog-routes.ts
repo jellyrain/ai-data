@@ -1,9 +1,4 @@
-import {
-  apiDatasetConfigSchema,
-  columnPermissionSchema,
-  rowPolicySchema,
-  tablePermissionSchema,
-} from "@ai-data/contracts";
+import { apiDatasetConfigSchema } from "@ai-data/contracts";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 
@@ -11,6 +6,15 @@ import { ApplicationError } from "../errors/application-error";
 import type { ApiAuthService, ApiCatalogService } from "../app-types";
 import type { AuthContext } from "../auth/auth-types";
 import type { CatalogPermissionRepository } from "../catalog/catalog-types";
+import {
+  requireCatalogAdmin,
+  type CatalogAdminService,
+} from "../catalog-admin/catalog-admin-service";
+import {
+  columnPermissionInputSchema,
+  objectPermissionInputSchema,
+  rowPolicyInputSchema,
+} from "../catalog-admin/catalog-admin-schemas";
 import { bearerToken } from "./auth-routes";
 
 /** 目录路径参数，只接受目标数据源标识。 */
@@ -21,16 +25,6 @@ const datasetParamsSchema = sourceParamsSchema.extend({ objectId: z.string().min
 const searchQuerySchema = z
   .object({ query: z.string().min(1), limit: z.coerce.number().int().min(1).max(100).default(20) })
   .strict();
-/** 为共享对象权限合同补充所属数据源，未知字段处理继承权限合同。 */
-const objectPermissionInputSchema = z
-  .object({ source_id: z.string().min(1) })
-  .merge(tablePermissionSchema);
-/** 为共享字段权限合同补充所属数据源，列名与操作约束沿用共享合同。 */
-const columnPermissionInputSchema = z
-  .object({ source_id: z.string().min(1) })
-  .merge(columnPermissionSchema);
-/** 为共享行策略合同补充所属数据源，条件结构沿用共享合同。 */
-const rowPolicyInputSchema = z.object({ source_id: z.string().min(1) }).merge(rowPolicySchema);
 
 /** 从 Access JWT 加载 API 可用于授权目录的身份上下文。 */
 async function currentContext(
@@ -40,18 +34,17 @@ async function currentContext(
   return authService.loadContext(bearerToken(request));
 }
 
-/** 系统管理员或具有 catalog:manage 功能权限的身份可维护目录。 */
-function requireCatalogAdmin(context: AuthContext): void {
-  if (!context.roles.includes("system_admin") && !context.permissions.includes("catalog:manage"))
-    throw new ApplicationError("UNAUTHORIZED", "无目录管理权限");
-}
-
 /** 注册面向当前用户的业务目录读取和管理员目录配置接口。 */
 function registerCatalogRoutes(
   app: FastifyInstance,
   authService: ApiAuthService,
   catalogService: ApiCatalogService,
   permissionRepository: CatalogPermissionRepository,
+  /** 生产装配必需；单模块路由测试可直接使用基础权限仓储。 */
+  adminService?: Pick<
+    CatalogAdminService,
+    "saveObjectPermission" | "saveColumnPermission" | "saveRowPolicy"
+  >,
 ): void {
   app.get("/catalog/datasets/:sourceId", async (request, reply) => {
     const { sourceId } = sourceParamsSchema.parse(request.params);
@@ -99,21 +92,47 @@ function registerCatalogRoutes(
     return reply.code(204).send();
   });
   app.put("/admin/catalog/object-permissions", async (request, reply) => {
-    requireCatalogAdmin(await currentContext(request, authService));
-    const input = objectPermissionInputSchema.parse(request.body);
-    await permissionRepository.saveObjectPermission(input.source_id, input);
+    const context = await currentContext(request, authService);
+    requireCatalogAdmin(context);
+    const { source_id, expected_version, ...input } = objectPermissionInputSchema.parse(
+      request.body,
+    );
+    if (adminService) {
+      const saved = await adminService.saveObjectPermission(
+        context,
+        source_id,
+        input,
+        expected_version,
+      );
+      reply.header("x-policy-version", saved.version);
+    } else await permissionRepository.saveObjectPermission(source_id, input);
     return reply.code(204).send();
   });
   app.put("/admin/catalog/column-permissions", async (request, reply) => {
-    requireCatalogAdmin(await currentContext(request, authService));
-    const input = columnPermissionInputSchema.parse(request.body);
-    await permissionRepository.saveColumnPermission(input.source_id, input);
+    const context = await currentContext(request, authService);
+    requireCatalogAdmin(context);
+    const { source_id, expected_version, ...input } = columnPermissionInputSchema.parse(
+      request.body,
+    );
+    if (adminService) {
+      const saved = await adminService.saveColumnPermission(
+        context,
+        source_id,
+        input,
+        expected_version,
+      );
+      reply.header("x-policy-version", saved.version);
+    } else await permissionRepository.saveColumnPermission(source_id, input);
     return reply.code(204).send();
   });
   app.put("/admin/catalog/row-policies", async (request, reply) => {
-    requireCatalogAdmin(await currentContext(request, authService));
-    const input = rowPolicyInputSchema.parse(request.body);
-    await permissionRepository.saveRowPolicy(input.source_id, input);
+    const context = await currentContext(request, authService);
+    requireCatalogAdmin(context);
+    const { source_id, expected_version, ...input } = rowPolicyInputSchema.parse(request.body);
+    if (adminService) {
+      const saved = await adminService.saveRowPolicy(context, source_id, input, expected_version);
+      reply.header("x-policy-version", saved.version);
+    } else await permissionRepository.saveRowPolicy(source_id, input);
     return reply.code(204).send();
   });
 }

@@ -4,7 +4,7 @@
 
 ## 存储过程
 
-DAS 启动迁移 `002_procedure_definitions.sql` 为 `dbo.exposed_source_objects` 增加 `procedure_definition_json`。管理员通过现有对象白名单接口 `PUT /internal/admin/data-source-objects` 保存定义；该接口替换整个数据源的白名单，请包含所有需要保留的对象。
+DAS 首建迁移 `001_initial_das_metadata_schema.sql` 在 `dbo.exposed_source_objects` 中创建 `procedure_definition_json`。管理员通过现有对象白名单接口 `PUT /internal/admin/data-source-objects` 保存定义；该接口替换整个数据源的白名单，请包含所有需要保留的对象。
 
 以下为 SQL Server 的示例请求。`object_id` 应使用管理目录实际发现的标识，参数按数据库声明顺序填写：
 

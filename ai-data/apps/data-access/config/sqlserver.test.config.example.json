@@ -1,9 +1,9 @@
 {
-  "server": "sqlserver-test.example.internal",
+  "server": "127.0.0.1",
   "port": 1433,
-  "database": "master",
-  "user": "integration_test",
-  "password": "replace-with-test-password",
+  "database": "ai_to_bi",
+  "user": "sa",
+  "password": "123456",
   "options": {
     "encrypt": true,
     "trust_server_certificate": false,

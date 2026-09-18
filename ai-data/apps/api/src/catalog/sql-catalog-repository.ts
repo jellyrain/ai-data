@@ -127,7 +127,7 @@ class SqlCatalogRepository implements ApiDatasetConfigRepository, CatalogPermiss
         {
           name: "operations_json",
           type: "string",
-          value: JSON.stringify(permission.operations ?? null),
+          value: permission.operations === undefined ? null : JSON.stringify(permission.operations),
         },
       ],
     });

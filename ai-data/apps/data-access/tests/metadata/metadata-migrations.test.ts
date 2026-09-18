@@ -13,11 +13,7 @@ describe("DAS 元数据表迁移", () => {
   it("按文件名顺序加载外置 SQL 迁移", () => {
     expect(
       loadSqlServerMigrations(migrationsDirectory).map((migration) => migration.fileName),
-    ).toEqual([
-      "000_schema_migrations.sql",
-      "001_initial_das_metadata_schema.sql",
-      "002_procedure_definitions.sql",
-    ]);
+    ).toEqual(["000_schema_migrations.sql", "001_initial_das_metadata_schema.sql"]);
   });
 
   it("按顺序执行所有外置 SQL 迁移", async () => {
@@ -30,10 +26,10 @@ describe("DAS 元数据表迁移", () => {
 
     await applySqlServerMigrations(executor, migrationsDirectory);
 
-    expect(executedBatches).toHaveLength(3);
+    expect(executedBatches).toHaveLength(2);
     expect(executedBatches[0]).toContain("CREATE TABLE dbo.schema_migrations");
     expect(executedBatches[1]).toContain("CREATE TABLE dbo.data_source_configs");
     expect(executedBatches[1]).toContain("CREATE TABLE dbo.query_audit_logs");
-    expect(executedBatches[2]).toContain("ADD procedure_definition_json NVARCHAR(MAX) NULL");
+    expect(executedBatches[1]).toContain("procedure_definition_json NVARCHAR(MAX) NULL");
   });
 });

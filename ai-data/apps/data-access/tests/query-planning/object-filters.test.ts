@@ -62,6 +62,19 @@ const request = (input: unknown) => ({
 });
 
 describe("对象预过滤物理映射", () => {
+  it("带值 ON 在对象映射后仍保持匹配阶段", async () => {
+    const on_filters = condition("v.dept");
+    expect(
+      (await planner.plan(request({ ...query, joins: [{ ...query.joins[0], on_filters }] }))).query,
+    ).toMatchObject({ joins: [{ on_filters }] });
+  });
+  it("带值 ON 不能引用未来加入的别名", async () => {
+    await expect(
+      planner.plan(
+        request({ ...query, joins: [{ ...query.joins[0], on_filters: condition("later.dept") }] }),
+      ),
+    ).rejects.toThrow();
+  });
   it("按各对象保存过滤，不将可选侧限制移动到查询级", async () => {
     expect((await planner.plan(request(query))).query).toMatchObject({
       from: { filters: condition("v.dept") },

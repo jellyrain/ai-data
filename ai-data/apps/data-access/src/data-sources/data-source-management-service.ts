@@ -1,3 +1,4 @@
+import { MAX_QUERY_ROWS } from "@ai-data/contracts";
 import { z } from "zod";
 
 import type { DiscoveredDataset } from "../connectors/connector-catalog";
@@ -89,7 +90,7 @@ const dataSourceManagementConfigSchema = z
     /** 当前 source_id 同时执行的最大请求数。 */
     concurrency_limit: z.number().int().min(1).max(1000),
     /** 当前 source_id 单次响应允许返回的最大行数。 */
-    row_limit: z.number().int().min(1).max(5000),
+    row_limit: z.number().int().min(1).max(MAX_QUERY_ROWS),
     /** 兼容历史配置的成本字段；新配置可省略，该值不参与执行控制。 */
     cost_limit: z.number().int().positive().optional(),
   })

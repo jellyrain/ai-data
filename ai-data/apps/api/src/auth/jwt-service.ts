@@ -1,4 +1,5 @@
 import { createHash, createSign } from "node:crypto";
+import dayjs from "dayjs";
 import { errors, importPKCS8, importSPKI, jwtVerify, SignJWT } from "jose";
 import { stableStringify, type QueryAccessContext, type QueryDsl } from "@ai-data/contracts";
 
@@ -112,7 +113,7 @@ class JwtService {
 
   /** 为当前查询签发有效期 60 秒的内部 JWT，使用独立于 Access JWT 的固定来源和受众。 */
   async signInternalQueryToken(input: InternalQueryTokenInput): Promise<string> {
-    const issuedAt = Math.floor(Date.now() / 1000);
+    const issuedAt = dayjs().unix();
     return new SignJWT({
       token_use: "das_query",
       org_id: input.organizationId,
@@ -126,7 +127,7 @@ class JwtService {
       .setIssuedAt(issuedAt)
       .setNotBefore(issuedAt)
       .setJti(crypto.randomUUID())
-      .setExpirationTime(issuedAt + 60)
+      .setExpirationTime(dayjs.unix(issuedAt).add(60, "second").unix())
       .sign(this.signingKey);
   }
 
@@ -138,7 +139,7 @@ class JwtService {
     path: string,
     body: unknown,
   ): Promise<string> {
-    const issuedAt = Math.floor(Date.now() / 1000);
+    const issuedAt = dayjs().unix();
     const requestHash = createHash("sha256")
       .update(stableStringify({ method, path, body: body ?? null }))
       .digest("base64url");
@@ -149,14 +150,14 @@ class JwtService {
       .setSubject(this.serviceId)
       .setIssuedAt(issuedAt)
       .setNotBefore(issuedAt)
-      .setExpirationTime(issuedAt + 60)
+      .setExpirationTime(dayjs.unix(issuedAt).add(60, "second").unix())
       .setJti(crypto.randomUUID())
       .sign(this.signingKey);
   }
 
   /** 为已批准实例生成接入凭证，其生命周期由服务启用状态和凭证版本控制。 */
   async signRegistrationCredential(serviceId: string, credentialVersion: number): Promise<string> {
-    const issuedAt = Math.floor(Date.now() / 1000);
+    const issuedAt = dayjs().unix();
     return new SignJWT({ token_use: "das_registration", credential_version: credentialVersion })
       .setProtectedHeader({ alg: "RS256", typ: "JWT" })
       .setIssuer(INTERNAL_QUERY_ISSUER)
@@ -183,7 +184,7 @@ class JwtService {
         typeof payload.jti !== "string" ||
         !payload.jti.trim() ||
         typeof payload.iat !== "number" ||
-        payload.iat > Math.floor(Date.now() / 1000) ||
+        payload.iat > dayjs().unix() ||
         typeof payload.credential_version !== "number" ||
         !Number.isInteger(payload.credential_version) ||
         payload.credential_version <= 0

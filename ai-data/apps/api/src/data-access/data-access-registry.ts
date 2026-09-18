@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import type { DataAccessHeartbeat, SourceHealth } from "@ai-data/contracts";
 
 import type { DataAccessServiceRegistration, DataAccessServiceRegistry } from "./data-access-types";
@@ -19,7 +20,7 @@ class InMemoryDataAccessServiceRegistry implements DataAccessServiceRegistry {
       serviceUrl,
       serviceVersion: heartbeat.service_version ?? null,
       status: heartbeat.status,
-      lastHeartbeatAt: new Date(),
+      lastHeartbeatAt: dayjs().toDate(),
       message: heartbeat.message ?? null,
       sources: heartbeat.sources as SourceHealth[],
     };
@@ -29,9 +30,9 @@ class InMemoryDataAccessServiceRegistry implements DataAccessServiceRegistry {
 
   /** 过滤服务级状态和心跳过期的 DAS 实例。 */
   async listHealthyServices(): Promise<DataAccessServiceRegistration[]> {
-    const cutoff = Date.now() - this.heartbeatTtlMilliseconds;
+    const cutoff = dayjs().subtract(this.heartbeatTtlMilliseconds, "millisecond");
     return [...this.services.values()].filter(
-      (service) => service.status === "healthy" && service.lastHeartbeatAt.getTime() > cutoff,
+      (service) => service.status === "healthy" && dayjs(service.lastHeartbeatAt).isAfter(cutoff),
     );
   }
 }

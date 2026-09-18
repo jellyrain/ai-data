@@ -99,7 +99,11 @@ import type {
   RelationCardinality,
   RelationColumnPair,
 } from "./catalog/api-dataset-types";
-import type { QueryResult, QueryResultColumn } from "./query/query-result-types";
+import type {
+  QueryResult,
+  QueryResultColumn,
+  QueryResultDelivery,
+} from "./query/query-result-types";
 import type { QueryDsl } from "./query/query-dsl-types";
 import type { DataAccessQueryRequest } from "./query/data-access-request-types";
 import type {
@@ -196,6 +200,7 @@ export type {
   DataAccessQueryRequest,
   QueryAccessContext,
   QueryResult,
+  QueryResultDelivery,
   QueryResultColumn,
   RowCondition,
   RowPolicy,
@@ -218,3 +223,42 @@ export type {
   SearchCatalogInput,
   SearchCatalogOutput,
 };
+export {
+  analysisRunStatusSchema,
+  submitMessageSchema,
+  clarificationSchema,
+  clarificationAnswerSchema,
+  runLeaseSchema,
+  analysisRunSchema,
+} from "./analysis-runs/analysis-run";
+export type {
+  AnalysisRunStatus,
+  SubmitMessage,
+  Clarification,
+  ClarificationAnswer,
+  RunLease,
+  AnalysisRunState,
+} from "./analysis-runs/analysis-run-types";
+export {
+  metricDefinitionSchema,
+  metricExecutionInputSchema,
+  metricValueSchema,
+} from "./metrics/metric";
+export type { MetricDefinition, MetricExecutionInput } from "./metrics/metric-types";
+export { queryEvidenceSchema, analysisStepSchema } from "./evidence/evidence";
+export type { QueryEvidence, AnalysisStep } from "./evidence/evidence-types";
+export {
+  reportBlockSchema,
+  reportSectionSchema,
+  saveReportInputSchema,
+  savedReportSchema,
+} from "./reports/report";
+export type { SaveReportInput, SavedReport } from "./reports/report-types";
+export { saveReportToolInputSchema, saveReportToolOutputSchema } from "./api-tools/api-tools";
+export type { SaveReportToolInput, SaveReportToolOutput } from "./api-tools/api-tools-types";
+export {
+  MAX_QUERY_ROWS,
+  MAX_QUERY_TABLE_BYTES,
+  MAX_QUERY_RESPONSE_BYTES,
+} from "./query/query-limits";
+export { queryResultDeliverySchema } from "./query/query-result";

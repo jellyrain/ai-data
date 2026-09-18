@@ -53,8 +53,13 @@ function compileRelationalQuery(
           `${renderField(condition.left, dialect)} = ${renderField(condition.right, dialect)}`,
       )
       .join(" AND ");
+    // 占位参数严格按 SQL 文本顺序注册：对象输入在前，ON 条件在后。
+    const relation = renderRelation(join.relation, dialect, parameters);
+    const onFilters = join.on_filters
+      ? renderFilterGroup(join.on_filters, dialect, parameters)
+      : undefined;
     sqlParts.push(
-      `${join.type.toUpperCase()} JOIN ${renderRelation(join.relation, dialect, parameters)} ON ${conditions}`,
+      `${join.type.toUpperCase()} JOIN ${relation} ON ${conditions}${onFilters === undefined ? "" : ` AND ${onFilters}`}`,
     );
   }
 

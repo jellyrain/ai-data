@@ -1,3 +1,4 @@
+import { MAX_QUERY_ROWS } from "@ai-data/contracts";
 import { z } from "zod";
 
 import { connectorKindSchema } from "../data-sources/connector-kind";
@@ -26,7 +27,7 @@ const dataSourceConfigRowSchema = z
     /** 当前 source_id 同时执行的业务请求上限。 */
     concurrency_limit: z.number().int().min(1).max(1000),
     /** DAS 向调用方返回的最大行数。 */
-    row_limit: z.number().int().min(1).max(5000),
+    row_limit: z.number().int().min(1).max(MAX_QUERY_ROWS),
     /** 历史成本字段，保留读取兼容性；实际资源控制使用超时和并发配置。 */
     cost_limit: z.number().int().positive(),
   })

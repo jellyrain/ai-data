@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import dayjs from "dayjs";
 import { ApplicationError } from "../errors/application-error";
 
 import type {
@@ -66,7 +67,9 @@ class AuthService {
       id: refreshToken.split(".")[0],
       userId: user.id,
       refreshTokenHash: hashRefreshToken(refreshToken),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      expiresAt: dayjs()
+        .add(7 * 24, "hour")
+        .toDate(),
       revokedAt: null,
     };
     await this.dependencies.repository.createSession(session);
@@ -97,7 +100,7 @@ class AuthService {
     if (
       !session ||
       session.revokedAt ||
-      session.expiresAt.getTime() <= Date.now() ||
+      !dayjs(session.expiresAt).isAfter(dayjs()) ||
       session.refreshTokenHash !== hashRefreshToken(refreshToken)
     ) {
       throw new ApplicationError("AUTHENTICATION_FAILED", "刷新令牌无效或已过期");
@@ -107,7 +110,9 @@ class AuthService {
     if (!user || user.status !== "active")
       throw new ApplicationError("AUTHENTICATION_FAILED", "用户不可用");
     const nextRefreshToken = `${session.id}.${createRefreshToken()}`;
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = dayjs()
+      .add(7 * 24, "hour")
+      .toDate();
     await this.dependencies.repository.rotateSession(
       session.id,
       hashRefreshToken(nextRefreshToken),
@@ -169,6 +174,30 @@ class AuthService {
     return context;
   }
 
+  /** 长运行从数据库重新核对会话和授权，避免继续使用请求开始时的身份快照。 */
+  async refreshContext(context: AuthContext): Promise<AuthContext> {
+    const [user, session] = await Promise.all([
+      this.dependencies.repository.findUserById(context.userId),
+      this.dependencies.repository.findSessionById(context.sessionId),
+    ]);
+    if (
+      !user ||
+      user.status !== "active" ||
+      user.organizationId !== context.organizationId ||
+      !session ||
+      session.userId !== user.id ||
+      session.revokedAt ||
+      !dayjs(session.expiresAt).isAfter(dayjs())
+    )
+      throw new ApplicationError("AUTHENTICATION_FAILED", "登录会话无效");
+    return {
+      userId: user.id,
+      organizationId: user.organizationId,
+      sessionId: session.id,
+      ...(await this.dependencies.repository.loadAuthorization(user.id)),
+    };
+  }
+
   /** 创建管理员维护的本地用户，调用方必须已完成权限校验。 */
   async createManagedUser(
     input: Parameters<UserAdminRepository["createUser"]>[0],
@@ -196,6 +225,21 @@ class AuthService {
       userId,
       organizationId,
       status,
+    );
+    if (updated) this.dependencies.contextCache?.deleteUser(userId);
+    return updated;
+  }
+
+  /** 管理员更新部门授权后让该用户的身份快照立即失效。 */
+  async updateManagedUserDepartments(
+    userId: string,
+    organizationId: string,
+    departmentIds: string[],
+  ): Promise<boolean> {
+    const updated = await this.dependencies.repository.updateUserDepartments(
+      userId,
+      organizationId,
+      departmentIds,
     );
     if (updated) this.dependencies.contextCache?.deleteUser(userId);
     return updated;

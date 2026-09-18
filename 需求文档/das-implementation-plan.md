@@ -1,9 +1,9 @@
 # DAS 实施方案与开发顺序
 
 版本：v0.2  
-状态：实施中（第 6 步执行映射核心已完成，新增合同要求待验收）  
+状态：实施中（执行映射、结果交付与 SQL Server 集成已验收；后续能力按阶段推进）\
 设计基线日期：2026-09-11  
-关联文档：[data-access-design.md](./data-access-design.md) · [contracts.md](./contracts.md) · [development-standards.md](./development-standards.md)
+关联文档：[data-access-design.md](./data-access-design.md) · [contracts.md](./contracts.md) · [development-standards.md](./development-standards.md) · [result-delivery-and-export.md](./result-delivery-and-export.md)
 
 ## 1. 系统边界
 
@@ -290,6 +290,8 @@ SQL Server 使用 `sys.databases`、MySQL 使用 `SHOW DATABASES`、PostgreSQL �
 
 ## 7. 首批代码文件
 
+第 1–7 步保存既有实施过程。2026-09-14 后续结果交付工作见下节；既有 SQL Server 隔离集成进展以[实现审查](./implementation-review.md)为准。
+
 ```text
 apps/data-access/src/connectors/connector.ts
 apps/data-access/src/connectors/executable-query.ts
@@ -307,3 +309,16 @@ apps/data-access/src/metadata/audit-repository.ts
 ```
 
 每一项功能先完成 BDD 场景和 TDD 断言，再实现代码；测试是后续调用方和重构的行为基线。
+
+## 8. 有界完整结果交付（本轮已验收）
+
+按[查询结果交付与文件导出设计](./result-delivery-and-export.md)补齐单次查询的结果字节和完整性边界，并衔接现有行数、时间、并发、取消与审计机制：
+
+- API 完成授权和最终 DSL 构造；DAS 按预算执行、标准化和脱敏后，向 API 返回单份完整结果或明确的截断/失败状态。
+- 查询行数、结果字节及时间预算具备明确配置范围；关系查询和固定参数化输出分别验证完整性。
+- SQL Server 逐行读取并仅保留有效行数上限加 1 行，过程余下行继续消费且验证多结果集；超出 32 MiB 预算时取消原生请求。MySQL、PostgreSQL 在驱动缓冲后执行标准化与预算检查，各驱动按实际读取方式验收。
+- 覆盖空结果、恰好达到/超过行数上限、宽行字节超限、超时、取消及审计失败，记录返回条数与完整性。
+- SQL Server、MySQL、PostgreSQL 和 HTTP 的具体执行变化按实际实现验收；Oracle 新增工作按后续阶段安排。
+- JWT 签名、有效期和请求绑定，以及现有数值标准化继续生效。严格单次消费 `jti` 与高精度十进制合同后续单独推进。
+
+本轮 DAS 408 项单元和 31 项 SQL Server 集成通过。新增 10 项集成覆盖生产 HTTP、JWT、规划、驱动、脱敏和审计链路，验证 50,000 行完整结果、部门范围、空结果、截断、字节超限与连接复用。类型检查、相关 ESLint 和最新生产构建通过；API 与 DAS 各自的验收边界见[专项设计](./result-delivery-and-export.md#85-本轮验收记录2026-09-14)。Web 客户端分页、虚拟滚动和文件生成属于后续前端工作。

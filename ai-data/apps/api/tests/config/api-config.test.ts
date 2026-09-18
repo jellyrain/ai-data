@@ -2,7 +2,12 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { loadApiConfig, parseApiConfig, parseApiEnvironment } from "../../src/config/api-config";
+import {
+  apiConfigSchema,
+  loadApiConfig,
+  parseApiConfig,
+  parseApiEnvironment,
+} from "../../src/config/api-config";
 
 /** 独立环境变量输入，测试配置转换规则，不修改测试进程的实际环境。 */
 const validEnvironment = {
@@ -23,6 +28,37 @@ const validEnvironment = {
 };
 
 describe("API 启动配置", () => {
+  it("选择支持 Responses 的模型并使用独立运行时目录及有界工具预算", () => {
+    const input = {
+      enabled: true,
+      active_provider: "local",
+      providers: [
+        {
+          id: "local",
+          protocol: "responses",
+          base_url: "http://127.0.0.1:8000/v1",
+          model: "custom-model",
+        },
+      ],
+      context_window: 32768,
+    };
+    expect(apiConfigSchema.shape.analysis_runtime.parse(input)).toMatchObject({
+      state_directory: "secrets/codex-runtime",
+      max_tool_calls: 30,
+      context_window: 32768,
+    });
+    expect(
+      apiConfigSchema.shape.analysis_runtime.safeParse({ ...input, active_provider: "missing" })
+        .success,
+    ).toBe(false);
+    expect(
+      apiConfigSchema.shape.analysis_runtime.safeParse({ ...input, max_steps: 12 }).success,
+    ).toBe(false);
+    expect(
+      apiConfigSchema.shape.analysis_runtime.safeParse({ ...input, max_output_tokens: 4096 })
+        .success,
+    ).toBe(false);
+  });
   it("加载 JSON 配置文件", async () => {
     const config = loadApiConfig(
       fileURLToPath(new URL("../../config/api.config.example.json", import.meta.url)),

@@ -5,7 +5,11 @@ import type { Socket } from "node:net";
 import axios, { type AxiosInstance } from "axios";
 import dayjs from "dayjs";
 import { JSONPath } from "jsonpath-plus";
-import { datasetColumnSchema, type QueryParameter } from "@ai-data/contracts";
+import {
+  datasetColumnSchema,
+  MAX_QUERY_RESPONSE_BYTES,
+  type QueryParameter,
+} from "@ai-data/contracts";
 
 import type { DataSourceConfig } from "../data-sources/data-source-types";
 import type { ApiDatasetMapping } from "./api-dataset-mapping-types";
@@ -21,6 +25,7 @@ import type { ActiveQueryOptions, ConnectorExecutionOptions } from "./query-exec
 import { QueryResourceGate } from "./query-resource-gate";
 import { QueryResourceError } from "./query-resource-error";
 import { assertFixedOutput } from "./fixed-output-validator";
+import { assertResultBudget } from "./result-budget";
 
 /** HTTP 虚拟表定义的最小读取能力。 */
 interface ApiDatasetMappingLookup {
@@ -54,6 +59,7 @@ class HttpApiConnector implements DataSourceConnector {
     this.client = axios.create({
       baseURL: secret.baseUrl,
       timeout: config.timeoutMs,
+      maxContentLength: MAX_QUERY_RESPONSE_BYTES,
       headers: secret.headers,
       httpAgent: this.agent,
       httpsAgent: this.secureAgent,
@@ -125,7 +131,7 @@ class HttpApiConnector implements DataSourceConnector {
     query: ExecutableQuery,
     options: ActiveQueryOptions,
   ): Promise<ConnectorExecutionResult> {
-    const deadline = Date.now() + options.timeoutMs;
+    const deadline = dayjs().add(options.timeoutMs, "millisecond").valueOf();
     if (query.type !== "parameterized_query") {
       throw new Error("HTTP API 连接器只支持参数化查询");
     }
@@ -166,7 +172,7 @@ class HttpApiConnector implements DataSourceConnector {
     const response = await executeHttpRequest(() =>
       this.client.request({
         signal: options.signal,
-        timeout: Math.max(1, deadline - Date.now()),
+        timeout: Math.max(1, dayjs(deadline).diff(dayjs())),
         method: mapping.request.method,
         url: mapping.request.path,
         params: queryParams,
@@ -180,8 +186,14 @@ class HttpApiConnector implements DataSourceConnector {
     }) as unknown as unknown[];
     // JSONPath 返回匹配项列表；object 模式只取首项，list 模式逐项转换。
     const sourceRows = mapping.response.mode === "list" ? selected : selected.slice(0, 1);
-    const rows = sourceRows.map((item) => mapApiRow(item, mapping));
-    const limitedRows = rows.slice(0, query.row_limit);
+    const limitedRows = sourceRows
+      .slice(0, query.row_limit)
+      .map((item) => mapApiRow(item, mapping));
+    const columns = mapping.response.fields.map((field) => ({
+      name: field.name,
+      data_type: field.dataType,
+    }));
+    assertResultBudget({ columns, rows: limitedRows });
     return connectorExecutionResultSchema.parse({
       columns: mapping.response.fields.map((field) => ({
         name: field.name,
@@ -189,7 +201,7 @@ class HttpApiConnector implements DataSourceConnector {
       })),
       rows: limitedRows,
       row_count: limitedRows.length,
-      truncated: rows.length > limitedRows.length,
+      truncated: sourceRows.length > limitedRows.length,
     });
   }
 
@@ -208,6 +220,8 @@ async function executeHttpRequest<T>(request: () => Promise<T>): Promise<T> {
     return await request();
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.code === "ERR_BAD_RESPONSE" && error.message.includes("maxContentLength"))
+        throw new QueryResourceError("QUERY_LIMIT_EXCEEDED", { cause: error });
       const socket = (error.request as { socket?: Socket } | undefined)?.socket;
       if (socket?.destroyed && !socket.closed) {
         await new Promise<void>((resolve) => socket.once("close", resolve));

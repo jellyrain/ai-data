@@ -41,6 +41,30 @@ describe("DAS 启动配置", () => {
     expect(parseDasConfig(JSON.stringify(validConfig))).toEqual(validConfig);
   });
 
+  it("按数据源保存独立的 SQL Server 链路选项", () => {
+    const input = {
+      ...validConfig,
+      sqlserver_transports: {
+        clinical: { encrypt: false, trust_server_certificate: true },
+        reporting: { encrypt: true, trust_server_certificate: false },
+      },
+    };
+    expect(parseDasConfig(JSON.stringify(input))).toEqual(input);
+  });
+
+  it("SQL Server 链路配置拒绝缺失布尔值、未知字段和空数据源标识", () => {
+    for (const sqlserver_transports of [
+      { clinical: { encrypt: false } },
+      { clinical: { encrypt: "false", trust_server_certificate: true } },
+      { clinical: { encrypt: false, trust_server_certificate: true, port: 1433 } },
+      { "": { encrypt: false, trust_server_certificate: true } },
+    ]) {
+      expect(() =>
+        parseDasConfig(JSON.stringify({ ...validConfig, sqlserver_transports })),
+      ).toThrow();
+    }
+  });
+
   it("拒绝未声明的配置字段", () => {
     expect(() =>
       parseDasConfig(

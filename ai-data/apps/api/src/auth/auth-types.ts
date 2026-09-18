@@ -127,6 +127,12 @@ interface UserAdminRepository extends AuthRepository {
   listUsers(organizationId: string): Promise<AuthUser[]>;
   /** 更新组织内用户状态并递增授权版本。 */
   updateUserStatus(userId: string, organizationId: string, status: UserStatus): Promise<boolean>;
+  /** 在用户所属组织内原子替换部门集合并递增授权版本。 */
+  updateUserDepartments(
+    userId: string,
+    organizationId: string,
+    departmentIds: string[],
+  ): Promise<boolean>;
 }
 
 export type {

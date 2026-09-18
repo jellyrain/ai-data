@@ -1,4 +1,6 @@
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
+import { z } from "zod";
+import { departmentIdsSchema } from "./department-scope";
 
 import type {
   AuthContext,
@@ -113,7 +115,9 @@ class SqlAuthRepository implements UserAdminRepository {
   /** 合并角色权限、角色继承范围和用户例外范围。 */
   async loadAuthorization(
     userId: string,
-  ): Promise<Pick<AuthContext, "roles" | "roleIds" | "permissions" | "dataPolicies">> {
+  ): Promise<
+    Pick<AuthContext, "roles" | "roleIds" | "permissions" | "dataPolicies" | "permissionContext">
+  > {
     const authorizationResult = await this.database.execute<{
       role_code: string;
       role_id: string;
@@ -154,7 +158,20 @@ class SqlAuthRepository implements UserAdminRepository {
           ]
         : [],
     );
-    return { roles, roleIds, permissions, dataPolicies };
+    const departments = await this.database.execute({
+      sql: "SELECT department_id FROM dbo.user_department_scopes WHERE user_id = @user_id ORDER BY department_id",
+      parameters: [{ name: "user_id", type: "string", value: userId }],
+    });
+    const rows = z
+      .array(z.object({ department_id: z.string().min(1).max(128) }).strict())
+      .parse(departments.rows);
+    return {
+      roles,
+      roleIds,
+      permissions,
+      dataPolicies,
+      permissionContext: { department_ids: rows.map((row) => row.department_id) },
+    };
   }
 
   /** 按存在性检查补齐默认组织、权限、角色和管理员绑定，已有账号密码保持原值。 */
@@ -257,6 +274,42 @@ class SqlAuthRepository implements UserAdminRepository {
       ],
     });
     return (result.rowsAffected[0] ?? 0) > 0;
+  }
+
+  /** 用户行锁将部门替换和版本递增串行化；组织不匹配时不改变任何范围。 */
+  async updateUserDepartments(
+    userId: string,
+    organizationId: string,
+    departmentIds: string[],
+  ): Promise<boolean> {
+    const ids = departmentIdsSchema.parse(departmentIds);
+    const result = await this.database.execute({
+      sql: `SET XACT_ABORT ON;
+        BEGIN TRY
+          BEGIN TRANSACTION;
+          DECLARE @updated BIT = 0;
+          IF EXISTS (SELECT 1 FROM dbo.users WITH (UPDLOCK, HOLDLOCK) WHERE id = @user_id AND organization_id = @organization_id)
+          BEGIN
+            DELETE FROM dbo.user_department_scopes WHERE user_id = @user_id;
+            INSERT INTO dbo.user_department_scopes (user_id, department_id)
+              SELECT @user_id, value FROM OPENJSON(@department_ids);
+            UPDATE dbo.users SET authorization_version = authorization_version + 1, updated_at = SYSUTCDATETIME() WHERE id = @user_id;
+            SET @updated = 1;
+          END;
+          COMMIT TRANSACTION;
+          SELECT @updated AS updated;
+        END TRY
+        BEGIN CATCH
+          IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+          THROW;
+        END CATCH;`,
+      parameters: [
+        { name: "user_id", type: "string", value: userId },
+        { name: "organization_id", type: "string", value: organizationId },
+        { name: "department_ids", type: "string", value: JSON.stringify(ids) },
+      ],
+    });
+    return result.rows[0]?.updated === true;
   }
 
   /** 将数据库用户行转换为认证领域对象。 */

@@ -5,11 +5,13 @@
 设计基线日期：2026-09-11  
 代码位置：`../ai-data/packages/contracts`
 
+结果交付补充：[查询结果交付与文件导出设计](./result-delivery-and-export.md)（2026-09-14）。
+
 本文区分当前 Schema 与待补齐的合同要求。运行恢复、外连接条件位置和复合聚合等要求须完成对应 Schema、API 处理与 DAS 执行支持后验收；设计确认不代表代码已实现。
 
 ## 1. Contracts 是什么
 
-`@ai-data/contracts` 是 Web、API、Codex Harness 和 Data Access Service 共用的边界定义。
+`@ai-data/contracts` 是 Web、API、模型运行工具和 Data Access Service 共用的边界定义。API 通过内部 `AnalysisHarness` 接口管理模型执行，业务工具复用共享 Schema。
 
 每一份合同同时提供：
 
@@ -125,9 +127,9 @@ JWT 同时包含标准 claims：`iss`（API）、`aud`（Data Access Service）�
 Web
   ↓ 用户问题
 API
-  ↓ JWT + 会话信息
-Codex Harness
-  ↓ API Tools：目录工具或 query_dataset
+  ↓ 当前授权会话、证据与工具定义
+AnalysisHarness（Node SDK 调用配置的兼容模型 HTTP 服务）
+  ↓ API 进程内工具调度：目录、指标、query_dataset、澄清或报告
 API
   ↓ Authorization 请求头 + 已签名查询请求
 Data Access Service
@@ -135,7 +137,7 @@ Data Access Service
 SQL Server / HTTP API
   ↓ 标准化查询结果
 API
-  ↓ SSE 事件
+  ↓ HTTP 完整结果 / SSE 分析事件
 Web
 ```
 
@@ -145,15 +147,16 @@ Data Access Service 的查询目标可以是 Oracle、MySQL、SQL Server、Postg
 
 Contracts 必须明确每个合同的数据流向，避免后续实现把单向数据合同误做成双向业务接口。这里的“单向/双向”指合同数据的拥有方和传递方向，不等同于底层网络连接是否使用请求/响应：
 
-| 边界                         | 调用方向                                                                 | 传输方式                    | 是否流式                                       | 合同范围                                                                      |
-| ---------------------------- | ------------------------------------------------------------------------ | --------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------- |
-| Web → API                    | Web 发起请求                                                             | HTTP 请求/响应              | 否；用户消息、选项提交、取消和重试都是独立请求 | API 请求合同                                                                  |
-| API → Web                    | API 推送运行过程与结果                                                   | SSE 长连接                  | 是，单向服务端到浏览器                         | `sseEventSchema`；每个事件带 `conversation_id`、`analysis_run_id`、`sequence` |
-| API ↔ Codex Harness          | API 创建并驱动 Agent，Harness 返回过程事件、工具调用和结果               | SDK/App Server 内部双向调用 | 运行事件可连续返回；不对浏览器暴露             | Agent 运行上下文和受控工具合同                                                |
-| 模型 ↔ API Tools             | 模型调用 API 工具，API 返回目录、查询结果或错误                          | API 请求/响应               | MVP 按一次工具调用返回完整结构化结果           | `api-tools`、`catalog`、`query-result`、`errors`                              |
-| API ↔ Data Access Service    | API 提交 `access`、已授权 DSL 和整体签名，数据访问服务返回查询结果或错误 | 内部请求/响应               | MVP 不定义业务数据流式传输                     | `data-access-query-request`、`query-result`、`errors`                         |
-| Data Access Service → API    | 数据访问服务定期报告实例存活和各数据源健康快照                           | 内部 HTTP 心跳请求          | 否；每次心跳是独立请求                         | `health`（`dataAccessHeartbeatSchema`）                                       |
-| Data Access Service ↔ 数据源 | 数据访问服务访问底层数据库或 HTTP API，并输出统一表结构                  | 内部实现请求/响应           | 不向模型暴露底层数据源流                       | `catalog`、`query-result`                                                     |
+| 边界                          | 调用方向                                                                 | 传输方式                   | 是否流式                                       | 合同范围                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------ | -------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------ |
+| Web → API                     | Web 发起请求                                                             | HTTP 请求/响应             | 否；用户消息、选项提交、取消和重试都是独立请求 | API 请求合同                                                                   |
+| API → Web                     | API 返回完整查询结果，推送运行过程与分析内容                             | HTTP 结果响应 / SSE 长连接 | 结果响应为单次交付，分析事件单向推送           | `query-result` 与 `sseEventSchema`；事件带运行归属及 `sequence`                |
+| API ↔ AnalysisHarness         | 执行器提供指令、已授权上下文和工具定义，Harness 返回完成或待澄清结果     | API 进程内接口             | 一次执行可连续调用多个工具，最终返回执行结果   | `HarnessRequest`、`HarnessResult` 与受控工具接口                               |
+| SdkAnalysisHarness ↔ 模型服务 | Node SDK 发送上下文和工具定义，接收工具调用或最终文本，并续接工具结果    | 兼容模型 HTTP 请求/响应    | 按生成步骤处理请求及工具结果                   | 当前 `openai-compatible` 模型传输合同                                          |
+| 模型 ↔ API Tools              | 模型提出工具调用，执行器绑定身份与租约，API 返回目录、样本、证据或错误   | API 进程内工具回调         | 每次调用返回结构化结果                         | 共享 `api-tools`、目录、查询、指标、报告及运行工具 Schema；完整输入由 API 校验 |
+| API ↔ Data Access Service     | API 提交 `access`、已授权 DSL 和整体签名，数据访问服务返回查询结果或错误 | 内部请求/响应              | MVP 不定义业务数据流式传输                     | `data-access-query-request`、`query-result`、`errors`                          |
+| Data Access Service → API     | 数据访问服务定期报告实例存活和各数据源健康快照                           | 内部 HTTP 心跳请求         | 否；每次心跳是独立请求                         | `health`（`dataAccessHeartbeatSchema`）                                        |
+| Data Access Service ↔ 数据源  | 数据访问服务访问底层数据库或 HTTP API，并输出统一表结构                  | 内部实现请求/响应          | 不向模型暴露底层数据源流                       | `catalog`、`query-result`                                                      |
 
 ### 6.1 合同数据流向
 
@@ -183,7 +186,7 @@ Contracts 必须明确每个合同的数据流向，避免后续实现把单向�
 
 - SSE 只能由 API 向 Web 推送，浏览器不能通过 SSE 通道回传业务请求；回传统一使用 HTTP 接口。
 - API 工具调用是双向请求/响应，但一次调用只对应一个明确的输入和输出，不把 JWT、权限配置或隐式状态放入模型工具参数。
-- `table`、`chart`、`final_answer` 等结果通过 API SSE 事件逐项推送；断线恢复依靠 `sequence`，不是重新建立一个双向流。
+- `table`、`chart`、`final_answer` 等分析内容通过 API SSE 逐项推送；完整明细通过 `POST /query` 的 HTTP 响应交付，SSE 表格使用有界样本。断线恢复依靠 `sequence`。
 - `thinking` 事件用于展示面向用户的分析摘要和阶段（理解、规划、查询、校验、总结），不传输模型内部完整推理链、JWT、权限配置、原始 DSL 或敏感数据。
 - 后续若需要数据访问服务级流式返回，必须新增明确的流式合同和结束事件，不能改变现有同步工具合同的语义。
 
@@ -208,7 +211,9 @@ API 业务配置管理数据集粒度与唯一键、批准关系及关联基数�
 
 API 配置新增 `unique_keys`，每项是共同唯一的字段集合；批准关系可声明稳定 `relation_id` 及 `cardinality: one_to_one | one_to_many | many_to_one | many_to_many`。关联声称单一匹配的侧须由该侧唯一键支持。API 按真实字段来源核对原始批准字段对，并依据原始唯一键及派生分组键判断当前关联是否扩行；可能重复计算的 `sum/count/avg` 拒绝执行，重复不敏感函数按自身语义校验。配置的业务唯一性由管理员验收，API 校验字段及声明的一致性。
 
-最终排序可以引用选择项的输出别名；原始字段排序须符合当前分组约束。整个层次结构及关系选择均包含在请求签名内，DAS 保持结构并按四种数据库方言参数化编译，最外层使用 N+1 探测截断。具体配置和示例见 [分层聚合说明](../ai-data/RELATIONAL-AGGREGATION.md)。带值 ON、指标版本与总计公式、运行恢复、证据及报告合同仍按各业务阶段补齐。
+最终排序可以引用选择项的输出别名；原始字段排序须符合当前分组约束。整个层次结构及关系选择均包含在请求签名内，DAS 保持结构并按四种数据库方言参数化编译，最外层使用 N+1 探测截断。具体配置和示例见 [分层聚合说明](../ai-data/RELATIONAL-AGGREGATION.md)。
+
+Join 可提供 `on_filters` 条件组，使用已加入对象及当前对象的字段和值约束匹配结果；它与完整批准关系的 `on` 使用 AND 连接。API 检查字段可见性、类型和过滤能力，DAS 参数化编译到 ON，保持外连接主记录保留语义。该条件同样包含在最终请求签名中。
 
 #### 6.3.2 参数化查询的授权合同
 
@@ -222,12 +227,16 @@ API 配置新增 `unique_keys`，每项是共同唯一的字段集合；批准�
 
 #### 6.3.3 查询结果的标准化与边界校验
 
+结果交付在现有合同基础上增加可选 `delivery`，以兼容历史保存内容。新 DAS/API 响应明确返回 `delivery.status`：完整时为 `complete` 且 `total_row_count` 等于实际 `row_count`；截断时为 `truncated` 且 `total_row_count` 为 `null`。`row_count` 始终等于 `rows.length`，截断时只表示已返回数量。历史结果缺少 `delivery` 时仍须按其 `truncated` 判断完整性。
+
+本轮 DSL `limit` 与数据源 `row_limit` 的硬上限为 100,000，执行采用两者较小值；普通查询省略 `limit` 时沿用管理员配置，运行查询缺省值归一化为 5,000。标准化 `{ columns, rows }` 的 JSON UTF-8 字节预算为 32 MiB，超限返回 `QUERY_LIMIT_EXCEEDED`；API→DAS 查询响应传输另预留 64 KiB 元数据空间，请求等待预算为 135,000 ms。数据源 `timeout_ms` 保持 100–120,000 ms。具体执行与验收见[专项设计](./result-delivery-and-export.md)。
+
 DAS 根据驱动字段元数据或 HTTP 字段配置转换单元格，再通过公共 `queryResultSchema` 验证。结果列名必须唯一，每行字段必须与列定义完全一致，`row_count` 等于当前 `rows.length`。单元格允许 `null`；HTTP 字段配置为不可空时，缺失值与 `null` 均在转换入口拒绝。空结果保留驱动或配置提供的列定义。
 
 - `integer` 使用安全整数，`decimal` 使用有限 JSON number。文本或 bigint 转数值时检查有效数字及目标类型范围，无法保持十进制文本数值的转换明确失败；当前合同不提供高精度十进制文本类型。驱动已转换为 number 的值只能验证收到的数值，源数据库精度仍需结合驱动集成验收。PostgreSQL `money` 含本地化货币格式，目录和结果按 `string` 保留原文本；`numeric` / `decimal` 按数值类型转换。
 - `boolean` 归一为 JSON 布尔值；`buffer` 归一为 Base64 文本，空二进制对应空字符串。未知原生类型按可转换的字符串表达返回，转换失败时报告字段和目标类型。
 - `date` 使用 `YYYY-MM-DD`，`datetime` 使用秒精度的 `YYYY-MM-DD HH:mm:ss`。带时区的时刻转为东八区；无时区的数据库日期时间保留业务墙钟值。MySQL 的 `TIMESTAMP` 按每次借用连接时设置的东八区会话返回，`DATETIME` 保留字段值。纯时间类型使用 `string`：SQL Server 的 Date 编码还原为原始墙钟 `HH:mm:ss`，其余驱动返回的时间文本保持源值。
-- DAS 内部结果与公共查询结果共用 Schema；SSE 的 `table` 数据共用列与行校验，所有 SSE 事件根对象拒绝未知字段。
+- DAS 内部结果与公共查询结果共用 Schema；SSE 的 `table` 数据共用列与行校验，所有 SSE 事件根对象拒绝未知字段。本轮 SSE 表格采用最多 100 行/256 KiB 数据样本。事件的可选 `result_row_count` 为原始交付行数，`result_truncated` 为原查询截断状态，`sampled` 表示样本行数少于原始交付行数；旧事件继续可读。完整结果由浏览器通过 HTTP 取得，运行证据的 QueryResult 受 5,000 行和 2 MiB JSON UTF-8 容量约束。
 
 ### 6.4 运行、澄清与事件关联合同
 
@@ -241,9 +250,11 @@ DAS 根据驱动字段元数据或 HTTP 字段配置转换单元格，再通过�
 - 事件：`sequence` 在每个运行内单调递增且唯一；状态转换和对应事件在同一事务持久化，SSE 按已提交事件推送和回放。
 - 工具与证据：每次工具调用、查询及产物具有稳定关联标识；同一工具的多次调用可区分，恢复和重试能关联既有结果。
 
-当前 SSE Schema 已提供运行 ID 与事件序号；澄清标识、执行代次及操作请求幂等合同须在运行恢复阶段补齐。第一版同一会话串行推进运行，等待澄清属于原运行；不同会话可并行执行。
+运行模块已提供 `AnalysisRunState`、`RunLease`、`SubmitMessage`、`ClarificationAnswer` 及持久化 SSE 回放。消息提交和澄清回答要求幂等键；新事件带执行代次及工具/证据关联标识。第一版同一会话串行推进运行，等待澄清属于原运行；不同会话可并行执行。接口、恢复规则及 Agent 接入边界见 [分析运行说明](../ai-data/ANALYSIS-RUNTIME.md)。
 
 ### 6.5 指标、分析证据与报告合同
+
+共享包已提供 `MetricDefinition`、`MetricExecutionInput`、`QueryEvidence`、`AnalysisStep`、`SaveReportInput` 和 `SavedReport`。API 发布并保存不可覆盖的指标版本，按定义生成分组和总计两次查询；报告快照包含关联来源和已授权查询，读取时同时检查最新分享范围及每份来源的当前权限。
 
 - 每个指标定义固定日期依据。门诊人次（挂号时间）与门诊人次（就诊时间）使用独立指标 ID；执行记录保存指标 ID、版本、实际对象、字段、筛选、关联和数据新鲜度。
 - Skill 提供通用分析方法与可选案例；模型依据运行时指标知识、目录和查询证据选择下一步。API/工具承担确定性计算、权限和状态控制，并持久化步骤、假设、查询及证据引用。分析路径随证据形成，具体方法通过真实案例持续完善。
@@ -260,7 +271,7 @@ API 的业务接口和框架错误出口统一返回 `{ code, message, request_i
 | AUTHENTICATION_FAILED                                                   | 401           |
 | UNAUTHORIZED、UNAUTHORIZED_OBJECT、UNAUTHORIZED_COLUMN、POLICY_REJECTED | 403           |
 | NOT_FOUND                                                               | 404           |
-| CANCELLED                                                               | 409           |
+| CANCELLED、CONFLICT                                                     | 409           |
 | RATE_LIMITED                                                            | 429           |
 | INTERNAL_ERROR                                                          | 500           |
 | DATA_SOURCE_UNAVAILABLE                                                 | 503           |

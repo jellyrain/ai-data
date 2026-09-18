@@ -151,7 +151,7 @@ function classifyQueryFailure(error: unknown): QueryRequestError {
   const errors: Partial<Record<ContractErrorCode, [string, number]>> = {
     QUERY_TIMEOUT: ["数据查询超时", 504],
     CANCELLED: ["数据查询已取消", 499],
-    QUERY_LIMIT_EXCEEDED: ["查询等待队列已满", 429],
+    QUERY_LIMIT_EXCEEDED: ["查询超出资源上限", 429],
     DATA_SOURCE_UNAVAILABLE: ["数据源暂时不可用", 503],
   };
   const code =

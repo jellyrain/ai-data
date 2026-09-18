@@ -17,6 +17,7 @@ const messages: Record<ContractErrorCode, string> = {
   RATE_LIMITED: "数据访问请求过于频繁",
   NOT_FOUND: "数据资源不存在",
   CANCELLED: "数据查询已取消",
+  CONFLICT: "请求状态发生冲突",
   INTERNAL_ERROR: "数据访问服务内部错误",
 };
 
@@ -45,6 +46,7 @@ async function requestDataAccess<T>(
   token?: string,
   method: "POST" | "PUT" = "POST",
   signal?: AbortSignal,
+  responseBudget?: { maxBytes: number; timeoutMs: number },
 ): Promise<T> {
   if (signal?.aborted) throw new ApplicationError("CANCELLED", messages.CANCELLED);
   const response = await (method === "PUT" ? axios.put : axios.post)<unknown>(url, body, {
@@ -55,12 +57,21 @@ async function requestDataAccess<T>(
     },
     validateStatus: () => true,
     maxRedirects: 0,
+    ...(responseBudget
+      ? { maxContentLength: responseBudget.maxBytes, timeout: responseBudget.timeoutMs }
+      : {}),
   }).catch((cause: unknown) => {
     if (!axios.isAxiosError(cause)) throw cause;
     // 管理请求可能携带连接凭据；保留错误码与堆栈，移除可被日志序列化的传输对象。
     delete cause.config;
     delete cause.request;
     delete cause.response;
+    if (
+      responseBudget &&
+      cause.code === "ERR_BAD_RESPONSE" &&
+      cause.message.includes("maxContentLength")
+    )
+      throw new ApplicationError("QUERY_LIMIT_EXCEEDED", messages.QUERY_LIMIT_EXCEEDED, { cause });
     if (cause.code === "ERR_CANCELED")
       throw new ApplicationError("CANCELLED", messages.CANCELLED, { cause });
     const isTimeout = cause.code === "ECONNABORTED" || cause.code === "ETIMEDOUT";

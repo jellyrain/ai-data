@@ -1,5 +1,7 @@
 import type { z } from "zod";
 import type {
+  saveReportToolInputSchema,
+  saveReportToolOutputSchema,
   describeDatasetInputSchema,
   describeDatasetOutputSchema,
   listDatasetsInputSchema,
@@ -26,8 +28,12 @@ type DescribeDatasetOutput = z.infer<typeof describeDatasetOutputSchema>;
 type QueryDatasetInput = z.infer<typeof queryDatasetInputSchema>;
 /** query_dataset 工具输出类型。 */
 type QueryDatasetOutput = z.infer<typeof queryDatasetOutputSchema>;
+type SaveReportToolInput = z.infer<typeof saveReportToolInputSchema>;
+type SaveReportToolOutput = z.infer<typeof saveReportToolOutputSchema>;
 
 export type {
+  SaveReportToolInput,
+  SaveReportToolOutput,
   DescribeDatasetInput,
   DescribeDatasetOutput,
   ListDatasetsInput,

@@ -1,4 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import dayjs from "dayjs";
 import type { DataAccessHeartbeat, DataAccessSession } from "@ai-data/contracts";
 import type { ApiConfig } from "../config/api-config";
 import type { JwtService } from "../auth/jwt-service";
@@ -58,7 +59,7 @@ class DataAccessSessionService {
         tokenHash: this.digest(token),
         serviceUrl,
         credentialVersion: version,
-        expiresAt: Date.now() + this.idleTimeoutMs,
+        expiresAt: dayjs().add(this.idleTimeoutMs, "millisecond").valueOf(),
       });
       return {
         service_id: heartbeat.service_id,
@@ -85,7 +86,7 @@ class DataAccessSessionService {
       )
         this.reject();
       await this.registry.registerHeartbeat(heartbeat, session.serviceUrl);
-      session.expiresAt = Date.now() + this.idleTimeoutMs;
+      session.expiresAt = dayjs().add(this.idleTimeoutMs, "millisecond").valueOf();
     });
   }
 
@@ -114,7 +115,7 @@ class DataAccessSessionService {
       !session ||
       !trusted ||
       session.credentialVersion !== trusted.credential_version ||
-      session.expiresAt <= Date.now()
+      !dayjs(session.expiresAt).isAfter(dayjs())
     ) {
       this.sessions.delete(serviceId);
       return undefined;

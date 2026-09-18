@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
 import {
   sourceHealthSchema,
@@ -39,7 +40,7 @@ class SqlDataAccessServiceRegistry implements DataAccessServiceRegistry {
     heartbeat: DataAccessHeartbeat,
     serviceUrl: string,
   ): Promise<DataAccessServiceRegistration> {
-    const now = new Date();
+    const now = dayjs().toDate();
     await this.database.execute({
       sql: `
         UPDATE dbo.data_access_services

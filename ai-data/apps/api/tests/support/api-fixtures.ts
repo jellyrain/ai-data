@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { ApiDependencies } from "../../src/app-types";
+import type { ApiDependencies, ApiAnalysisServices, ApiCatalogService } from "../../src/app-types";
 import type { AuthContext } from "../../src/auth/auth-types";
 import type { ApiConfig } from "../../src/config/api-config";
 
@@ -47,6 +47,7 @@ function createApiDependencies() {
     metadataDatabase: { checkHealth: vi.fn(async () => "healthy" as const) },
     auth: {
       loadContext: vi.fn(async () => context),
+      refreshContext: vi.fn(async () => context),
       login: vi.fn(unexpectedCall),
       refresh: vi.fn(unexpectedCall),
       logout: vi.fn(async () => {}),
@@ -54,12 +55,31 @@ function createApiDependencies() {
       listManagedUsers: vi.fn(async () => []),
       findManagedUser: vi.fn(async () => null),
       updateManagedUserStatus: vi.fn(async () => false),
+      updateManagedUserDepartments: vi.fn(async () => false),
     },
     conversations: {
       create: vi.fn(unexpectedCall),
       list: vi.fn(async () => []),
       get: vi.fn(async () => null),
       submitUserMessage: vi.fn(async () => null),
+    },
+    analysis: {
+      runs: {
+        get: vi.fn<ApiAnalysisServices["runs"]["get"]>(unexpectedCall),
+        events: vi.fn<ApiAnalysisServices["runs"]["events"]>(unexpectedCall),
+        evidence: vi.fn(unexpectedCall),
+        steps: vi.fn(unexpectedCall),
+        answer: vi.fn(unexpectedCall),
+        cancel: vi.fn(unexpectedCall),
+        execute: vi.fn(unexpectedCall),
+      },
+      metrics: {
+        publish: vi.fn(unexpectedCall),
+        list: vi.fn(unexpectedCall),
+        get: vi.fn(unexpectedCall),
+        execute: vi.fn(unexpectedCall),
+      },
+      reports: { save: vi.fn(unexpectedCall), get: vi.fn(unexpectedCall) },
     },
     dataAccess: {
       registry: {
@@ -72,8 +92,16 @@ function createApiDependencies() {
       managementClient: { execute: vi.fn(unexpectedCall) },
     },
     catalog: {
+      admin: {
+        saveObjectPermission: vi.fn(unexpectedCall),
+        saveColumnPermission: vi.fn(unexpectedCall),
+        saveRowPolicy: vi.fn(unexpectedCall),
+        listVersions: vi.fn(unexpectedCall),
+        getVersion: vi.fn(unexpectedCall),
+        previewQuery: vi.fn(unexpectedCall),
+      },
       service: {
-        listAuthorized: vi.fn(async () => []),
+        listAuthorized: vi.fn<ApiCatalogService["listAuthorized"]>(async () => []),
         searchAuthorized: vi.fn(async () => []),
         getAuthorized: vi.fn(async () => null),
         getAuthorizedConfig: vi.fn(async () => null),

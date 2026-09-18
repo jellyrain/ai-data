@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "prebuild": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
-    "build": "tsc -p tsconfig.build.json --noEmit && esbuild src/index.ts --bundle --platform=node --format=esm --target=node24 --minify --legal-comments=none --outfile=dist/index.js",
+    "build": "tsc -p tsconfig.build.json --noEmit && esbuild src/index.ts --bundle --platform=node --format=esm --target=node24 --minify --legal-comments=none --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" --outfile=dist/index.js",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run --pool=threads --maxWorkers=1",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -28,6 +29,7 @@
     "@ai-data/metadata": "workspace:*",
     "@fastify/helmet": "^13.0.2",
     "@fastify/rate-limit": "^10.3.0",
+    "@openai/codex-sdk": "^0.154.0",
     "axios": "catalog:",
     "dayjs": "catalog:",
     "fastify": "catalog:",

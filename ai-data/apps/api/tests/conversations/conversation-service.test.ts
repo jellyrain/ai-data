@@ -46,6 +46,38 @@ class MemoryConversationRepository implements ConversationRepository {
   updateAnalysisRun() {
     return Promise.resolve(false);
   }
+  async submitMessage(
+    conversationId: string,
+    userId: string,
+    organizationId: string,
+    content: string,
+  ) {
+    if (!(await this.findConversation(conversationId, userId, organizationId))) return null;
+    const now = new Date();
+    const message: ConversationMessage = {
+      id: "message",
+      conversationId,
+      role: "user",
+      content,
+      sequence: this.messages.length,
+      createdAt: now,
+    };
+    const analysisRun: AnalysisRun = {
+      id: "run",
+      conversationId,
+      userId,
+      organizationId,
+      status: "created",
+      errorCode: null,
+      errorMessage: null,
+      startedAt: null,
+      completedAt: null,
+      createdAt: now,
+    };
+    this.messages.push(message);
+    this.runs.push(analysisRun);
+    return { message, analysisRun };
+  }
 }
 
 describe("会话服务", () => {
@@ -61,7 +93,12 @@ describe("会话服务", () => {
       dataPolicies: [],
     };
     const conversation = await service.create(context, "门诊分析");
-    const submitted = await service.submitUserMessage(context, conversation.id, "统计门诊量");
+    const submitted = await service.submitUserMessage(
+      context,
+      conversation.id,
+      "统计门诊量",
+      "request-1",
+    );
 
     expect(submitted?.message.conversationId).toBe(conversation.id);
     expect(submitted?.analysisRun.conversationId).toBe(conversation.id);

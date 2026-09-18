@@ -1,16 +1,123 @@
-import type { MetadataQueryExecutor } from "@ai-data/metadata";
+import dayjs from "dayjs";
+import type { MetadataQueryExecutor, MetadataTransactionalExecutor } from "@ai-data/metadata";
+import { createHash, randomUUID } from "node:crypto";
+import { submitMessageSchema } from "@ai-data/contracts";
+import { ApplicationError } from "../errors/application-error";
+import { insertAnalysisRun, readAnalysisRun } from "../analysis-runs/analysis-run-records";
+import type { AnalysisRun } from "../analysis-runs/analysis-run-record-types";
 
 import type {
-  AnalysisRun,
-  AnalysisRunStatus,
   Conversation,
   ConversationMessage,
   ConversationRepository,
+  SubmittedMessage,
 } from "./conversation-types";
 
 /** API 对话会话、消息和分析运行的参数化 SQL Server 仓储。 */
 class SqlConversationRepository implements ConversationRepository {
-  constructor(private readonly database: MetadataQueryExecutor) {}
+  constructor(private readonly database: MetadataTransactionalExecutor) {}
+
+  /** 会话行锁统一保护重复提交、消息序号和活跃运行检查。 */
+  async submitMessage(
+    conversationId: string,
+    userId: string,
+    organizationId: string,
+    content: string,
+    idempotencyKey: string,
+    sessionId?: string,
+  ): Promise<SubmittedMessage | null> {
+    const input = submitMessageSchema.parse({ content, idempotency_key: idempotencyKey });
+    const hash = createHash("sha256").update(input.content).digest("hex");
+    return this.database.transaction(async (executor) => {
+      const conversation = await executor.execute({
+        sql: "SELECT id FROM dbo.conversations WITH (UPDLOCK,HOLDLOCK) WHERE id=@id AND user_id=@user AND organization_id=@org AND status='active'",
+        parameters: [
+          { name: "id", type: "string", value: conversationId },
+          { name: "user", type: "string", value: userId },
+          { name: "org", type: "string", value: organizationId },
+        ],
+      });
+      if (!conversation.rows[0]) return null;
+      const prior = await executor.execute({
+        sql: "SELECT request_hash, message_id, analysis_run_id FROM dbo.conversation_submissions WHERE conversation_id=@conversation AND idempotency_key=@key",
+        parameters: [
+          { name: "conversation", type: "string", value: conversationId },
+          { name: "key", type: "string", value: idempotencyKey },
+        ],
+      });
+      if (prior.rows[0]) {
+        if (prior.rows[0].request_hash !== hash)
+          throw new ApplicationError("CONFLICT", "幂等键已用于其他问题");
+        const message = await executor.execute<ConversationMessageRow>({
+          sql: "SELECT id, conversation_id, role, content, sequence, created_at FROM dbo.conversation_messages WHERE id=@id",
+          parameters: [{ name: "id", type: "string", value: String(prior.rows[0].message_id) }],
+        });
+        return {
+          message: this.mapMessage(message.rows[0]),
+          analysisRun: await readAnalysisRun(executor, String(prior.rows[0].analysis_run_id)),
+        };
+      }
+      const active = await executor.execute({
+        sql: "SELECT TOP (1) id FROM dbo.analysis_runs WHERE conversation_id=@id AND status IN ('created','running','waiting_clarification','cancelling')",
+        parameters: [{ name: "id", type: "string", value: conversationId }],
+      });
+      if (active.rows[0])
+        throw new ApplicationError("CONFLICT", "会话已有活跃运行，请完成或取消后再提交");
+      const sequence = await executor.execute({
+        sql: "SELECT COALESCE(MAX(sequence),-1)+1 AS sequence FROM dbo.conversation_messages WHERE conversation_id=@id",
+        parameters: [{ name: "id", type: "string", value: conversationId }],
+      });
+      const now = dayjs().toDate();
+      const message: ConversationMessage = {
+        id: randomUUID(),
+        conversationId,
+        role: "user",
+        content: input.content,
+        sequence: Number(sequence.rows[0].sequence),
+        createdAt: now,
+      };
+      const analysisRun: AnalysisRun = {
+        id: randomUUID(),
+        conversationId,
+        organizationId,
+        userId,
+        status: "created",
+        errorCode: null,
+        errorMessage: null,
+        startedAt: null,
+        completedAt: null,
+        createdAt: now,
+      };
+      await this.appendMessage(message, executor);
+      await insertAnalysisRun(executor, analysisRun);
+      await executor.execute({
+        sql: "UPDATE dbo.conversation_messages SET analysis_run_id=@run WHERE id=@message",
+        parameters: [
+          { name: "run", type: "string", value: analysisRun.id },
+          { name: "message", type: "string", value: message.id },
+        ],
+      });
+      if (sessionId)
+        await executor.execute({
+          sql: "INSERT INTO dbo.analysis_dispatches(analysis_run_id,session_id) VALUES(@run,@session)",
+          parameters: [
+            { name: "run", type: "string", value: analysisRun.id },
+            { name: "session", type: "string", value: sessionId },
+          ],
+        });
+      await executor.execute({
+        sql: "INSERT INTO dbo.conversation_submissions (conversation_id,idempotency_key,request_hash,message_id,analysis_run_id) VALUES (@conversation,@key,@hash,@message,@run); UPDATE dbo.conversations SET updated_at=SYSUTCDATETIME() WHERE id=@conversation;",
+        parameters: [
+          { name: "conversation", type: "string", value: conversationId },
+          { name: "key", type: "string", value: idempotencyKey },
+          { name: "hash", type: "string", value: hash },
+          { name: "message", type: "string", value: message.id },
+          { name: "run", type: "string", value: analysisRun.id },
+        ],
+      });
+      return { message, analysisRun };
+    });
+  }
 
   /** 保存会话并绑定当前组织和用户。 */
   async createConversation(conversation: Conversation): Promise<void> {
@@ -58,8 +165,11 @@ class SqlConversationRepository implements ConversationRepository {
   }
 
   /** 保存调用方提供的序号；数据库唯一约束防止同一会话出现重复序号。 */
-  async appendMessage(message: ConversationMessage): Promise<void> {
-    await this.database.execute({
+  private async appendMessage(
+    message: ConversationMessage,
+    executor: MetadataQueryExecutor,
+  ): Promise<void> {
+    await executor.execute({
       sql: "INSERT INTO dbo.conversation_messages (id, conversation_id, role, content, sequence, created_at) VALUES (@id, @conversation_id, @role, @content, @sequence, @created_at)",
       parameters: [
         { name: "id", type: "string", value: message.id },
@@ -75,51 +185,10 @@ class SqlConversationRepository implements ConversationRepository {
   /** 按序号读取消息；调用方应先通过会话查询完成用户与组织归属检查。 */
   async listMessages(conversationId: string): Promise<ConversationMessage[]> {
     const result = await this.database.execute<ConversationMessageRow>({
-      sql: "SELECT id, conversation_id, role, content, sequence, created_at FROM dbo.conversation_messages WHERE conversation_id = @conversation_id ORDER BY sequence",
+      sql: "SELECT id, conversation_id, role, content, sequence, created_at, analysis_run_id FROM dbo.conversation_messages WHERE conversation_id = @conversation_id ORDER BY sequence",
       parameters: [{ name: "conversation_id", type: "string", value: conversationId }],
     });
     return result.rows.map((row) => this.mapMessage(row));
-  }
-
-  /** 保存一次分析运行。 */
-  async createAnalysisRun(run: AnalysisRun): Promise<void> {
-    await this.database.execute({
-      sql: "INSERT INTO dbo.analysis_runs (id, conversation_id, organization_id, user_id, status, error_code, error_message, started_at, completed_at, created_at) VALUES (@id, @conversation_id, @organization_id, @user_id, @status, @error_code, @error_message, @started_at, @completed_at, @created_at)",
-      parameters: [
-        { name: "id", type: "string", value: run.id },
-        { name: "conversation_id", type: "string", value: run.conversationId },
-        { name: "organization_id", type: "string", value: run.organizationId },
-        { name: "user_id", type: "string", value: run.userId },
-        { name: "status", type: "string", value: run.status },
-        { name: "error_code", type: "string", value: run.errorCode },
-        { name: "error_message", type: "string", value: run.errorMessage },
-        { name: "started_at", type: "date", value: run.startedAt },
-        { name: "completed_at", type: "date", value: run.completedAt },
-        { name: "created_at", type: "date", value: run.createdAt },
-      ],
-    });
-  }
-
-  /** 按用户与组织更新运行状态及时间；当前 SQL 以归属条件定位记录。 */
-  async updateAnalysisRun(
-    runId: string,
-    userId: string,
-    organizationId: string,
-    status: AnalysisRunStatus,
-    error?: { code: string; message: string },
-  ): Promise<boolean> {
-    const result = await this.database.execute({
-      sql: "UPDATE dbo.analysis_runs SET status = @status, error_code = @error_code, error_message = @error_message, started_at = CASE WHEN @status = 'running' AND started_at IS NULL THEN SYSUTCDATETIME() ELSE started_at END, completed_at = CASE WHEN @status IN ('completed', 'failed', 'cancelled') THEN SYSUTCDATETIME() ELSE completed_at END WHERE id = @id AND user_id = @user_id AND organization_id = @organization_id",
-      parameters: [
-        { name: "status", type: "string", value: status },
-        { name: "error_code", type: "string", value: error?.code ?? null },
-        { name: "error_message", type: "string", value: error?.message ?? null },
-        { name: "id", type: "string", value: runId },
-        { name: "user_id", type: "string", value: userId },
-        { name: "organization_id", type: "string", value: organizationId },
-      ],
-    });
-    return (result.rowsAffected[0] ?? 0) > 0;
   }
 
   /** 将数据库会话行转换为会话领域对象。 */
@@ -140,6 +209,7 @@ class SqlConversationRepository implements ConversationRepository {
       id: row.id,
       conversationId: row.conversation_id,
       role: row.role,
+      ...(row.analysis_run_id ? { analysisRunId: row.analysis_run_id } : {}),
       content: row.content,
       sequence: row.sequence,
       createdAt: row.created_at,
@@ -167,6 +237,8 @@ type ConversationRow = {
 
 /** `conversation_messages` 查询返回的数据库记录。 */
 type ConversationMessageRow = {
+  /** 新消息持久化时记录对应运行；旧数据允许为空。 */
+  analysis_run_id?: string | null;
   /** 消息主键。 */
   id: string;
   /** 消息所属会话主键。 */

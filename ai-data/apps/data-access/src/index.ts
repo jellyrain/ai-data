@@ -103,7 +103,7 @@ async function start(): Promise<void> {
     const dataSourceManager = new DataSourceManager(
       dataSourceRepository,
       secretResolver,
-      new DefaultConnectorFactory(apiDatasetRepository),
+      new DefaultConnectorFactory(apiDatasetRepository, config.sqlserver_transports),
     );
     const catalogService = new CatalogService(dataSourceManager, exposedObjectRepository);
     const managementService = new DataSourceManagementService(

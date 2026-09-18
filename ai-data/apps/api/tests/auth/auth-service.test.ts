@@ -69,6 +69,17 @@ class MemoryAuthRepository implements UserAdminRepository {
   ensureBootstrapAdmin(): Promise<void> {
     throw new Error("此测试不执行管理员初始化");
   }
+  async updateUserDepartments(
+    userId: string,
+    organizationId: string,
+    departmentIds: string[],
+  ): Promise<boolean> {
+    const user = this.users.get(userId);
+    if (!user || user.organizationId !== organizationId) return false;
+    this.permissionContext = { department_ids: departmentIds };
+    user.authorizationVersion++;
+    return true;
+  }
 
   findUserByUsername(username: string) {
     return Promise.resolve(

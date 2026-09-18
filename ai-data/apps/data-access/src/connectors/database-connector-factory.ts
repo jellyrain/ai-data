@@ -4,9 +4,14 @@ import { DatabaseConnector } from "./database-connector";
 import { createDatabaseDriver } from "./database-drivers";
 import type { DataSourceConnectorFactory } from "../data-sources/data-source-manager";
 import { getDatabaseDialect } from "./dialects";
+import type { DasConfig } from "../config/das-config";
 
 /** 使用真实数据库驱动创建业务连接器的默认工厂。 */
 class DatabaseConnectorFactory implements DataSourceConnectorFactory {
+  constructor(
+    private readonly sqlServerTransports: NonNullable<DasConfig["sqlserver_transports"]> = {},
+  ) {}
+
   /** 为每个 source_id 创建独立数据库连接池和方言连接器。 */
   async create(
     config: DataSourceConfig,
@@ -15,7 +20,19 @@ class DatabaseConnectorFactory implements DataSourceConnectorFactory {
     if (secret.connectorKind === "http_api") {
       throw new Error("HTTP API 凭据不能由数据库连接器工厂创建");
     }
-    const driver = await createDatabaseDriver(config, secret);
+    const transport = Object.hasOwn(this.sqlServerTransports, config.sourceId)
+      ? this.sqlServerTransports[config.sourceId]
+      : undefined;
+    const driver = await createDatabaseDriver(
+      config,
+      secret,
+      transport === undefined
+        ? undefined
+        : {
+            encrypt: transport.encrypt,
+            trustServerCertificate: transport.trust_server_certificate,
+          },
+    );
     return new DatabaseConnector(config, driver, getDatabaseDialect(secret.connectorKind));
   }
 }

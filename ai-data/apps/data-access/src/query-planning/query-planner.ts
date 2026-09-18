@@ -151,6 +151,9 @@ class QueryPlanner {
         type: join.type,
         relation: filteredRelations[index + 1],
         on: join.on,
+        ...(join.on_filters
+          ? { on_filters: mapFilterGroup(join.on_filters, aliases.slice(0, index + 2)) }
+          : {}),
       };
     });
 

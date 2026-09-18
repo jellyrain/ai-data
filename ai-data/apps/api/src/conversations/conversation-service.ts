@@ -1,20 +1,26 @@
+import dayjs from "dayjs";
+import type { AnalysisDispatcher } from "../runtime/runtime-types";
 import type { AuthContext } from "../auth/auth-types";
 import type {
-  AnalysisRun,
   Conversation,
   ConversationDetail,
-  ConversationMessage,
   ConversationRepository,
   SubmittedMessage,
 } from "./conversation-types";
 
 /** 使用当前可信身份上下文维护会话、用户消息和分析运行。 */
 class ConversationService {
-  constructor(private readonly repository: ConversationRepository) {}
+  constructor(
+    private readonly repository: ConversationRepository,
+    private readonly runtime?: {
+      dispatcher?: Pick<AnalysisDispatcher, "wake">;
+      authorizeRun: (context: AuthContext, runId: string) => Promise<unknown>;
+    },
+  ) {}
 
   /** 创建当前用户所属组织的新会话。 */
   async create(context: AuthContext, title?: string): Promise<Conversation> {
-    const now = new Date();
+    const now = dayjs().toDate();
     const conversation: Conversation = {
       id: crypto.randomUUID(),
       organizationId: context.organizationId,
@@ -41,42 +47,31 @@ class ConversationService {
       context.organizationId,
     );
     if (!conversation) return null;
-    return { conversation, messages: await this.repository.listMessages(conversation.id) };
+    const messages = await this.repository.listMessages(conversation.id);
+    for (const runId of new Set(
+      messages.flatMap((message) => (message.analysisRunId ? [message.analysisRunId] : [])),
+    ))
+      await this.runtime?.authorizeRun(context, runId);
+    return { conversation, messages };
   }
 
-  /** 校验会话归属及 active 状态后，依次保存用户消息与待执行分析运行。 */
+  /** 归属校验、幂等检查和原子写入由仓储在同一事务内完成。 */
   async submitUserMessage(
     context: AuthContext,
     conversationId: string,
     content: string,
+    idempotencyKey: string,
   ): Promise<SubmittedMessage | null> {
-    const detail = await this.get(context, conversationId);
-    if (!detail || detail.conversation.status !== "active") return null;
-    const now = new Date();
-    const message: ConversationMessage = {
-      id: crypto.randomUUID(),
+    const submitted = await this.repository.submitMessage(
       conversationId,
-      role: "user",
+      context.userId,
+      context.organizationId,
       content,
-      sequence: detail.messages.length,
-      createdAt: now,
-    };
-    const analysisRun: AnalysisRun = {
-      id: crypto.randomUUID(),
-      conversationId,
-      organizationId: context.organizationId,
-      userId: context.userId,
-      status: "created",
-      errorCode: null,
-      errorMessage: null,
-      startedAt: null,
-      completedAt: null,
-      createdAt: now,
-    };
-    // 消息和运行分别写入仓储；序号取当前消息数，串行推进由上层运行流程协调。
-    await this.repository.appendMessage(message);
-    await this.repository.createAnalysisRun(analysisRun);
-    return { message, analysisRun };
+      idempotencyKey,
+      ...(this.runtime?.dispatcher ? [context.sessionId] : []),
+    );
+    if (submitted) this.runtime?.dispatcher?.wake();
+    return submitted;
   }
 }
 

@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { submitMessageSchema } from "@ai-data/contracts";
 
 import { ApplicationError } from "../errors/application-error";
 import type { ApiAuthService, ApiConversationService } from "../app-types";
@@ -10,9 +11,6 @@ import { bearerToken } from "./auth-routes";
 const createConversationSchema = z
   .object({ title: z.string().min(1).max(512).optional() })
   .strict();
-/** 用户消息输入，正文必须非空，拒绝未声明字段。 */
-const submitMessageSchema = z.object({ content: z.string().min(1) }).strict();
-
 /** 从 Access JWT 加载当前可信身份上下文。 */
 async function currentContext(
   request: FastifyRequest,
@@ -51,10 +49,12 @@ function registerConversationRoutes(
     return reply.send(detail);
   });
   app.post("/conversations/:id/messages", async (request, reply) => {
+    const input = submitMessageSchema.parse(request.body);
     const submitted = await conversationService.submitUserMessage(
       await currentContext(request, authService),
       (request.params as { id: string }).id,
-      submitMessageSchema.parse(request.body).content,
+      input.content,
+      input.idempotency_key,
     );
     if (!submitted) throw new ApplicationError("NOT_FOUND", "会话不存在或不可用");
     return reply.code(201).send(submitted);

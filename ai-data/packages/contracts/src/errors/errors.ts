@@ -28,6 +28,8 @@ const contractErrorCodeSchema = z.enum([
   "NOT_FOUND",
   /** 服务正在取消当前分析或查询。 */
   "CANCELLED",
+  /** 幂等键、版本、运行状态或执行租约发生冲突。 */
+  "CONFLICT",
   /** 服务内部发生未分类的处理错误。 */
   "INTERNAL_ERROR",
 ]);

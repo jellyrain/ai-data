@@ -58,6 +58,40 @@ function query(type: "left" | "right" = "left") {
 
 describe("对象预过滤 SQL", () => {
   it.each([mysqlDialect, postgresqlDialect, sqlServerDialect, oracleDialect])(
+    "$kind 的带值 ON 参数位于对象过滤后，保持外连接匹配语义",
+    (dialect) => {
+      const input = query();
+      if (input.type !== "relational_query") throw new Error("预期关系查询");
+      const configured = executableQuerySchema.parse({
+        ...input,
+        joins: input.joins.map((join) => ({
+          ...join,
+          on_filters: {
+            logic: "and",
+            items: [{ field: "v.id", op: "eq", data_type: "integer", value: 1 }],
+          },
+        })),
+      });
+      const compiled = compileSqlQuery(configured, dialect);
+      expect(compiled.parameters.map((parameter) => parameter.value)).toEqual(["org", "A", 1]);
+      expect(compiled.sql).toMatch(/ ON .* AND /);
+      if (dialect !== mysqlDialect) return;
+      const db = new DatabaseSync(":memory:");
+      try {
+        db.exec(
+          "CREATE TABLE visit(id INTEGER, org TEXT); CREATE TABLE detail(visit_id INTEGER, dept TEXT); INSERT INTO visit VALUES (1,'org'),(2,'org'),(3,'org'); INSERT INTO detail VALUES (1,'A'),(2,'A');",
+        );
+        expect(db.prepare(compiled.sql).all("org", "A", 1)).toEqual([
+          { id: 1, dept: "A" },
+          { id: 2, dept: null },
+          { id: 3, dept: null },
+        ]);
+      } finally {
+        db.close();
+      }
+    },
+  );
+  it.each([mysqlDialect, postgresqlDialect, sqlServerDialect, oracleDialect])(
     "$kind 在各对象子查询中参数化过滤",
     (dialect) => {
       const compiled = compileSqlQuery(query(), dialect);

@@ -66,8 +66,36 @@ class SqlServerMetadataDatabase implements MetadataDatabaseHealthChecker, Metada
   async execute<T extends Record<string, unknown>>(
     statement: MetadataStatement,
   ): Promise<MetadataQueryResult<T>> {
-    const request = this.pool.request();
+    return this.executeRequest<T>(this.pool.request(), statement);
+  }
 
+  /** 事务执行器只借用当前事务连接；提交或回滚完成后连接归还池。 */
+  async transaction<T>(operation: (executor: MetadataQueryExecutor) => Promise<T>): Promise<T> {
+    const transaction = this.pool.transaction();
+    await transaction.begin();
+    try {
+      const result = await operation({
+        execute: <R extends Record<string, unknown>>(statement: MetadataStatement) =>
+          this.executeRequest<R>(transaction.request(), statement),
+      });
+      await transaction.commit();
+      return result;
+    } catch (error) {
+      try {
+        await transaction.rollback();
+      } catch (rollbackError) {
+        throw new AggregateError([error, rollbackError], "业务事务失败且回滚失败", {
+          cause: rollbackError,
+        });
+      }
+      throw error;
+    }
+  }
+
+  private async executeRequest<T extends Record<string, unknown>>(
+    request: mssql.Request,
+    statement: MetadataStatement,
+  ): Promise<MetadataQueryResult<T>> {
     // 仓储显式给出绑定类型，使 null 等值也能按预期数据库类型传入。
     for (const parameter of statement.parameters) {
       switch (parameter.type) {

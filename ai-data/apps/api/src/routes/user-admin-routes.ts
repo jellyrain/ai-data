@@ -5,6 +5,7 @@ import { ApplicationError } from "../errors/application-error";
 import type { ApiAuthService } from "../app-types";
 import type { AuthContext } from "../auth/auth-types";
 import { hashPassword } from "../auth/password";
+import { departmentIdsSchema } from "../auth/department-scope";
 import { bearerToken } from "./auth-routes";
 
 /** 管理员创建用户输入，拒绝未知字段；组织归属从当前身份取得。 */
@@ -39,6 +40,19 @@ async function currentContext(
 
 /** 注册管理员用户维护接口。 */
 function registerUserAdminRoutes(app: FastifyInstance, authService: ApiAuthService): void {
+  app.put("/admin/users/:id/departments", async (request, reply) => {
+    const context = await currentContext(request, authService);
+    requireAdmin(context);
+    const input = z.object({ department_ids: departmentIdsSchema }).strict().parse(request.body);
+    const updated = await authService.updateManagedUserDepartments(
+      (request.params as { id: string }).id,
+      context.organizationId,
+      input.department_ids,
+    );
+    if (!updated) throw new ApplicationError("NOT_FOUND", "用户不存在");
+    return reply.code(204).send();
+  });
+
   app.post("/admin/users", async (request, reply) => {
     const context = await currentContext(request, authService);
     requireAdmin(context);

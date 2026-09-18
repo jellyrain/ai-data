@@ -9,7 +9,7 @@ class QueryResourceError extends Error {
     const messages: Record<QueryResourceErrorCode, string> = {
       QUERY_TIMEOUT: "查询超时",
       CANCELLED: "查询已取消",
-      QUERY_LIMIT_EXCEEDED: "数据源查询等待队列已满",
+      QUERY_LIMIT_EXCEEDED: "查询超出资源上限",
       DATA_SOURCE_UNAVAILABLE: "数据源已关闭",
     };
     super(messages[code], options);

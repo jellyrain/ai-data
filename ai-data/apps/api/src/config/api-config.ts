@@ -65,6 +65,45 @@ const apiConfigSchema = z
         service_version: z.string().min(1, "service.service_version 不能为空"),
       })
       .strict(),
+    /** 模型提供方与执行预算由部署配置选择；省略时只启用结构化业务接口。 */
+    analysis_runtime: z
+      .object({
+        enabled: z.boolean(),
+        active_provider: z.string().min(1),
+        providers: z
+          .array(
+            z
+              .object({
+                id: z.string().min(1),
+                /** 官方 Harness 使用 Responses 协议及普通函数工具。 */
+                protocol: z.literal("responses"),
+                base_url: z.url(),
+                model: z.string().min(1),
+                api_key: z.string().min(1).optional(),
+                headers: z.record(z.string(), z.string()).optional(),
+              })
+              .strict(),
+          )
+          .min(1)
+          .max(20),
+        timeout_ms: z.number().int().min(1000).max(600000).default(180000),
+        /** 相对项目启动工作目录解析，集中保存官方历史、日志及临时文件。 */
+        state_directory: z.string().min(1).default("secrets/codex-runtime"),
+        /** 与所选模型服务的实际上下文容量一致；省略时使用官方模型配置。 */
+        context_window: z.number().int().min(4096).max(2097152).optional(),
+        max_context_bytes: z.number().int().min(4096).max(1048576).default(65536),
+        max_tool_calls: z.number().int().min(1).max(100).default(30),
+        concurrency: z.number().int().min(1).max(20).default(2),
+        poll_ms: z.number().int().min(100).max(30000).default(1000),
+      })
+      .strict()
+      .superRefine((value, context) => {
+        if (new Set(value.providers.map((provider) => provider.id)).size !== value.providers.length)
+          context.addIssue({ code: "custom", message: "模型提供方标识不能重复" });
+        if (!value.providers.some((provider) => provider.id === value.active_provider))
+          context.addIssue({ code: "custom", message: "当前模型提供方必须存在于配置中" });
+      })
+      .optional(),
     /** API 自己的元数据库连接配置。 */
     metadata_sqlserver: metadataConnectionSchema,
     /** 获准接入的 DAS 实例；省略时没有实例可注册。版本递增后旧接入凭证失效。 */

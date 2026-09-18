@@ -10,6 +10,7 @@ import type { DataSourceConfig } from "../data-sources/data-source-types";
 import type { DatabaseColumn, DatabaseDriver, DatabaseParameter } from "./database-connector";
 import { runDatabaseQuery } from "./database-query-control";
 import { queryAbortError } from "./query-resource-error";
+import { readSqlServerResult } from "./sqlserver-result-reader";
 
 /** 读取 SQL Server、MySQL 或 PostgreSQL 数据源已配置的目标库。 */
 function getTargetDatabase(config: DataSourceConfig): string {
@@ -33,6 +34,8 @@ function getOracleConnectString(config: DataSourceConfig, host: string, port: nu
 async function createSqlServerDriver(
   config: DataSourceConfig,
   secret: Extract<ResolvedDataSourceSecret, { connectorKind: "sqlserver" }>,
+  /** 由部署配置提供的链路选项；默认加密并验证证书。 */
+  transport = { encrypt: true, trustServerCertificate: false },
 ): Promise<DatabaseDriver> {
   const pool = await new mssql.ConnectionPool({
     server: secret.host,
@@ -41,7 +44,7 @@ async function createSqlServerDriver(
     user: secret.user,
     password: secret.password,
     pool: { max: config.connectionPoolLimit, min: 0, idleTimeoutMillis: 30000 },
-    options: { encrypt: true, trustServerCertificate: false, useUTC: true },
+    options: { ...transport, useUTC: true },
     requestTimeout: config.timeoutMs,
     connectionTimeout: config.timeoutMs,
   }).connect();
@@ -62,13 +65,19 @@ async function createSqlServerDriver(
           request.cancel();
         });
         try {
-          const result = await request.query(sql);
-          if (Array.isArray(result.recordsets) && result.recordsets.length > 1) {
-            throw new Error("数据库查询返回多个结果集");
-          }
+          const result = options.resultBudget
+            ? await readSqlServerResult(request, sql, options.resultBudget)
+            : await request.query(sql).then((value) => {
+                if (Array.isArray(value.recordsets) && value.recordsets.length > 1)
+                  throw new Error("数据库查询返回多个结果集");
+                return {
+                  rows: value.recordset as Record<string, unknown>[],
+                  columns: value.recordset.columns,
+                };
+              });
           return {
-            rows: result.recordset as Record<string, unknown>[],
-            columns: Object.values(result.recordset.columns).map((field): DatabaseColumn => {
+            rows: result.rows,
+            columns: Object.values(result.columns).map((field): DatabaseColumn => {
               const factory = typeof field.type === "function" ? field.type : field.type.type;
               const dataType =
                 Object.entries(mssql.TYPES).find(([, candidate]) => candidate === factory)?.[0] ??
@@ -409,10 +418,12 @@ function mapMysqlColumn(field: FieldPacket): DatabaseColumn {
 async function createDatabaseDriver(
   config: DataSourceConfig,
   secret: ResolvedDataSourceSecret,
+  /** 当前源的 SQL Server 链路选项；省略时由 SQL Server 驱动使用默认值。 */
+  sqlServerTransport?: Parameters<typeof createSqlServerDriver>[2],
 ): Promise<DatabaseDriver> {
   switch (secret.connectorKind) {
     case "sqlserver":
-      return createSqlServerDriver(config, secret);
+      return createSqlServerDriver(config, secret, sqlServerTransport);
     case "mysql":
       return createMysqlDriver(config, secret);
     case "postgresql":

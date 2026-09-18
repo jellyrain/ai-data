@@ -73,6 +73,11 @@ interface MetadataQueryExecutor {
   ): Promise<MetadataQueryResult<T>>;
 }
 
+/** 多个业务仓储在同一连接和事务中协作，异常使整个操作回滚。 */
+interface MetadataTransactionalExecutor extends MetadataQueryExecutor {
+  transaction<T>(operation: (executor: MetadataQueryExecutor) => Promise<T>): Promise<T>;
+}
+
 /** 健康检查路由依赖的最小元数据库能力。 */
 interface MetadataDatabaseHealthChecker {
   /** 返回元数据库是否可以执行最小只读请求。 */
@@ -97,6 +102,7 @@ interface MetadataMigration {
 }
 
 export type {
+  MetadataTransactionalExecutor,
   MetadataBatchExecutor,
   MetadataConnectionConfig,
   MetadataDatabaseHealthChecker,

@@ -58,6 +58,16 @@ function authorizeRelationalQuery(
     assertFieldCapability(field, relations.get(field.alias)!, "sortable_fields");
   }
   validateFilters(query.filters, scopes.fields, relations);
+  const availableAliases = new Set([query.from.alias]);
+  for (const join of query.joins) {
+    availableAliases.add(join.alias);
+    if (join.on_filters) {
+      const fields = new Map(
+        [...scopes.fields].filter(([, field]) => availableAliases.has(field.alias)),
+      );
+      validateFilters(join.on_filters, fields, relations);
+    }
+  }
   const joins = assertApprovedJoins(query, relations, assertField);
   assertAggregationCardinality(query, joins, relations, scopes);
   const authorizeObject = <T extends RelationalQuery["from"]>(ref: T): T => {

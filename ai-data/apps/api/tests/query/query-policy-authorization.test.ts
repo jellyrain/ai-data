@@ -158,6 +158,34 @@ async function authorize(
 }
 
 describe("关系查询的对象行授权", () => {
+  it("带值 ON 保留匹配条件并纳入请求签名", async () => {
+    const on_filters = {
+      logic: "or",
+      items: [
+        { field: "v.dept", op: "eq", data_type: "string", value: "A" },
+        { field: "d.dept", op: "eq", data_type: "string", value: "B" },
+      ],
+    };
+    expect(await authorize([], { ...baseQuery, joins: [{ ...join, on_filters }] })).toMatchObject({
+      joins: [{ on_filters }],
+    });
+  });
+  it.each(["future.dept", "d.missing"])("带值 ON 拒绝不可访问字段 %s", async (field) => {
+    await expect(
+      authorize([], {
+        ...baseQuery,
+        joins: [
+          {
+            ...join,
+            on_filters: {
+              logic: "and",
+              items: [{ field, op: "eq", data_type: "string", value: "A" }],
+            },
+          },
+        ],
+      }),
+    ).rejects.toThrow();
+  });
   it.each<RowPolicy["condition"]>([
     { field: "dept", op: "eq", value: "A" },
     { field: "dept", op: "neq", value: "A" },

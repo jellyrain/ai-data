@@ -1,3 +1,5 @@
+import type { AnalysisRun, AnalysisRunStatus } from "../analysis-runs/analysis-run-record-types";
+
 /** API 会话、消息和分析运行的持久化能力。 */
 interface ConversationRepository {
   /** 创建当前用户所属组织的会话。 */
@@ -10,20 +12,17 @@ interface ConversationRepository {
   ): Promise<Conversation | null>;
   /** 列出当前用户的会话。 */
   listConversations(userId: string, organizationId: string): Promise<Conversation[]>;
-  /** 按调用方分配的序号追加消息，会话归属须在调用前确认。 */
-  appendMessage(message: ConversationMessage): Promise<void>;
   /** 按序读取已确认归属的会话消息。 */
   listMessages(conversationId: string): Promise<ConversationMessage[]>;
-  /** 创建分析运行。 */
-  createAnalysisRun(run: AnalysisRun): Promise<void>;
-  /** 更新指定用户及组织所属运行的状态，返回是否命中记录。 */
-  updateAnalysisRun(
-    runId: string,
+  /** 在会话行锁内幂等保存消息、运行和初始快照。 */
+  submitMessage(
+    conversationId: string,
     userId: string,
     organizationId: string,
-    status: AnalysisRunStatus,
-    error?: { code: string; message: string },
-  ): Promise<boolean>;
+    content: string,
+    idempotencyKey: string,
+    sessionId?: string,
+  ): Promise<SubmittedMessage | null>;
 }
 
 /** 当前用户所属组织中的对话会话。 */
@@ -46,6 +45,8 @@ type Conversation = {
 
 /** 按会话内序号持久化的一条对话消息。 */
 type ConversationMessage = {
+  /** 助手结论与澄清对应的运行；旧记录可以省略。 */
+  analysisRunId?: string;
   /** 消息主键。 */
   id: string;
   /** 所属会话。 */
@@ -56,33 +57,6 @@ type ConversationMessage = {
   content: string;
   /** 会话内递增序号。 */
   sequence: number;
-  /** 创建时间。 */
-  createdAt: Date;
-};
-
-/** 分析运行记录可保存的状态值；状态转换规则由运行流程负责。 */
-type AnalysisRunStatus = "created" | "running" | "completed" | "failed" | "cancelled";
-
-/** 一次用户问题对应的分析运行记录。 */
-type AnalysisRun = {
-  /** 分析运行主键。 */
-  id: string;
-  /** 所属会话。 */
-  conversationId: string;
-  /** 所属组织。 */
-  organizationId: string;
-  /** 发起用户。 */
-  userId: string;
-  /** 当前运行状态。 */
-  status: AnalysisRunStatus;
-  /** 稳定失败码。 */
-  errorCode: string | null;
-  /** 面向用户的失败说明。 */
-  errorMessage: string | null;
-  /** 首次更新为 running 的时间；尚未启动时为 null。 */
-  startedAt: Date | null;
-  /** 更新为终态时记录的时间；尚未结束时为 null。 */
-  completedAt: Date | null;
   /** 创建时间。 */
   createdAt: Date;
 };

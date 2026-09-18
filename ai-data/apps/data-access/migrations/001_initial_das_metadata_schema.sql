@@ -65,6 +65,7 @@ BEGIN
       is_discoverable BIT NOT NULL DEFAULT 1,
       is_queryable BIT NOT NULL DEFAULT 1,
       capabilities_json NVARCHAR(MAX) NOT NULL DEFAULT N'{}',
+      procedure_definition_json NVARCHAR(MAX) NULL,
       created_at DATETIME2(3) NOT NULL DEFAULT GETDATE(),
       updated_at DATETIME2(3) NOT NULL DEFAULT GETDATE(),
       CONSTRAINT PK_exposed_source_objects PRIMARY KEY (source_id, object_id)

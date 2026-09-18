@@ -137,6 +137,7 @@ type QueryAccessContext = z.infer<typeof queryAccessContextSchema>;
 - 互斥字段、依赖字段和操作符组合使用 `.superRefine(...)` 校验。
 - 查询结果行数、分页量、超时等资源边界必须有明确上限。
 - 日期时间使用东八区 `YYYY-MM-DD HH:mm:ss`，并校验真实日期。
+- 应用中的时间生成、解析、格式化、加减和比较统一使用 `dayjs`。业务时间显式指定东八区；数据库驱动需要 `Date` 时通过 `.toDate()` 转换，时间戳使用 `.valueOf()` 或 `.unix()`。
 
 ### 6.3 Zod 注释规范
 

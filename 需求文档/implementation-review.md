@@ -1,49 +1,93 @@
 # 实现与需求符合性审查
 
 审查日期：2026-09-11  
-状态：问题待逐项处理  
-代码范围：`../ai-data/packages/contracts`、`../ai-data/packages/metadata`、`../ai-data/apps/data-access`；API 仅检查与这些模块相关的衔接。  
-关联文件：[代码写法与文件组织审查](./code-organization-review.md)
+状态：后端基础、结果交付、目录管理及完整本地模型对话链路已验收（2026-09-14）\
+代码范围：`../ai-data/packages/contracts`、`../ai-data/packages/metadata`、`../ai-data/apps/data-access`、`../ai-data/apps/api`。\
+关联文件：[代码写法与文件组织审查](./code-organization-review.md) · [查询结果交付与文件导出设计](./result-delivery-and-export.md)
 
 ## 1. 审查结论与依据
 
-基础目录、共享合同、元数据库访问、连接器与执行映射已经具备。当前实现尚未完整满足设计基线，DAS 存在已复现的脱敏、认证及查询结果问题；审计和部分执行能力仍待接入。API 处于开发中，其授权衔接问题单独记录。
+当前已完成授权查询、DAS 执行与审计、结果预算、指标版本、运行状态、证据及报告快照的后端基础验收。官方 Codex app-server 运行时、持久化调度、多工具执行器和目录策略管理已完成当前后端验收；确定性对话与实际本地模型通过 API 业务路由、Node DAS 构建进程及隔离 SQL Server 完成查询闭环，第 7 步后端已完成。
 
-本文件保存审查时的代码快照结论。后续处理每项问题时，应先核对最新实现，再补充验证证据和更新状态。
+本文件保留各次审查的代码快照和问题处理证据。日期较早的测试数量与边界属于当时状态；当前结论以本节、问题索引及最新验收记录为准。
 
-依据：[contracts.md](./contracts.md)、[data-access-design.md](./data-access-design.md)、[das-implementation-plan.md](./das-implementation-plan.md)、[api-implementation-plan.md](./api-implementation-plan.md)、[development-standards.md](./development-standards.md)。DAS 实施方案第 6 步标为“核心已完成”，第 7 步执行与审计尚未标为完成；新增合同要求也明确列为待验收。
+依据：[contracts.md](./contracts.md)、[data-access-design.md](./data-access-design.md)、[das-implementation-plan.md](./das-implementation-plan.md)、[api-implementation-plan.md](./api-implementation-plan.md)、[development-standards.md](./development-standards.md)。
 
-| 模块        | 现状                                             | 验收判断                                     |
-| ----------- | ------------------------------------------------ | -------------------------------------------- |
-| contracts   | 基础目录、查询、权限、结果和 SSE 合同已实现      | 新增合同未齐，已有 Schema 存在校验缺口       |
-| metadata    | 独立连接池、参数化执行、健康检查和迁移加载已实现 | 基础职责具备，测试验收不足                   |
-| data-access | 连接器、目录、白名单映射、查询执行和脱敏已有实现 | 部分满足，存在阻塞验收的问题                 |
-| api         | 已有目录、授权、签名和 DAS Client                | 按开发中跟踪，相关授权场景须在开放查询前验收 |
+| 模块        | 现状                                                          | 验收判断                                 |
+| ----------- | ------------------------------------------------------------- | ---------------------------------------- |
+| contracts   | 目录、查询、权限、结果、SSE、运行、指标、证据和报告合同已实现 | 已有合同与结果交付边界已验收             |
+| metadata    | 连接池、参数化执行、事务、健康检查和迁移已实现                | 包测试与 SQL Server 隔离迁移已验收       |
+| data-access | 目录、白名单、编译执行、脱敏、预算及审计已实现                | SQL Server 生产 HTTP 路径已验收          |
+| api         | 授权、运行、指标、报告及 Node 模型运行时、目录策略管理已实现  | 确定性 HTTP 对话与完整本地模型对话已验收 |
 
 ## 2. 问题索引与处理规则
 
 P1 表示优先处理的权限、敏感数据或关键查询正确性问题；P2 表示功能完整性、结果合同和可靠性问题。“待确认”表示文档与代码约定需要先统一。各条目按实际验收更新状态；每次处理应记录修改内容、验证结果和剩余限制。
 
-| 编号 | 优先级 | 范围                  | 问题                                 | 状态                   |
-| ---- | ------ | --------------------- | ------------------------------------ | ---------------------- |
-| R-01 | P1     | DAS                   | 部分脱敏在末尾保留 0 位时泄露原文    | 已修复并验收           |
-| R-02 | P1     | DAS / API             | 内部管理、目录和心跳通道认证不足     | 已修复并验收           |
-| R-03 | P1     | DAS / API             | 授权有效期和 JWT 必需字段校验不完整  | 已修复并验收           |
-| R-04 | P2     | DAS                   | 审计仓储未接入请求执行链             | 已接通；集成待实跑     |
-| R-05 | P2     | DAS                   | 数据库结果截断状态不准确             | 已修复；集成待实跑     |
-| R-06 | P2     | DAS                   | 结果类型与可空性未完整标准化         | 已修复；集成待实跑     |
-| R-07 | P2     | DAS                   | 存储过程目录与 HTTP 输入参数定义不足 | 已实现受控调用；集成待实跑 |
-| R-08 | P2     | DAS                   | 超时、取消、排队与成本限制未完整落地 | 资源控制已实现；集成待实跑 |
-| R-09 | P2     | contracts / API / DAS | v0.2 新增合同与执行能力待补齐        | 对象过滤与分层聚合已实现；业务合同按阶段推进 |
-| R-10 | P2     | contracts             | SSE 严格校验和查询结果一致性校验不足 | 已修复并验收           |
-| R-11 | P2     | metadata              | 包测试命令因没有测试文件失败         | 包测试完成；集成待实跑 |
-| R-12 | 待确认 | DAS / 文档            | 元数据库密码的配置约定不一致         | 待讨论                 |
-| R-13 | P1     | API                   | 外连接可选侧行权限仍写入 WHERE       | 已修复并验收           |
-| R-14 | P1     | API                   | 行策略求值、操作符与多角色合并不完整 | 已修复并验收           |
-| R-15 | P1     | API                   | 参数化查询的行列权限和脱敏未落实     | 已修复并自动化验收     |
-| R-16 | P1     | API                   | 组合关联只校验提交条件的子集         | 已修复并验收           |
+| 编号 | 优先级 | 范围                  | 问题                                 | 状态                                             |
+| ---- | ------ | --------------------- | ------------------------------------ | ------------------------------------------------ |
+| R-01 | P1     | DAS                   | 部分脱敏在末尾保留 0 位时泄露原文    | 已修复并验收                                     |
+| R-02 | P1     | DAS / API             | 内部管理、目录和心跳通道认证不足     | 已修复并验收                                     |
+| R-03 | P1     | DAS / API             | 授权有效期和 JWT 必需字段校验不完整  | 已修复并验收                                     |
+| R-04 | P2     | DAS                   | 审计仓储未接入请求执行链             | SQL Server 审计落库已验收                        |
+| R-05 | P2     | DAS                   | 数据库结果截断状态不准确             | SQL Server 集成已验收                            |
+| R-06 | P2     | DAS                   | 结果类型与可空性未完整标准化         | SQL Server 集成已验收；其他库待环境              |
+| R-07 | P2     | DAS                   | 存储过程目录与 HTTP 输入参数定义不足 | SQL Server 过程及迁移已验收；其他库按计划        |
+| R-08 | P2     | DAS                   | 超时、取消、排队与成本限制未完整落地 | SQL Server 超时、取消及连接复用已验收            |
+| R-09 | P2     | contracts / API / DAS | v0.2 新增合同与执行能力待补齐        | 当前后端合同与完整模型对话已验收；Web 按阶段实施 |
+| R-10 | P2     | contracts             | SSE 严格校验和查询结果一致性校验不足 | 已修复并验收                                     |
+| R-11 | P2     | metadata              | 包测试命令因没有测试文件失败         | 包测试与 SQL Server 迁移集成已验收               |
+| R-12 | P2     | DAS / API / 文档      | 元数据库密码的配置约定不一致         | 已统一为本地启动配置                             |
+| R-13 | P1     | API                   | 外连接可选侧行权限仍写入 WHERE       | 已修复并验收                                     |
+| R-14 | P1     | API                   | 行策略求值、操作符与多角色合并不完整 | 已修复并验收                                     |
+| R-15 | P1     | API                   | 参数化查询的行列权限和脱敏未落实     | 已修复并自动化验收                               |
+| R-16 | P1     | API                   | 组合关联只校验提交条件的子集         | 已修复并验收                                     |
 
 ## 3. 问题详情
+
+### 模型运行时与目录策略管理（2026-09-15）
+
+API 使用项目官方 Codex 0.154.0 app-server 和 `CodexAnalysisHarness`，通过 `dynamicTools` 接收普通函数调用。本地 `analysis_runtime` 选择 Responses 模型提供方、认证及执行预算。`AnalysisExecutor` 在单次租约内运行多个业务工具，最终助手消息与终态一起保存；查询和指标 HTTP 接口保留原有单次操作语义。
+
+消息、运行和调度记录同事务提交；启动和轮询恢复待执行及过期租约任务，澄清回答后续接原运行。恢复、每次工具调用和交付结果时重新校验登录会话与当前授权。查询证据按稳定输入摘要复用，模型取得有界样本、完整性和证据标识；工具审计保存输入摘要、耗时、状态、错误码和证据引用。报告工具使用确定性标识，保存事务校验租约。
+
+目录管理接口校验管理员权限和目标角色组织归属。策略版本按组织与数据源递增，保存目标角色完整快照、变更和发布审计；历史版本不可覆盖。查询预览按指定角色的授权资料计算最终 DSL 与 `output_masks`。新增迁移为 `005_catalog_policy_versions`、`006_analysis_dispatch`、`007_codex_threads`；官方线程映射保存时校验租约，恢复前复核历史证据权限。配置和接口分别见[模型运行时说明](../ai-data/MODEL-RUNTIME.md)与[分析运行说明](../ai-data/ANALYSIS-RUNTIME.md)。
+
+本轮官方 Harness 测试结果见[测试说明](../ai-data/TESTING.md)。API SQL Server 集成覆盖真实事务、指标与报告业务，并补齐策略并发版本、报告保存原子去重和取消后拒绝保存。
+
+[对话集成测试](../ai-data/apps/api/tests/integration/dialogue.integration.ts)的 3 项确定性场景通过，以脚本化模型 Harness 驱动真实 API HTTP、DAS HTTP、JWT、编译器和 SQL Server，覆盖澄清回答恢复原运行、两次 SQL 查询与证据、重试复用、追问上下文，以及两角色的数据范围和会话/事件归属。
+
+完整本地模型对话另有 1 项通过：实际 `CodexAnalysisHarness` 使用当前配置提供方、生产 `query-analysis` 与 `query-dsl` 指令和运行工具，DAS 由 Node 直接运行实际 ESM 构建产物，完成目录核对、日期过滤、去重计数、最终答案及证据审计。受限角色的结果与答案为 A 科室 2 人次，证据限定在该角色范围。该场景每轮在配置与 180 秒的较小值内执行，测试上限 240 秒；增加重启后恢复同一官方线程并沿用结果回答追问。
+
+API 与 DAS 的 ESM 构建使用 Node `createRequire` 加载依赖。模型工具结构统一发布 JSON 标量、标量数组及操作符说明，API 按完整 Zod 合同校验，失败反馈包含字段路径和原因。真实官方协议测试检查两份 Skill 正文确实进入模型请求，以及普通函数发布结构。第 7 步按当前后端范围关闭，复跑入口见[测试说明](../ai-data/TESTING.md#对话链路验收)。
+
+相关类型检查、ESLint、API 构建和格式检查按本轮变更复核，结果以最新记录为准。DAS 本轮复用原构建产物，通过 HTTP 对话链路验证。
+
+API 构建产物另使用隔离 SQL 数据库与临时配置、启用 `analysis_runtime`，验证 `node dist/index.js` 启动与 `/health`；部署检查单独记录。
+
+### 本轮验收记录（2026-09-14）
+
+根级 `test` 共 891 项通过（工程 15、contracts 140、metadata 24、API 310、DAS 402），`typecheck`、`lint`、`build`、`format:check` 均通过。SQL Server 集成另计 33 项，全部通过。
+
+- DAS 过程定义已合并到初始 `001` 迁移，迁移发现、执行次数和集成预期均已同步。
+- 本地 config 连接 SQL Server，在随机隔离库完成 API 12 项、DAS 21 项集成验收。覆盖迁移首建、重复执行、失败回滚、实际类型、截断、过程调用、两层 AVG、带值 ON、超时、取消、连接复用及审计落库。
+- API 增加 `analysis-runs`、`metrics`、`evidence`、`reports` 模块及对应路由。消息与运行原子提交；租约代次、幂等记录、澄清和 SSE 事件可恢复；查询证据与事件一起保存。指标固定时间依据和版本，总计独立重算；报告保存完整来源，并按最新分享设置及当前数据权限检查历史版本。
+- 隔离就诊样本使用真实 API 授权、事务仓储和 SQL Server 表。A、B 部门各 2 人次，跨组去重总计为 3；A 部门角色只能取得 2。分组比率为 20、9，总比率为 130/12。业务客户端使用限定样本模板的 SQL 适配器；DAS 驱动及编译执行由独立集成用例验证。
+- 部门授权由管理员维护到本地元数据库，查询执行前后及历史读取时重新校验当前身份和来源范围。分享撤回同时作用于旧报告版本。接口及当前接入边界见 [分析运行说明](../ai-data/ANALYSIS-RUNTIME.md)，复跑方式见 [测试运行说明](../ai-data/TESTING.md)。
+
+下文日期较早的处理记录保留当时的验收范围；当前进展以问题索引和本轮记录为准。
+
+### 结果交付 API/DAS 验收（2026-09-14）
+
+已按[专项设计](./result-delivery-and-export.md)完成本轮 API/DAS 结果交付：查询硬上限 100,000 行、标准化结果 32 MiB、显式 `delivery` 完整性、查询返回前的身份/权限复查，以及运行证据 5,000 行/2 MiB、SSE 表格 100 行/256 KiB 预算。普通 `POST /query` 通过 HTTP 交付结果，运行缺省 `limit` 归一化继续满足幂等与恢复规则。
+
+单元与工程测试共 919 项通过（工程 15、contracts 145、metadata 24、API 327、DAS 408）；SQL Server 集成共 43 项通过（API 12、DAS 31）。API、DAS、contracts 类型检查、相关 ESLint、根格式检查及两个应用的最新生产构建通过。指标重试使用统一缺省 `limit` 比较规则后，3 项指标单元与 12 项 API 集成再次通过。
+
+DAS 新增 10 项真实集成场景，经生产 HTTP、JWT、规划、SQL Server 驱动、脱敏与审计验证 50,000 行完整结果、A/B 部门各 25,000 行、空结果、行数边界与截断、UTF-8/表格 JSON 32 MiB 超限和连接复用。API 业务集成使用其现有查询 fixture client；两服务分别在各自套件验收，真实 API→生产 DAS→SQL Server 的组合链路仍按后续阶段验收。复跑方式见[测试运行说明](../ai-data/TESTING.md)。
+
+Web 后续实现本地页码、页大小、上一页/下一页、跳页、真实总数和虚拟滚动，并使用已有数据或授权后的历史快照生成 Excel、Word、PDF。Excel 承载完整结果，Word 承载可编辑会话和分析，PDF 承载固定版式分析；导出复用已取得的业务结果。
+
+既有运行幂等、报告快照来源范围授权、JWT 签名/有效期/请求绑定与数值合同保持基线。严格单次消费 `jti`、高精度十进制合同和 Oracle 新增工作按后续阶段跟踪。Web 按计划实施；模型运行时进展见本节最新记录，既有 891 项根测试及 33 项 SQL Server 集成记录保留其原验收范围。
 
 ### R-01 部分脱敏在末尾保留 0 位时泄露原文
 
@@ -108,7 +152,7 @@ P1 表示优先处理的权限、敏感数据或关键查询正确性问题；P2
 ### R-05 数据库结果截断状态不准确
 
 - [x] 完成截断状态修复与行为回归。
-- [ ] 真实 SQL Server 集成用例待专用环境实跑。
+- [x] 真实 SQL Server 集成用例已在随机隔离数据库实跑（2026-09-14）。
 - **要求**：`truncated` 准确说明是否因返回限制丢弃了可返回的结果行。
 - **现状与证据**：SQL 先使用 `TOP N` / `LIMIT N` 等限制，执行后再判断驱动结果是否多于 N 行。用遵守 `TOP 2` 的模拟驱动和 3 行合成源数据复现：返回 2 行，`truncated` 仍为 false。已有测试让 `TOP 1` 返回 2 行，未模拟真实限制行为。
 - **位置**：[sql-query-compiler.ts](../ai-data/apps/data-access/src/connectors/sql-query-compiler.ts)，第 39 行；[database-connector.ts](../ai-data/apps/data-access/src/connectors/database-connector.ts)，第 109 行；[连接器测试](../ai-data/apps/data-access/tests/connectors/database-connector.test.ts)。
@@ -120,7 +164,8 @@ P1 表示优先处理的权限、敏感数据或关键查询正确性问题；P2
 ### R-06 结果类型与可空性未完整标准化
 
 - [x] 完成驱动元数据、值转换和可空性自动化验收（2026-09-13）。
-- [ ] 四类真实数据库的类型兼容性待专用环境实跑。
+- [x] SQL Server 真实类型及空结果验收完成（2026-09-14）。
+- [ ] 其他数据库的真实类型兼容性待对应环境实跑。
 - **要求**：结果按统一列类型和 JSON 表达返回，HTTP 字段遵守配置的类型及 nullable。
 - **修复前证据**：MySQL、PostgreSQL、Oracle 驱动仅保留列名，未传递实际类型，连接器将缺少类型的列默认为 string。HTTP 字段映射直接返回原值，仅检查 undefined，未拒绝不可空字段的 null。使用模拟 HTTP 响应已复现 integer 列返回字符串 `"12"`、不可空字段返回 null。
 - **位置**：[database-drivers.ts](../ai-data/apps/data-access/src/connectors/database-drivers.ts)，第 98、129、167 行；[http-api-connector.ts](../ai-data/apps/data-access/src/connectors/http-api-connector.ts)，第 157 行。
@@ -137,7 +182,8 @@ P1 表示优先处理的权限、敏感数据或关键查询正确性问题；P2
 ### R-07 存储过程目录与 HTTP 输入参数定义不足
 
 - [x] 补齐可信定义、固定输出与自动化调用链验收（2026-09-13）。
-- [ ] 各数据库真实过程调用与新迁移待专用环境实跑。
+- [x] SQL Server 真实过程调用与已合并初始迁移验收完成（2026-09-14）。
+- [ ] 其他数据库的真实过程调用按实施计划验收。
 - **要求**：目录提供固定输出列，以及真实输入参数类型、必填状态和默认语义。
 - **现状与证据**：数据库目录 SQL 发现存储过程名称，但输出列与输入参数未发现或配置补齐；模拟其实际投影经过目录服务，得到 `columns: []`、`query_parameters: []`。HTTP 参数全部被声明为 string、非必填，映射元数据没有保存完整参数定义。
 - **位置**：[SQL Server 目录](../ai-data/apps/data-access/src/connectors/dialects/sqlserver-dialect.ts)，第 33 行；[目录服务](../ai-data/apps/data-access/src/catalog/catalog-service.ts)；[HTTP 参数声明](../ai-data/apps/data-access/src/connectors/http-api-connector.ts)，第 88 行；[映射元数据](../ai-data/apps/data-access/src/metadata/api-dataset-records.ts)。
@@ -151,7 +197,8 @@ API 签名覆盖审核后的 `expected_output`，DAS 将其与本地固定定义
 ### R-08 超时、取消、排队与成本限制未完整落地
 
 - [x] 完成超时、并发、排队、取消及自动化资源释放验收（2026-09-13）。
-- [ ] 四类数据库的实际中断及连接回收待专用环境实跑。
+- [x] SQL Server 实际超时、中断及连接复用验收完成（2026-09-14）。
+- [ ] 其他数据库的实际中断及连接回收待对应环境实跑。
 - **要求**：查询受数据源的超时、并发和排队约束；取消传播到在途工作。`cost_limit` 保留历史配置兼容性，不作为当前执行限制。
 - **现状与证据**：已有并发闸门，但外层等待队列没有显式容量限制。MySQL 仅设置连接超时，Oracle 执行未接入配置的查询超时；查询链没有取消信号。`costLimit` 已保存，但未发现执行限制使用点。以上为静态检查结果。
 - **位置**：[database-drivers.ts](../ai-data/apps/data-access/src/connectors/database-drivers.ts)；[database-connector.ts](../ai-data/apps/data-access/src/connectors/database-connector.ts)；[http-api-connector.ts](../ai-data/apps/data-access/src/connectors/http-api-connector.ts)；[query-planner.ts](../ai-data/apps/data-access/src/query-planning/query-planner.ts)。
@@ -162,15 +209,16 @@ API 签名覆盖审核后的 `expected_output`，DAS 将其与本地固定定义
 
 API 请求断开沿 Axios 到 DAS，再传入数据库或 HTTP 调用。SQL Server 使用请求取消与单次请求超时，MySQL 销毁并移除借出的连接，PostgreSQL 结束活动专用连接，Oracle 使用 `callTimeout`、`breakExecution` 和连接归还。HTTP 中断请求并等待 socket 关闭。新测试覆盖队列与截止竞态、取消传播、池初始化故障清理；API 与 DAS 路由另以真实本地 HTTP 连接验证断开传播。测试使用驱动替身及已安装依赖的实际接口，真实数据库验证仍待执行。
 
-管理输入现在可省略 `cost_limit`；已有字段继续保存但不参与查询放行。返回行数限制与 `truncated` 继续按结果合同执行；完整大批量明细的分页及异步交付按后续查询能力规划。
+管理输入现在可省略 `cost_limit`；已有字段继续保存但不参与查询放行。返回行数限制与 `truncated` 继续按结果合同执行；2026-09-14 确认的完整结果交付、客户端分页与文件生成按[专项设计](./result-delivery-and-export.md)实施，新增资源边界单独验收。
 
 ### R-09 v0.2 新增合同与执行能力待补齐
 
 - [x] 提前完成关系查询的对象过滤合同及 API → DAS 执行链（2026-09-13）。
 - [x] 完成每对象预聚合、唯一键、关联基数与统计扩行校验（2026-09-13）。
-- [ ] 按对应阶段完成合同与场景验收。
+- [x] 完成带值 ON、指标版本与总计、运行恢复、证据及报告后端合同，并通过隔离样本验收（2026-09-14）。
+- [ ] Agent 调度、自动续跑与 Web 交互按对应阶段接入。
 - **要求**：见 [contracts.md](./contracts.md) 第 6.3.1、6.4、6.5 节。
-- **现状**：对象预过滤、每对象预聚合加最终聚合、业务唯一键及关联基数已实现。带值 ON、指标统计定义和总计公式，以及运行恢复、指标版本、证据和报告范围等合同仍按业务阶段推进。
+- **现状**：对象预过滤、分层聚合、业务唯一键、关联基数、带值 ON 已实现；指标定义、固定时间依据与独立重算总计、事务运行、租约恢复、证据、版本化报告和 SSE 回放已接入 API。接口与验收边界见 [分析运行说明](../ai-data/ANALYSIS-RUNTIME.md)。
 - **位置**：[query-dsl.ts](../ai-data/packages/contracts/src/query/query-dsl.ts)；[api-dataset.ts](../ai-data/packages/contracts/src/catalog/api-dataset.ts)；[sse-events.ts](../ai-data/packages/contracts/src/sse/sse-events.ts)。
 - **影响**：基础 Schema 完成不等于新增设计场景可执行。此项属于文档已注明的计划内工作。
 - **验收**：新增能力同时具备共享合同、API 生成与校验、DAS 执行及边界测试；暂不可正确表达的查询由 API 明确拒绝。指标、运行和报告合同按各自阶段验收，不将其业务规划职责转移给 DAS。
@@ -201,7 +249,7 @@ API 业务配置新增 `unique_keys`、批准关系 `relation_id` 与 `cardinali
 ### R-11 metadata 包测试命令因没有测试文件失败
 
 - [x] 完成 metadata 包级测试与必要行为验证。
-- [ ] 真实 SQL Server 首建、重复迁移与失败回滚待专用环境实跑。
+- [x] 真实 SQL Server 首建、重复迁移与失败回滚已在隔离库实跑（2026-09-14）。
 - **要求**：包声明的测试命令可执行，元数据库基础能力有对应验证。
 - **现状与证据**：`packages/metadata` 声明了 Vitest test 脚本，但没有测试文件；执行递归测试时以 `No test files found` 失败。应用侧迁移测试主要检查文件加载和模拟执行器调用。
 - **位置**：[metadata/package.json](../ai-data/packages/metadata/package.json)，第 13 行；[sqlserver-database.ts](../ai-data/packages/metadata/src/sqlserver/sqlserver-database.ts)；[迁移测试](../ai-data/apps/data-access/tests/metadata/metadata-migrations.test.ts)。
@@ -212,11 +260,13 @@ API 业务配置新增 `unique_keys`、批准关系 `relation_id` 与 `cardinali
 
 ### R-12 元数据库密码的配置约定不一致
 
-- [ ] 确认约定并同步实现、文档和测试。
+- [x] 元数据库凭据使用本地启动 JSON 配置，Schema、加载入口与配置测试沿用该约定（2026-09-14）。
 - **要求与现状**：[data-access-design.md](./data-access-design.md) 第 3 节要求敏感连接值使用密钥系统或引用；`das-config.ts` 明确允许启动配置保存元数据库密码明文，并将 password 定义为必填字段。
 - **位置**：[das-config.ts](../ai-data/apps/data-access/src/config/das-config.ts)，第 46 行。
 - **影响**：部署与验收人员无法依据同一约定配置服务。
 - **验收**：先确定最终启动凭据来源及保护方式，再统一 Schema、加载流程、示例配置和设计说明。本条不记录实际配置值。
+
+**处理记录（2026-09-14）**：API、DAS 从各自本地 JSON 文件读取 `metadata_sqlserver`，密码为必填字段；本地文件受文件权限及 Git 忽略规则保护。业务数据源继续使用 `secret_ref`。设计说明已统一，现有配置测试验证合法连接配置及缺失密码的拒绝行为。本地 SQL Server 集成使用相同配置加载实际连接。
 
 ### R-13 外连接可选侧行权限仍写入 WHERE
 
@@ -240,7 +290,7 @@ API 业务配置新增 `unique_keys`、批准关系 `relation_id` 与 `cardinali
 
 **处理记录（2026-09-13）**：[行策略求值](../ai-data/apps/api/src/query/row-policy-filters.ts)支持 `eq`、`neq`、`in`、`not_in`、`between`、`is_null`、`not_null`，同对象允许范围按 OR 合并，强制范围和对象业务条件按 AND 合并。只计算对该对象具有访问权的角色；其中存在无行策略的角色时，其允许范围不额外受限，强制范围仍生效。每个对象别名独立注入，强制条件按资源匹配，无法验证的匹配条件明确拒绝。
 
-`value_from` 仅从认证上下文白名单读取：`user_id`、`organization_id` 和可信 `permissionContext.department_ids`。当前 SQL 认证仓储尚未提供部门集合，依赖该值的策略会拒绝查询；策略字段若在授权目录中缺少可信类型也拒绝。关系查询之外的参数授权仍由 R-15 跟踪。[授权测试](../ai-data/apps/api/tests/query/query-policy-authorization.test.ts)包含本条与 R-13、R-16 共 50 个场景；[认证服务测试](../ai-data/apps/api/tests/auth/auth-service.test.ts)验证可信权限上下文传递。
+`value_from` 仅从认证上下文白名单读取：`user_id`、`organization_id` 和可信 `permissionContext.department_ids`。2026-09-14 已接入 `user_department_scopes`：管理员按组织维护用户部门，更新同时递增授权版本并清除当前实例缓存；认证仓储及长运行身份刷新从数据库读取集合。空范围或缺少可信字段类型时相关策略拒绝查询。关系查询之外的参数授权由 R-15 跟踪。[授权测试](../ai-data/apps/api/tests/query/query-policy-authorization.test.ts)覆盖行策略语义；[部门测试](../ai-data/apps/api/tests/auth/department-authorization.test.ts)覆盖维护权限、缓存失效及长运行刷新。
 
 ### R-15 参数化查询的行列权限和脱敏未落实
 
@@ -306,8 +356,8 @@ R-07、R-15 的可信参数与固定输出授权，以及 R-04、R-08 的审计�
 
 ## 5. 建议处理顺序
 
-1. 在专用数据库环境验收 R-04、R-05、R-06、R-07、R-08、R-11 的实际驱动、迁移和审计链路；开放参数化数据集前确认 R-15 的权限绑定与实际数据源语义一致。
-2. R-12：统一元数据库启动凭据的配置与保护约定。
-3. R-09：查询对象过滤、分层聚合、唯一键和关联基数已实现；指标版本及总计规则、运行恢复、证据和报告合同按对应业务阶段推进。
+1. 在已发布口径、受控工具和证据基础上完善通用分析 Skill，按业务案例验证查询分支与计算结果。
+2. 按开发清单推进 Web 交互、报告模板与画布、浏览器导出及知识审核。
+3. 其他数据库的实际驱动和部署验收按相应环境推进。
 
 每项记录关闭时，补充处理日期、变更文件及验证结果；代码位置变化后同步修正文档链接。
