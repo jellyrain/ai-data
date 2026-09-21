@@ -3,6 +3,7 @@ import { saveReportInputSchema } from "@ai-data/contracts";
 import type { FastifyInstance } from "fastify";
 import type { ApiAnalysisServices, ApiAuthService } from "../app-types";
 import { bearerToken } from "./auth-routes";
+import type { KnowledgeService } from "../knowledge/knowledge-service";
 
 const paramsSchema = z.object({ id: z.string().min(1).max(128) }).strict();
 const versionSchema = z.object({ version: z.coerce.number().int().positive().optional() }).strict();
@@ -15,6 +16,7 @@ function registerMetricReportRoutes(
   app: FastifyInstance,
   auth: ApiAuthService,
   services: ApiAnalysisServices,
+  knowledge: Pick<KnowledgeService, "submitMetric">,
 ): void {
   app.get("/metrics", async (request) => ({
     items: await services.metrics.list(await auth.loadContext(bearerToken(request))),
@@ -23,7 +25,7 @@ function registerMetricReportRoutes(
     reply
       .code(201)
       .send(
-        await services.metrics.publish(await auth.loadContext(bearerToken(request)), request.body),
+        await knowledge.submitMetric(await auth.loadContext(bearerToken(request)), request.body),
       ),
   );
   app.get("/metrics/:id", async (request) =>

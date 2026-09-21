@@ -40,8 +40,7 @@ function setup() {
   const startupDirectory = resolve("secrets", "deployment-root");
   const runtime = createAnalysisRuntime({
     config: {
-      providers: [{ id: "local", model: "configured", base_url: "http://127.0.0.1/v1" }],
-      active_provider: "local",
+      enabled: true,
       state_directory: "runtime",
     },
     startupDirectory,
@@ -53,6 +52,7 @@ describe("分析运行时生命周期", () => {
   it("状态根目录相对于项目启动目录，官方进程就绪后才派发", async () => {
     const h = setup();
     expect(state.config.stateDirectory).toBe(resolve(h.startupDirectory, "runtime"));
+    expect(state.config).not.toHaveProperty("provider");
     await h.runtime.start();
     expect(state.order).toEqual(["harness-start", "dispatcher-start"]);
     await Promise.all([h.runtime.close(), h.runtime.close()]);

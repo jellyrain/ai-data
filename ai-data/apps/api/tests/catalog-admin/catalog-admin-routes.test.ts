@@ -61,6 +61,44 @@ function setup() {
 
 // 前提：HTTP 中间件加载当前管理员身份。操作：写策略、读版本或预览角色。预期：只传递可信组织，原有 PUT 状态码和新的版本头均可读取。
 describe("目录策略管理 HTTP 接口", () => {
+  it("完整目录配置接收期望版本并返回可继续编辑的版本头", async () => {
+    const { app, dependencies } = setup();
+    const getConfigVersion = vi.fn(async () => 7);
+    Object.assign(dependencies.catalog.service, { getConfigVersion });
+    const response = await app.inject({
+      method: "PUT",
+      url: "/admin/catalog/datasets",
+      headers: { authorization: "Bearer test" },
+      payload: { source_id: "clinical", object_id: "visit", expected_version: 6 },
+    });
+    expect(response.statusCode).toBe(204);
+    expect(dependencies.catalog.service.saveConfig).toHaveBeenCalledWith(
+      expect.objectContaining({ source_id: "clinical", object_id: "visit" }),
+      6,
+    );
+    expect(response.headers["x-config-version"]).toBe("7");
+    await app.close();
+  });
+
+  it("配置读取期间版本变化时返回冲突，不能给旧内容附上新版本", async () => {
+    const { app, dependencies } = setup();
+    Object.assign(dependencies.catalog.service, {
+      getConfigVersion: vi.fn().mockResolvedValueOnce(1).mockResolvedValueOnce(2),
+      getAuthorizedConfig: async () => ({
+        source_id: "clinical",
+        object_id: "visit",
+        approved_relations: [],
+        column_descriptions: [],
+        column_policies: [],
+      }),
+    });
+    const response = await app.inject({
+      url: "/catalog/datasets/clinical/visit/business-config",
+      headers: { authorization: "Bearer test" },
+    });
+    expect(response.statusCode).toBe(409);
+    await app.close();
+  });
   it("对象权限维护调用管理服务并返回已保存版本头", async () => {
     const { app, service, dependencies } = setup();
     const response = await app.inject({

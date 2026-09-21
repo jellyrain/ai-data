@@ -22,7 +22,7 @@ class AnalysisExecutor {
   }
 
   private async run(context: AuthContext, runId: string): Promise<void> {
-    const { runs, harness, tools, repository } = this.dependencies;
+    const { runs, harness, repository } = this.dependencies;
     context = await this.dependencies.refreshContext(context);
     let lease;
     try {
@@ -52,13 +52,19 @@ class AnalysisExecutor {
     timer.unref();
     let calls = 0;
     try {
+      const configured = await this.dependencies.resolveConfiguration?.(context, runId);
+      const tools = configured?.tools ?? this.dependencies.tools;
+      const instructions = configured?.instructions ?? this.dependencies.instructions;
       const definitions = tools.definitions();
+      const memory = await this.dependencies.loadMemory?.(context);
+      const reportContext = await this.dependencies.loadReportContext?.(context, runId);
       const runtimeKey = createHash("sha256")
         .update(
           stableStringify({
             tools: definitions,
-            instructions: this.dependencies.instructions,
-            runtime: this.dependencies.runtimeKey ?? "",
+            instructions,
+            memory,
+            runtime: configured?.runtimeKey ?? this.dependencies.runtimeKey ?? "",
           }),
         )
         .digest("hex");
@@ -80,11 +86,22 @@ class AnalysisExecutor {
           ? {
               conversation: input.messages.slice(-1),
               evidence: evidence.filter((item) => item.analysis_run_id === runId),
+              ...(memory ? { memory } : {}),
+              ...(reportContext ? { report: reportContext } : {}),
             }
-          : { conversation: input.messages, evidence },
+          : {
+              conversation: input.messages,
+              evidence,
+              ...(memory ? { memory } : {}),
+              ...(reportContext ? { report: reportContext } : {}),
+            },
       );
-      if (Buffer.byteLength(prompt, "utf8") > (this.dependencies.maxContextBytes ?? 65536))
+      if (
+        Buffer.byteLength(prompt, "utf8") >
+        (configured?.maxContextBytes ?? this.dependencies.maxContextBytes ?? 65536)
+      )
         throw new ApplicationError("QUERY_LIMIT_EXCEEDED", "会话上下文超出分析容量");
+      if (memory) await runs.recordMemoryContext(context, runId, lease, memory);
       const result = await harness.run({
         sessionKey: JSON.stringify([
           context.organizationId,
@@ -98,7 +115,8 @@ class AnalysisExecutor {
           await repository.saveThread(context, runId, lease, input.context_hash, threadId);
         },
         input: prompt,
-        instructions: this.dependencies.instructions,
+        instructions,
+        ...(configured ? { configuration: configured.configuration } : {}),
         tools: definitions,
         signal: controller.signal,
         onCompaction: async (event) => {
@@ -107,7 +125,7 @@ class AnalysisExecutor {
         },
         executeTool: async (name, value, callId) => {
           if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "分析已中断");
-          if (++calls > (this.dependencies.maxToolCalls ?? 50))
+          if (++calls > (configured?.maxToolCalls ?? this.dependencies.maxToolCalls ?? 50))
             throw new ApplicationError("QUERY_LIMIT_EXCEEDED", "本轮工具调用次数已达上限");
           return tools.execute(context, runId, lease, name, value, callId);
         },

@@ -1,4 +1,12 @@
-import type { AnalysisRunState, AnalysisStep, QueryEvidence, SseEvent } from "@ai-data/contracts";
+import type {
+  AnalysisRunState,
+  AnalysisStep,
+  QueryEvidence,
+  SseEvent,
+  MemoryIntent,
+  MemoryContext,
+} from "@ai-data/contracts";
+import type { MetadataQueryExecutor } from "@ai-data/metadata";
 import type { AuthContext } from "../auth/auth-types";
 import type { ApiQueryAuthorization, ApiQueryClient } from "../app-types";
 import type { ToolAudit } from "./tool-audit-types";
@@ -11,6 +19,20 @@ type RunDependencies = {
   refreshContext: (context: AuthContext) => Promise<AuthContext>;
   now?: () => number;
   leaseMilliseconds?: number;
+  /** 对话修改在成功终态事务内提交，取消或失败不触发。 */
+  completeOperation?: (
+    context: AuthContext,
+    runId: string,
+    executor: MetadataQueryExecutor,
+    content: string,
+  ) => Promise<void>;
+  applyPreferenceAnswer?: (
+    context: AuthContext,
+    confirmationId: string,
+    approved: boolean,
+    key: string,
+    executor: MetadataQueryExecutor,
+  ) => Promise<void>;
 };
 
 /** 事件的归属、序号和代次由事务仓储统一补齐。 */
@@ -20,6 +42,9 @@ type RunEvent = SseEvent extends infer Event
     : never
   : never;
 type RunChange = {
+  memoryContext?: MemoryContext;
+  memoryIntents?: MemoryIntent[];
+  apply?: (executor: MetadataQueryExecutor) => Promise<void>;
   events?: RunEvent[];
   evidence?: QueryEvidence[];
   steps?: AnalysisStep[];

@@ -1,0 +1,34 @@
+{
+  "service": {
+    "host": "0.0.0.0",
+    "port": 3102,
+    "service_id": "data-access-service",
+    "service_version": "1.0.0"
+  },
+  "api": {
+    "base_url": "http://127.0.0.1:3101",
+    "heartbeat_path": "/internal/data-access/heartbeat",
+    "registration_path": "/internal/data-access/register",
+    "registration_credential_path": "../secrets/api-registration.jwt",
+    "jwt_verification_public_key_path": "../secrets/api-public.pem"
+  },
+  "sqlserver_transports": {},
+  "metadata_sqlserver": {
+    "server": "127.0.0.1",
+    "port": 1433,
+    "database": "das_meta",
+    "user": "das_service",
+    "password": "replace-with-metadata-database-password",
+    "options": {
+      "encrypt": true,
+      "trust_server_certificate": false,
+      "connection_timeout_ms": 5000,
+      "request_timeout_ms": 15000,
+      "pool": {
+        "max": 10,
+        "min": 0,
+        "idle_timeout_ms": 30000
+      }
+    }
+  }
+}

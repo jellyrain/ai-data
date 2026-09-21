@@ -21,6 +21,9 @@ import { AnalysisRunService } from "../../src/analysis-runs/analysis-run-service
 import { SqlAnalysisRunRepository } from "../../src/analysis-runs/sql-analysis-run-repository";
 import { MetricService } from "../../src/metrics/metric-service";
 import { SqlMetricRepository } from "../../src/metrics/sql-metric-repository";
+import { KnowledgeService } from "../../src/knowledge/knowledge-service";
+import { SqlKnowledgeRepository } from "../../src/knowledge/sql-knowledge-repository";
+import { serialExecutor } from "../../src/memory/serial-executor";
 import { ReportService } from "../../src/reports/report-service";
 import { SqlReportRepository } from "../../src/reports/sql-report-repository";
 import { config, context as administrator } from "../support/api-fixtures";
@@ -68,6 +71,7 @@ function registerBusinessAcceptance(databaseProvider: () => SqlServerMetadataDat
     let catalogRepository: SqlCatalogRepository;
     let authorization: QueryAuthorizationService;
     let metrics: MetricService;
+    let knowledge: KnowledgeService;
     let runs: AnalysisRunService;
     let reports: ReportService;
     let conversations: ConversationService;
@@ -172,12 +176,52 @@ function registerBusinessAcceptance(databaseProvider: () => SqlServerMetadataDat
           },
         },
       });
-      metrics = new MetricService(new SqlMetricRepository(database), authorization, runs);
+      metrics = new MetricService(new SqlMetricRepository(database), authorization, runs, {
+        authorizationForExecutor: (executor) => {
+          const repository = new SqlCatalogRepository(serialExecutor(executor));
+          return new QueryAuthorizationService(
+            new BusinessCatalogService(
+              { listRawCatalog: async () => [dataset] },
+              repository,
+              repository,
+            ),
+            jwt,
+          );
+        },
+      });
+      knowledge = new KnowledgeService({
+        repository: new SqlKnowledgeRepository(database),
+        metrics,
+        authorizeScope: async () => {},
+        validateSource: async () => {},
+      });
       reports = new ReportService(new SqlReportRepository(database), runs, authorization);
       conversations = new ConversationService(new SqlConversationRepository(database));
-      await metrics.publish(administrator, visitMetric);
-      await metrics.publish(administrator, ratioMetric);
+      await publishMetric(visitMetric);
+      await publishMetric(ratioMetric);
     });
+
+    /** SQL 样本正式指标通过同一负责人审核发布流程建立。 */
+    async function publishMetric(metric: MetricDefinition) {
+      const candidate = await knowledge.submitMetric(administrator, metric);
+      if (candidate.status !== "published") {
+        await knowledge.assignOwner(
+          administrator,
+          candidate.candidate_id,
+          administrator.userId,
+          candidate.version,
+        );
+        await knowledge.review(administrator, candidate.candidate_id, {
+          expected_version: candidate.version,
+          decision: "approve",
+          comment: "样本口径审核通过",
+        });
+      }
+      return knowledge.publish(administrator, candidate.candidate_id, {
+        expected_version: candidate.version,
+        effective_at: "2026-01-01 00:00:00",
+      });
+    }
 
     /** 只接受此样本的两类聚合模板，将授权后的日期和部门值绑定到实际 SQL。 */
     async function executeFixture(query: QueryDsl) {
@@ -273,11 +317,13 @@ function registerBusinessAcceptance(databaseProvider: () => SqlServerMetadataDat
     });
     it("日期依据使用独立指标标识，版本不可覆盖且重试固定原版本", async () => {
       const initial = await execute(full);
-      await expect(metrics.publish(administrator, visitMetric)).rejects.toMatchObject({
+      await expect(
+        publishMetric({ ...visitMetric, name: "相同版本的其他内容" }),
+      ).rejects.toMatchObject({
         code: "CONFLICT",
       });
       await expect(
-        metrics.publish(administrator, {
+        publishMetric({
           ...visitMetric,
           version: 2,
           date_basis: { field: "v.registered_on", data_type: "date" },
@@ -288,9 +334,9 @@ function registerBusinessAcceptance(databaseProvider: () => SqlServerMetadataDat
         metric_id: "registered_count",
         date_basis: { field: "v.registered_on", data_type: "date" },
       });
-      await metrics.publish(administrator, registered);
+      await publishMetric(registered);
       expect((await execute(full, registered)).result.total).toBe(2);
-      await metrics.publish(administrator, { ...visitMetric, version: 2, name: "新版就诊人次" });
+      await publishMetric({ ...visitMetric, version: 2, name: "新版就诊人次" });
       expect((await metrics.execute(full, visitMetric.metric_id, initial.input)).version).toBe(1);
     });
     it("报告快照经过分享和当前范围双重校验，撤回分享同时作用于历史版本", async () => {

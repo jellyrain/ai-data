@@ -3,7 +3,7 @@ import { AnalysisTools } from "../../src/runtime/analysis-tools";
 import { context, createApiDependencies } from "../support/api-fixtures";
 
 /** 工具的身份与运行信息来自执行器，模型只传业务条件。 */
-function setup(withSkills = false) {
+function setup(withSkills = false, allowedNames?: string[]) {
   const api = createApiDependencies();
   const runs = {
     assertCurrent: vi.fn(async () => {}),
@@ -22,6 +22,7 @@ function setup(withSkills = false) {
     })),
   };
   const service = new AnalysisTools({
+    allowedNames,
     ...(withSkills ? { skills } : {}),
     listSourceIds: async () => ["visible", "hidden"],
     runs,
@@ -35,6 +36,27 @@ function setup(withSkills = false) {
 }
 
 describe("运行绑定的查询工具", () => {
+  it("Agent 工具选择同时限制发现和执行，未选工具记录拒绝且不访问业务服务", async () => {
+    const h = setup(true, ["list_sources"]);
+    expect(h.service.definitions().map((tool) => tool.name)).toEqual(["list_sources"]);
+    const result = await h.service.execute(
+      context,
+      "run",
+      h.lease,
+      "read_skill_reference",
+      { skill_name: "query-dsl", relative_path: "SKILL.md" },
+      "denied",
+    );
+    expect(result).toMatchObject({ success: false, output: { code: "UNAUTHORIZED" } });
+    expect(h.skills.readReference).not.toHaveBeenCalled();
+    expect(h.runs.recordTool).toHaveBeenLastCalledWith(
+      context,
+      "run",
+      h.lease,
+      expect.objectContaining({ status: "failed", error_code: "UNAUTHORIZED" }),
+    );
+    expect(setup(true, []).service.definitions()).toEqual([]);
+  });
   it("已加载 Skill 时注册读取函数，读取前后复核身份、租约并记录审计", async () => {
     const h = setup(true);
     expect(h.service.definitions().some((tool) => tool.name === "read_skill_reference")).toBe(true);

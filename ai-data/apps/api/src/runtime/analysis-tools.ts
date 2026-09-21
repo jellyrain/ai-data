@@ -7,16 +7,35 @@ import type { AuthContext } from "../auth/auth-types";
 import type { AnalysisRunService } from "../analysis-runs/analysis-run-service";
 import type { MetricService } from "../metrics/metric-service";
 import type { ReportService } from "../reports/report-service";
+import type { ReportRevisionService } from "../reports/report-revision-service";
+import type { ReportExecutionService } from "../reports/report-execution-service";
 import type { HarnessTool, HarnessToolResult } from "../harness/harness-types";
 import type { SkillResources } from "../skills/skill-resources";
 import { ApplicationError } from "../errors/application-error";
 import { toolDescriptions, toolInputs } from "./tool-contracts";
 import { modelQueryResult } from "./model-query-result";
 import { modelToolSchema } from "./model-tool-schema";
+import type { MemoryRuntime } from "../memory/memory-runtime";
+import { saveUserPreferenceResultSchema } from "@ai-data/contracts";
+
+const memoryTools = new Set([
+  "get_user_preferences",
+  "save_user_preference",
+  "get_published_knowledge",
+  "create_knowledge_candidate",
+]);
 
 /** 工具调用依赖服务层的授权、证据和报告能力。 */
 type ToolDependencies = {
+  reportEditing?: Pick<ReportRevisionService, "read" | "stage" | "target">;
+  reportExecutions?: Pick<ReportExecutionService, "get">;
+  /** 省略用于既有通用接入；配置 Agent 时显式传入允许工具，空数组表示全部不开放。 */
+  allowedNames?: readonly string[];
   skills?: Pick<SkillResources, "readReference">;
+  memory?: Pick<
+    MemoryRuntime,
+    "snapshot" | "save" | "knowledge" | "stageCandidate" | "capture" | "captureMetric"
+  >;
   runs: Pick<AnalysisRunService, "assertCurrent" | "recordTool" | "query" | "clarify">;
   catalog: ApiCatalogService;
   metrics: Pick<MetricService, "list" | "get" | "query">;
@@ -30,7 +49,19 @@ class AnalysisTools {
 
   definitions(): HarnessTool[] {
     return Object.entries(toolInputs)
+      .filter(
+        ([name]) =>
+          !["get_report_definition", "save_report_definition"].includes(name) ||
+          this.dependencies.reportEditing,
+      )
+      .filter(([name]) => name !== "get_report_execution" || this.dependencies.reportExecutions)
       .filter(([name]) => name !== "read_skill_reference" || this.dependencies.skills)
+      .filter(([name]) => !memoryTools.has(name) || this.dependencies.memory)
+      .filter(
+        ([name]) =>
+          this.dependencies.allowedNames === undefined ||
+          this.dependencies.allowedNames.includes(name),
+      )
       .map(([name, schema]) => ({
         name,
         description: toolDescriptions[name as keyof typeof toolInputs],
@@ -59,9 +90,23 @@ class AnalysisTools {
       duration_ms: 0,
     });
     try {
+      if (this.dependencies.allowedNames && !this.dependencies.allowedNames.includes(name))
+        throw new ApplicationError("UNAUTHORIZED", "Agent 未启用该工具");
       const schema = toolInputs[name as keyof typeof toolInputs];
       if (!schema) throw new ApplicationError("INVALID_INPUT", "工具不存在");
       const parsed = schema.parse(input);
+      const reportTarget = await this.dependencies.reportEditing?.target(context, runId);
+      if (reportTarget?.mode === "narrative") {
+        if (
+          !["get_report_execution", "read_skill_reference", "request_clarification"].includes(name)
+        )
+          throw new ApplicationError("UNAUTHORIZED", "分析说明只能引用绑定的报表执行结果");
+        if (
+          name === "get_report_execution" &&
+          toolInputs.get_report_execution.parse(parsed).execution_id !== reportTarget.execution_id
+        )
+          throw new ApplicationError("UNAUTHORIZED", "分析说明不能切换来源执行");
+      }
       const stableId = createHash("sha256")
         .update(name + stableStringify(parsed))
         .digest("hex");
@@ -76,6 +121,29 @@ class AnalysisTools {
         return { success: true, output: { clarification_id: stableId }, stop: true };
       }
       const output = await this.invoke(context, runId, lease, name, parsed, stableId);
+      if (name === "save_user_preference") {
+        const saved = saveUserPreferenceResultSchema.parse(output);
+        if (saved.status === "confirmation_required") {
+          const confirmation = saved.confirmation;
+          await this.dependencies.runs.clarify(
+            context,
+            runId,
+            lease,
+            {
+              clarification_id: confirmation.confirmation_id,
+              preference_confirmation_id: confirmation.confirmation_id,
+              question: `是否将账号偏好「${confirmation.proposed.key}」更新为：${JSON.stringify(confirmation.proposed.value)}，自动应用：${confirmation.proposed.auto_apply ? "开启" : "关闭"}？`,
+              options: [
+                { id: "approve", label: "同意更新此偏好" },
+                { id: "reject", label: "保留当前设置" },
+              ],
+              allow_custom_input: false,
+            },
+            { ...base, status: "completed", duration_ms: dayjs().diff(started) },
+          );
+          return { success: true, output, stop: true };
+        }
+      }
       context = await this.dependencies.refreshContext(context);
       await this.dependencies.runs.assertCurrent(context, runId, lease);
       if (Buffer.byteLength(JSON.stringify(output), "utf8") > 65536)
@@ -133,6 +201,52 @@ class AnalysisTools {
     key: string,
   ): Promise<unknown> {
     switch (name) {
+      case "get_report_definition": {
+        if (!this.dependencies.reportEditing)
+          throw new ApplicationError("NOT_FOUND", "报表编辑未启用");
+        return this.dependencies.reportEditing.read(
+          context,
+          runId,
+          toolInputs.get_report_definition.parse(input).report_id,
+        );
+      }
+      case "save_report_definition": {
+        if (!this.dependencies.reportEditing)
+          throw new ApplicationError("NOT_FOUND", "报表编辑未启用");
+        return this.dependencies.reportEditing.stage(context, runId, lease, input);
+      }
+      case "get_report_execution": {
+        if (!this.dependencies.reportExecutions)
+          throw new ApplicationError("NOT_FOUND", "报表执行未启用");
+        const result = await this.dependencies.reportExecutions.get(
+          context,
+          toolInputs.get_report_execution.parse(input).execution_id,
+        );
+        return {
+          execution_id: result.execution_id,
+          status: result.status,
+          definition_version: result.definition_version,
+          parameters: result.parameters,
+          results: result.results.map((item) => ({
+            query_id: item.query_id,
+            evidence_id: item.evidence.evidence_id,
+            result: modelQueryResult(item.evidence.result),
+          })),
+        };
+      }
+      case "get_user_preferences":
+      case "save_user_preference":
+      case "get_published_knowledge":
+      case "create_knowledge_candidate": {
+        const memory = this.dependencies.memory;
+        if (!memory) throw new ApplicationError("NOT_FOUND", "当前运行未启用记忆服务");
+        if (name === "get_user_preferences") return memory.snapshot(context);
+        if (name === "save_user_preference") return memory.save(context, runId, lease, input, key);
+        if (name === "create_knowledge_candidate")
+          return memory.stageCandidate(context, runId, lease, input, key);
+        const request = toolInputs.get_published_knowledge.parse(input);
+        return memory.knowledge(context, request.knowledge_id, request.version);
+      }
       case "read_skill_reference": {
         const request = toolInputs.read_skill_reference.parse(input);
         if (!this.dependencies.skills)
@@ -235,6 +349,7 @@ class AnalysisTools {
           undefined,
           { managed: true },
         );
+        await this.dependencies.memory?.capture(context, runId, lease, evidence);
         return { ...modelQueryResult(evidence.result), evidence_id: evidence.evidence_id };
       }
       case "query_metric": {
@@ -246,6 +361,7 @@ class AnalysisTools {
           lease,
         );
         const grouped = modelQueryResult(result.grouped);
+        await this.dependencies.memory?.captureMetric(context, runId, lease, result.evidence_ids);
         return { ...result, grouped, values: result.values.slice(0, grouped.rows.length) };
       }
       case "save_report": {

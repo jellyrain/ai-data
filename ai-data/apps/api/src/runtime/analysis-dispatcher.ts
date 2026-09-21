@@ -28,6 +28,9 @@ class PollingAnalysisDispatcher {
     this.timer.unref();
     this.wake();
   }
+  isBusy(): boolean {
+    return this.active.size > 0;
+  }
   wake(): void {
     if (this.pollTask || this.closed) return;
     this.pollTask = this.poll()

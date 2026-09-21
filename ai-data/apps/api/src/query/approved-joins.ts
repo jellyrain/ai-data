@@ -46,6 +46,8 @@ function assertApprovedJoins(
       source?.config?.approved_relations.find((relation) => {
         if (
           relation.target_object_id !== join.object_id ||
+          (relation.allowed_join_types !== undefined &&
+            !relation.allowed_join_types.includes(join.type)) ||
           (join.relation_id !== undefined && relation.relation_id !== join.relation_id) ||
           relation.column_pairs.length !== pairs.length
         )

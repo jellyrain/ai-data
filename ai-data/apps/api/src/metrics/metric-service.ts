@@ -10,11 +10,12 @@ import {
   type RunLease,
 } from "@ai-data/contracts";
 import type { AuthContext } from "../auth/auth-types";
+import type { MetadataQueryExecutor } from "@ai-data/metadata";
 import type { ApiQueryAuthorization } from "../app-types";
 import type { AnalysisRunService } from "../analysis-runs/analysis-run-service";
 import { ApplicationError } from "../errors/application-error";
 import { parseAnalysisQuery } from "../analysis-runs/analysis-query";
-import type { MetricRepository } from "./metric-types";
+import type { MetricDependencies, MetricRepository } from "./metric-types";
 
 /** 将固定时间依据和已发布维度写入 DSL，总计独立查询完整范围。 */
 function buildMetricQueries(metric: MetricDefinition, input: MetricExecutionInput) {
@@ -78,18 +79,20 @@ class MetricService {
     private readonly repository: MetricRepository,
     private readonly authorization: ApiQueryAuthorization,
     private readonly runs: AnalysisRunService,
+    private readonly dependencies: MetricDependencies = {},
   ) {}
 
-  /** 发布者维护指标口径；每个已声明维度和固定时间字段均经过当前目录校验。 */
-  async publish(context: AuthContext, input: unknown): Promise<MetricDefinition> {
-    if (!context.roles.includes("system_admin") && !context.permissions.includes("catalog:manage"))
-      throw new ApplicationError("UNAUTHORIZED", "无指标管理权限");
+  /** 每个已声明维度和固定时间字段均按当前目录授权校验；事务校验使用同一连接。 */
+  async validateDefinition(
+    context: AuthContext,
+    input: MetricDefinition,
+    executor?: MetadataQueryExecutor,
+  ): Promise<void> {
     const metric = metricDefinitionSchema.parse(input);
-    await this.validateDefinition(context, metric);
-    await this.repository.publish(context.organizationId, metric);
-    return metric;
-  }
-  private async validateDefinition(context: AuthContext, metric: MetricDefinition): Promise<void> {
+    const authorization = executor
+      ? this.dependencies.authorizationForExecutor?.(executor)
+      : this.authorization;
+    if (!authorization) throw new ApplicationError("INTERNAL_ERROR", "指标事务授权未配置");
     const range =
       metric.date_basis.data_type === "date"
         ? ["2026-01-01", "2026-12-31"]
@@ -102,12 +105,25 @@ class MetricService {
         end: range[1],
         dimensions,
       });
-      await this.authorization.authorize(queries.grouped, context);
+      await authorization.authorize(queries.grouped, context);
     }
   }
   async get(context: AuthContext, metricId: string, version?: number): Promise<MetricDefinition> {
     const metric = await this.repository.find(context.organizationId, metricId, version);
     if (!metric) throw new ApplicationError("NOT_FOUND", "指标不存在");
+    const scope = await this.repository.findPublicationScope(
+      context.organizationId,
+      metric.metric_id,
+      metric.version,
+    );
+    if (!scope) throw new ApplicationError("NOT_FOUND", "指标发布记录不存在");
+    if (this.dependencies.authorizeScope) await this.dependencies.authorizeScope(context, scope);
+    else if (
+      (scope.source_id && scope.source_id !== metric.query.source_id) ||
+      (scope.object_id && scope.object_id !== metric.query.from.object_id) ||
+      (scope.metric_id && scope.metric_id !== metric.metric_id)
+    )
+      throw new ApplicationError("UNAUTHORIZED", "指标适用范围不匹配");
     await this.validateDefinition(context, metric);
     return metric;
   }

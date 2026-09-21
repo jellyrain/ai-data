@@ -9,15 +9,22 @@ const reportBlockSchema = z
     block_id: id,
     type: z.enum(["text", "table", "chart"]),
     title: z.string().min(1).max(512),
-    evidence_ids: z.array(id).min(1).max(100),
+    evidence_ids: z
+      .array(id)
+      .min(1)
+      .max(100)
+      .refine((ids) => new Set(ids).size === ids.length, "证据引用不能重复"),
     content: z.string().max(64000).optional(),
+    /** 表格展示列顺序；省略时显示来源结果全部列。 */
+    columns: z.array(id).min(1).max(200).optional(),
     chart: z
       .object({ type: z.enum(["line", "bar", "pie"]), x: id, y: id })
       .strict()
       .optional(),
   })
   .strict()
-  .refine((block) => block.type !== "chart" || block.chart !== undefined, "图表块必须声明坐标字段");
+  .refine((block) => block.type !== "chart" || block.chart !== undefined, "图表块必须声明坐标字段")
+  .refine((block) => block.type !== "text" || Boolean(block.content?.trim()), "文字块必须提供内容");
 const reportSectionSchema = z
   .object({
     section_id: id,
@@ -30,7 +37,21 @@ const saveReportInputSchema = z
   .object({
     analysis_run_id: id,
     title: z.string().min(1).max(512),
-    sections: z.array(reportSectionSchema).min(1).max(100),
+    sections: z
+      .array(reportSectionSchema)
+      .min(1)
+      .max(100)
+      .superRefine((sections, context) => {
+        const sectionIds = sections.map((section) => section.section_id);
+        const blockIds = sections.flatMap((section) =>
+          section.blocks.map((block) => block.block_id),
+        );
+        if (
+          new Set(sectionIds).size !== sectionIds.length ||
+          new Set(blockIds).size !== blockIds.length
+        )
+          context.addIssue({ code: "custom", message: "章节与块标识必须在报告内唯一" });
+      }),
     shared_with: z.array(id).max(1000).default([]),
   })
   .strict();
@@ -42,7 +63,17 @@ const savedReportSchema = saveReportInputSchema
     organization_id: id,
     user_id: id,
     created_at: dateTimeSchema,
-    sources: z.array(queryEvidenceSchema).min(1).max(1000),
+    /** 公共执行生成的快照关联固定定义版本；历史人工快照可以省略。 */
+    definition_version: z.number().int().positive().optional(),
+    execution_id: id.optional(),
+    sources: z
+      .array(queryEvidenceSchema)
+      .min(1)
+      .max(1000)
+      .refine(
+        (sources) => new Set(sources.map((source) => source.evidence_id)).size === sources.length,
+        "来源证据不能重复",
+      ),
   })
   .strict()
   .superRefine((report, context) => {

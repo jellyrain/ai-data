@@ -1,6 +1,6 @@
 import type { AnalysisRunService } from "../analysis-runs/analysis-run-service";
 import type { AuthContext } from "../auth/auth-types";
-import type { AnalysisHarness } from "../harness/harness-types";
+import type { AnalysisHarness, HarnessConfiguration } from "../harness/harness-types";
 import type { AnalysisTools } from "./analysis-tools";
 import type { RunLease } from "@ai-data/contracts";
 
@@ -36,9 +36,24 @@ type ExecutorDependencies = {
   refreshContext: (context: AuthContext) => Promise<AuthContext>;
   instructions: string;
   runtimeKey?: string;
+  loadMemory?: (context: AuthContext) => Promise<unknown>;
+  loadReportContext?: (context: AuthContext, runId: string) => Promise<unknown>;
   heartbeatMs?: number;
   maxToolCalls?: number;
   maxContextBytes?: number;
+  resolveConfiguration?: (
+    context: AuthContext,
+    runId: string,
+  ) => Promise<ResolvedRuntimeConfiguration>;
+};
+/** 从会话绑定版本装配出的单轮运行能力和预算。 */
+type ResolvedRuntimeConfiguration = {
+  tools: AnalysisTools;
+  instructions: string;
+  runtimeKey: string;
+  configuration: HarnessConfiguration;
+  maxToolCalls: number;
+  maxContextBytes: number;
 };
 /** 服务生命周期内的后台扫描能力。 */
 interface AnalysisDispatcher {
@@ -51,5 +66,6 @@ export type {
   AnalysisInput,
   RuntimeRepository,
   ExecutorDependencies,
+  ResolvedRuntimeConfiguration,
   AnalysisDispatcher,
 };

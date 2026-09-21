@@ -91,6 +91,10 @@ class SqlConversationRepository implements ConversationRepository {
       await this.appendMessage(message, executor);
       await insertAnalysisRun(executor, analysisRun);
       await executor.execute({
+        sql: "UPDATE r SET agent_id=c.agent_id,agent_version=c.agent_version FROM dbo.analysis_runs r JOIN dbo.conversations c ON c.id=r.conversation_id WHERE r.id=@run",
+        parameters: [{ name: "run", type: "string", value: analysisRun.id }],
+      });
+      await executor.execute({
         sql: "UPDATE dbo.conversation_messages SET analysis_run_id=@run WHERE id=@message",
         parameters: [
           { name: "run", type: "string", value: analysisRun.id },
@@ -122,7 +126,7 @@ class SqlConversationRepository implements ConversationRepository {
   /** 保存会话并绑定当前组织和用户。 */
   async createConversation(conversation: Conversation): Promise<void> {
     await this.database.execute({
-      sql: "INSERT INTO dbo.conversations (id, organization_id, user_id, title, status, created_at, updated_at) VALUES (@id, @organization_id, @user_id, @title, @status, @created_at, @updated_at)",
+      sql: "INSERT INTO dbo.conversations (id, organization_id, user_id, title, status, created_at, updated_at, agent_id, agent_version) VALUES (@id, @organization_id, @user_id, @title, @status, @created_at, @updated_at, @agent, @version)",
       parameters: [
         { name: "id", type: "string", value: conversation.id },
         { name: "organization_id", type: "string", value: conversation.organizationId },
@@ -131,6 +135,8 @@ class SqlConversationRepository implements ConversationRepository {
         { name: "status", type: "string", value: conversation.status },
         { name: "created_at", type: "date", value: conversation.createdAt },
         { name: "updated_at", type: "date", value: conversation.updatedAt },
+        { name: "agent", type: "string", value: conversation.agentId ?? null },
+        { name: "version", type: "integer", value: conversation.agentVersion ?? null },
       ],
     });
   }
@@ -142,7 +148,7 @@ class SqlConversationRepository implements ConversationRepository {
     organizationId: string,
   ): Promise<Conversation | null> {
     const result = await this.database.execute<ConversationRow>({
-      sql: "SELECT id, organization_id, user_id, title, status, created_at, updated_at FROM dbo.conversations WHERE id = @id AND user_id = @user_id AND organization_id = @organization_id",
+      sql: "SELECT id, organization_id, user_id, title, status, created_at, updated_at, agent_id, agent_version FROM dbo.conversations WHERE id = @id AND user_id = @user_id AND organization_id = @organization_id",
       parameters: [
         { name: "id", type: "string", value: conversationId },
         { name: "user_id", type: "string", value: userId },
@@ -155,7 +161,7 @@ class SqlConversationRepository implements ConversationRepository {
   /** 按用户与组织过滤会话，并按最后更新时间倒序返回。 */
   async listConversations(userId: string, organizationId: string): Promise<Conversation[]> {
     const result = await this.database.execute<ConversationRow>({
-      sql: "SELECT id, organization_id, user_id, title, status, created_at, updated_at FROM dbo.conversations WHERE user_id = @user_id AND organization_id = @organization_id ORDER BY updated_at DESC",
+      sql: "SELECT id, organization_id, user_id, title, status, created_at, updated_at, agent_id, agent_version FROM dbo.conversations WHERE user_id = @user_id AND organization_id = @organization_id ORDER BY updated_at DESC",
       parameters: [
         { name: "user_id", type: "string", value: userId },
         { name: "organization_id", type: "string", value: organizationId },
@@ -201,6 +207,7 @@ class SqlConversationRepository implements ConversationRepository {
       status: row.status,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      ...(row.agent_id ? { agentId: row.agent_id, agentVersion: row.agent_version! } : {}),
     };
   }
   /** 将数据库消息行转换为会话消息领域对象。 */
@@ -219,6 +226,9 @@ class SqlConversationRepository implements ConversationRepository {
 
 /** `conversations` 查询返回的数据库记录。 */
 type ConversationRow = {
+  /** 迁移前会话尚未选择 Agent，首次运行时固定版本。 */
+  agent_id?: string | null;
+  agent_version?: number | null;
   /** 会话主键。 */
   id: string;
   /** 会话所属组织主键。 */

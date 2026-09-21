@@ -2,8 +2,11 @@ import { z } from "zod";
 
 import type { DataSourceConfig } from "../data-sources/data-source-types";
 import type { EncryptedDataSourceSecret } from "./secret-types";
-import { Aes256GcmSecretCipher, type AesGcmEncryptedPayload } from "./aes-256-gcm-secret-cipher";
-import type { MasterKeyProvider } from "./local-master-key-store";
+import {
+  Aes256GcmSecretCipher,
+  type AesGcmEncryptedPayload,
+  type MasterKeyProvider,
+} from "@ai-data/metadata/secrets";
 
 /** SQL Server、MySQL、PostgreSQL 与 Oracle 共用的受控服务器登录凭据字段。 */
 const databaseSecretFields = {

@@ -63,5 +63,26 @@ describe("分析运行和业务合同", () => {
     expect(analysisRunSchema.safeParse({ analysis_run_id: "run", status: "running" }).success).toBe(
       false,
     );
+    const state = {
+      analysis_run_id: "r",
+      conversation_id: "c",
+      organization_id: "o",
+      user_id: "u",
+      status: "created",
+      created_at: "2026-09-20 12:00:00",
+      updated_at: "2026-09-20 12:00:00",
+      lease_epoch: 0,
+      lease: null,
+      sequence: 0,
+      clarification: null,
+      evidence_ids: [],
+      error: null,
+    };
+    expect(analysisRunSchema.safeParse(state).success).toBe(true);
+    expect(analysisRunSchema.safeParse({ ...state, agent_id: "a", agent_version: 1 }).success).toBe(
+      true,
+    );
+    expect(analysisRunSchema.safeParse({ ...state, agent_id: "a" }).success).toBe(false);
+    expect(analysisRunSchema.safeParse({ ...state, agent_version: 1 }).success).toBe(false);
   });
 });

@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
 import { SqlServerMetadataDatabase } from "@ai-data/metadata/sqlserver";
 
@@ -22,14 +23,15 @@ import { DataAccessSessionService } from "./data-access/data-access-session-serv
 import { DataAccessManagementClient } from "./data-access/data-access-management-client";
 import { AnalysisRunService } from "./analysis-runs/analysis-run-service";
 import { SqlAnalysisRunRepository } from "./analysis-runs/sql-analysis-run-repository";
-import { MetricService } from "./metrics/metric-service";
-import { SqlMetricRepository } from "./metrics/sql-metric-repository";
-import { ReportService } from "./reports/report-service";
-import { SqlReportRepository } from "./reports/sql-report-repository";
+import { createReportServices } from "./reports/create-report-services";
+import { CatalogRelationService } from "./catalog/catalog-relation-service";
+import { SqlRelationRepository } from "./catalog/sql-relation-repository";
 import { CatalogAdminService } from "./catalog-admin/catalog-admin-service";
 import { SqlCatalogAdminRepository } from "./catalog-admin/sql-catalog-admin-repository";
 import { createAnalysisRuntime } from "./runtime/create-analysis-runtime";
 import { ApplicationError } from "./errors/application-error";
+import { createAgentConfiguration } from "./agents/create-agent-configuration";
+import { createMemoryServices } from "./memory/create-memory-services";
 
 /** API 迁移随应用发布，独立于 TypeScript bundle。 */
 const migrationsDirectory = fileURLToPath(new URL("../migrations", import.meta.url));
@@ -43,6 +45,8 @@ async function start(): Promise<void> {
   const config = loadApiConfig(process.env.API_CONFIG_PATH ?? defaultConfigPath);
   const metadataDatabase = await SqlServerMetadataDatabase.connect(config.metadata_sqlserver);
   let runtime: ReturnType<typeof createAnalysisRuntime> | undefined;
+  let memory: ReturnType<typeof createMemoryServices> | undefined;
+  let reporting: ReturnType<typeof createReportServices> | undefined;
 
   try {
     await metadataDatabase.initializeSchema(migrationsDirectory);
@@ -56,8 +60,9 @@ async function start(): Promise<void> {
     );
     const dataAccessCatalogClient = new HttpDataAccessCatalogClient(jwt);
     const catalogRepository = new SqlCatalogRepository(metadataDatabase);
+    const rawCatalog = new RegisteredDataAccessCatalog(dataAccessRegistry, dataAccessCatalogClient);
     const businessCatalog = new BusinessCatalogService(
-      new RegisteredDataAccessCatalog(dataAccessRegistry, dataAccessCatalogClient),
+      rawCatalog,
       catalogRepository,
       catalogRepository,
     );
@@ -79,6 +84,11 @@ async function start(): Promise<void> {
       authorization: queryAuthorization,
       client: queryClient,
       refreshContext: (context) => authService.refreshContext(context),
+      applyPreferenceAnswer: async (context, id, approved, key, executor) => {
+        await memory!.preferences.confirm(context, id, approved, key, executor);
+      },
+      completeOperation: (context, runId, executor, content) =>
+        reporting!.complete(context, runId, executor, content),
     });
     // 默认管理员初始化先于监听端口，确保首次启动的管理入口有可用账号。
     if (config.bootstrap_admin) {
@@ -92,16 +102,86 @@ async function start(): Promise<void> {
         passwordHash: await hashPassword(config.bootstrap_admin.password),
       });
     }
-    const metrics = new MetricService(
-      new SqlMetricRepository(metadataDatabase),
+    memory = createMemoryServices({
+      templates: {
+        validate: (context, content, executor) =>
+          reporting!.templates.validate(context, content, executor),
+        assertSubmit: (context, content, executor) =>
+          reporting!.templates.assertSubmit(context, content, executor),
+      },
+      database: metadataDatabase,
+      config,
+      jwt,
+      catalogClient: dataAccessCatalogClient,
       queryAuthorization,
       runs,
-    );
-    const reports = new ReportService(
-      new SqlReportRepository(metadataDatabase),
+      refreshContext: (context) => authService.refreshContext(context),
+      isForegroundBusy: () => runtime?.dispatcher.isBusy() ?? false,
+      onError: (error) =>
+        process.stderr.write(
+          `记忆调度失败: ${error instanceof ApplicationError ? error.code : "INTERNAL_ERROR"}\n`,
+        ),
+    });
+    const metrics = memory.metrics;
+    const skillsDirectory = config.analysis_runtime?.skills_directory
+      ? resolve(process.cwd(), config.analysis_runtime.skills_directory)
+      : fileURLToPath(new URL("../../../packages/skills/", import.meta.url));
+    const agentConfiguration = createAgentConfiguration({
+      database: metadataDatabase,
+      config: config.analysis_runtime,
+      startupDirectory: process.cwd(),
+      skillsDirectory,
+    });
+    const conversations = new ConversationService(conversationRepository, {
+      ...(config.analysis_runtime?.enabled
+        ? { dispatcher: { wake: () => runtime?.dispatcher.wake() } }
+        : {}),
+      authorizeRun: (context, runId) => runs.get(context, runId),
+      selectAgent: (context, id, version) =>
+        config.analysis_runtime?.enabled || id
+          ? agentConfiguration.runtime.selectAgent(context, id, version)
+          : Promise.resolve(undefined),
+    });
+    reporting = createReportServices({
+      database: metadataDatabase,
       runs,
-      queryAuthorization,
-    );
+      catalog: businessCatalog,
+      authorization: queryAuthorization,
+      metrics,
+      catalogForExecutor: memory.catalogForExecutor,
+      authorizationForExecutor: memory.authorizationForExecutor,
+      metricsForExecutor: memory.metricsForExecutor,
+      access: memory.access,
+      conversations: { get: (context, id) => conversations.get(context, id) },
+      refreshContext: (context) => authService.refreshContext(context),
+      ...(config.analysis_runtime?.enabled
+        ? {
+            selectAgent: async (
+              context: Parameters<typeof agentConfiguration.runtime.selectAgent>[0],
+              id?: string,
+            ) => {
+              const selected = await agentConfiguration.runtime.selectAgent(context, id);
+              const agent = await agentConfiguration.agents.get(
+                context,
+                selected.agentId,
+                selected.agentVersion,
+              );
+              if (
+                !["get_report_definition", "save_report_definition"].every((name) =>
+                  agent.tool_names.includes(name),
+                )
+              )
+                throw new ApplicationError(
+                  "INVALID_INPUT",
+                  "请选择已启用报表定义读写工具的 Agent 新版本",
+                );
+              return selected;
+            },
+          }
+        : {}),
+      wake: () => runtime?.dispatcher.wake(),
+    });
+    const reports = reporting.reports;
     runtime = config.analysis_runtime?.enabled
       ? createAnalysisRuntime({
           config: config.analysis_runtime,
@@ -110,11 +190,13 @@ async function start(): Promise<void> {
           catalog: businessCatalog,
           metrics,
           reports,
+          reportEditing: reporting.revisions,
+          reportExecutions: reporting.executions,
+          memory: memory.runtime,
           refreshContext: (context) => authService.refreshContext(context),
-          instructions:
-            "你是业务数据分析助手。遵循 query-analysis 和 query-dsl Skill，通过已提供的业务函数查询授权数据，依据证据回答；需要用户补充条件时调用 request_clarification。",
+          agents: agentConfiguration.runtime,
           startupDirectory: process.cwd(),
-          skillsDirectory: fileURLToPath(new URL("../../../packages/skills/", import.meta.url)),
+          skillsDirectory,
           onError: (error) =>
             process.stderr.write(
               `分析调度失败: ${error instanceof ApplicationError ? error.code : "INTERNAL_ERROR"}\n`,
@@ -131,10 +213,10 @@ async function start(): Promise<void> {
       config,
       metadataDatabase,
       auth: authService,
-      conversations: new ConversationService(conversationRepository, {
-        dispatcher: runtime?.dispatcher,
-        authorizeRun: (context, runId) => runs.get(context, runId),
-      }),
+      agentConfiguration,
+      memory,
+      reporting,
+      conversations,
       analysis: { runs, metrics, reports },
       ...(runtime ? { runtime } : {}),
       dataAccess: {
@@ -143,6 +225,11 @@ async function start(): Promise<void> {
         managementClient: new DataAccessManagementClient(jwt),
       },
       catalog: {
+        relations: new CatalogRelationService({
+          repository: new SqlRelationRepository(metadataDatabase),
+          rawCatalog,
+          catalog: businessCatalog,
+        }),
         service: businessCatalog,
         permissions: catalogRepository,
         admin: new CatalogAdminService({
@@ -158,6 +245,7 @@ async function start(): Promise<void> {
     });
     app.addHook("onClose", async () => {
       await runtime?.close();
+      await memory?.worker?.close();
       await metadataDatabase.close();
     });
     // 部署进程退出时先停派发、释放执行租约，再关闭元数据库连接。
@@ -176,6 +264,7 @@ async function start(): Promise<void> {
     process.once("SIGTERM", shutdown);
   } catch (error) {
     await runtime?.close();
+    await memory?.worker?.close();
     await metadataDatabase.close();
     throw error;
   }

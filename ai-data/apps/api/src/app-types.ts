@@ -15,6 +15,76 @@ import type { ReportService } from "./reports/report-service";
 import type { CatalogAdminService } from "./catalog-admin/catalog-admin-service";
 import type { AnalysisDispatcher } from "./runtime/runtime-types";
 import type { SqlRuntimeRepository } from "./runtime/sql-runtime-repository";
+import type { AgentService } from "./agents/agent-service";
+import type { ModelService } from "./models/model-service";
+import type { SkillCatalog } from "./skills/skill-catalog";
+import type { PreferenceService } from "./preferences/preference-service";
+import type { KnowledgeService } from "./knowledge/knowledge-service";
+import type { SqlMemoryEventRepository } from "./memory/sql-memory-event-repository";
+import type { MemoryDispatcher } from "./memory/memory-dispatcher";
+import type { ReportDefinitionService } from "./reports/report-definition-service";
+import type { ReportManagementService } from "./reports/report-management-service";
+import type { ReportExecutionService } from "./reports/report-execution-service";
+import type { ReportRevisionService } from "./reports/report-revision-service";
+import type { CatalogRelationService } from "./catalog/catalog-relation-service";
+
+/** 全部编辑入口共享报表定义与结果服务。 */
+type ApiReportServices = {
+  definitions: Pick<
+    ReportDefinitionService,
+    | "get"
+    | "save"
+    | "share"
+    | "versions"
+    | "list"
+    | "getBlock"
+    | "saveBlock"
+    | "listBlocks"
+    | "listTemplates"
+  >;
+  management: Pick<
+    ReportManagementService,
+    "list" | "versions" | "share" | "exportReport" | "exportConversation" | "artifacts"
+  >;
+  executions: Pick<ReportExecutionService, "execute" | "get" | "exportContent">;
+  revisions: Pick<ReportRevisionService, "revise" | "narrate" | "narratives">;
+};
+
+type ApiMemoryServices = {
+  preferences: Pick<
+    PreferenceService,
+    "list" | "get" | "save" | "delete" | "setAutoApply" | "listPendingConfirmations"
+  >;
+  knowledge: Pick<
+    KnowledgeService,
+    | "submit"
+    | "submitMetric"
+    | "getCandidate"
+    | "listCandidates"
+    | "listSources"
+    | "support"
+    | "update"
+    | "withdraw"
+    | "assignOwner"
+    | "review"
+    | "publish"
+    | "listReviews"
+    | "listPublished"
+    | "getPublished"
+    | "listVersions"
+    | "setEnabled"
+    | "rollback"
+  >;
+  events: Pick<SqlMemoryEventRepository, "list" | "retry">;
+  worker?: Pick<MemoryDispatcher, "start" | "close">;
+};
+
+/** Agent 管理使用的模型、版本和公共资源目录能力。 */
+type ApiAgentServices = {
+  agents: Pick<AgentService, "publish" | "list" | "get" | "setEnabled">;
+  models: Pick<ModelService, "publish" | "list" | "get" | "setEnabled">;
+  skills: Pick<SkillCatalog, "list" | "read">;
+};
 
 /** 分析运行、指标执行和报告的 HTTP 服务边界。 */
 type ApiAnalysisServices = {
@@ -22,7 +92,7 @@ type ApiAnalysisServices = {
     AnalysisRunService,
     "get" | "events" | "evidence" | "steps" | "answer" | "cancel" | "execute"
   >;
-  metrics: Pick<MetricService, "publish" | "list" | "get" | "execute">;
+  metrics: Pick<MetricService, "list" | "get" | "execute">;
   reports: Pick<ReportService, "save" | "get">;
 };
 
@@ -48,7 +118,12 @@ type ApiConversationService = Pick<
 /** 用户目录读取与管理员配置维护所需的能力。 */
 type ApiCatalogService = Pick<
   BusinessCatalogService,
-  "listAuthorized" | "searchAuthorized" | "getAuthorized" | "getAuthorizedConfig" | "saveConfig"
+  | "listAuthorized"
+  | "searchAuthorized"
+  | "getAuthorized"
+  | "getAuthorizedConfig"
+  | "saveConfig"
+  | "getConfigVersion"
 >;
 /** 查询路由依次调用授权服务和 DAS 客户端。 */
 type ApiQueryAuthorization = Pick<QueryAuthorizationService, "authorize">;
@@ -66,6 +141,9 @@ type ApiDependencies = {
   /** 会话、消息和分析运行服务。 */
   conversations: ApiConversationService;
   analysis: ApiAnalysisServices;
+  agentConfiguration: ApiAgentServices;
+  memory: ApiMemoryServices;
+  reporting: ApiReportServices;
   /** DAS 实例发现与物理目录读取。 */
   dataAccess: {
     registry: Pick<
@@ -77,6 +155,7 @@ type ApiDependencies = {
   };
   /** 业务目录服务及角色权限持久化。 */
   catalog: {
+    relations: Pick<CatalogRelationService, "graph" | "publish">;
     service: ApiCatalogService;
     permissions: CatalogPermissionRepository;
     admin: Pick<
@@ -101,6 +180,8 @@ type ApiDependencies = {
 };
 
 export type {
+  ApiMemoryServices,
+  ApiReportServices,
   ApiDependencies,
   ApiAuthService,
   ApiConversationService,
@@ -108,4 +189,5 @@ export type {
   ApiQueryAuthorization,
   ApiQueryClient,
   ApiAnalysisServices,
+  ApiAgentServices,
 };

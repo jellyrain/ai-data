@@ -116,8 +116,31 @@ class BusinessCatalogService {
   }
 
   /** 保存管理员业务配置前，检查说明、字段策略和批准关联引用的对象与列是否存在。 */
-  async saveConfig(config: ApiDatasetConfig): Promise<void> {
+  async saveConfig(config: ApiDatasetConfig, expectedVersion?: number): Promise<void> {
+    const version =
+      expectedVersion ??
+      (await this.configRepository.getVersion?.(config.source_id, config.object_id));
     const datasets = await this.rawCatalog.listRawCatalog(config.source_id);
+    await this.validateConfig(config, datasets, this.configRepository);
+    if (this.configRepository.saveValidated)
+      await this.configRepository.saveValidated(config, version, (repository) =>
+        this.validateConfig(config, datasets, repository),
+      );
+    else if (version === undefined) await this.configRepository.save(config);
+    else await this.configRepository.save(config, version);
+  }
+
+  /** 配置版本供表单读取与原子更新使用，版本 0 表示尚无业务配置。 */
+  async getConfigVersion(sourceId: string, objectId: string): Promise<number> {
+    return (await this.configRepository.getVersion?.(sourceId, objectId)) ?? 0;
+  }
+
+  /** 配置变化同时复核入向关系，避免删除唯一键使已批准基数失效。 */
+  private async validateConfig(
+    config: ApiDatasetConfig,
+    datasets: Dataset[],
+    repository: ApiDatasetConfigRepository,
+  ): Promise<void> {
     const dataset = datasets.find((item) => item.object_id === config.object_id);
     if (!dataset) throw new ApplicationError("INVALID_INPUT", "业务配置引用的数据集不存在");
     resolveParameterDefinitions(dataset, config, "INVALID_INPUT");
@@ -146,7 +169,7 @@ class BusinessCatalogService {
       const targetConfig =
         relation.target_object_id === config.object_id
           ? config
-          : await this.configRepository.find(config.source_id, relation.target_object_id);
+          : await repository.find(config.source_id, relation.target_object_id);
       const targetKeys = validateUniqueKeys(targetConfig, targetDataset.columns, "INVALID_INPUT");
       validateRelationConfig(
         relation,
@@ -157,7 +180,24 @@ class BusinessCatalogService {
         "INVALID_INPUT",
       );
     }
-    await this.configRepository.save(config);
+    for (const sourceConfig of await repository.listBySourceId(config.source_id)) {
+      if (sourceConfig.object_id === config.object_id) continue;
+      const sourceDataset = datasets.find((item) => item.object_id === sourceConfig.object_id);
+      for (const relation of sourceConfig.approved_relations.filter(
+        (item) => item.target_object_id === config.object_id,
+      )) {
+        if (!sourceDataset)
+          throw new ApplicationError("INVALID_INPUT", "入向批准关系的起点数据集不存在");
+        validateRelationConfig(
+          relation,
+          sourceDataset.columns,
+          dataset.columns,
+          validateUniqueKeys(sourceConfig, sourceDataset.columns, "INVALID_INPUT"),
+          sourceKeys,
+          "INVALID_INPUT",
+        );
+      }
+    }
   }
 }
 

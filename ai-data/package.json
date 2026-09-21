@@ -18,7 +18,9 @@
     "test:integration": "pnpm --filter @ai-data/api --filter @ai-data/data-access test:integration",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "pnpm -r build"
+    "build": "pnpm -r build",
+    "release": "node scripts/prepare-release.mjs",
+    "test:release": "node scripts/test-release.mjs"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

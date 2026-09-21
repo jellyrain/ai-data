@@ -6,8 +6,7 @@ import type { DiscoveredDataset } from "../../src/connectors/connector-catalog";
 import type { DataSourceConfig } from "../../src/data-sources/data-source-types";
 import type { EncryptedDataSourceSecret } from "../../src/secrets/secret-types";
 import type { ExposedSourceObject } from "../../src/catalog/catalog-types";
-import { Aes256GcmSecretCipher } from "../../src/secrets/aes-256-gcm-secret-cipher";
-import type { ActiveMasterKeyProvider } from "../../src/secrets/local-master-key-store";
+import { Aes256GcmSecretCipher, type ActiveMasterKeyProvider } from "@ai-data/metadata/secrets";
 import type { DataSourceSecretResolver } from "../../src/secrets/secret-resolver";
 
 // 按场景替换写入、发现和运行时依赖，检查管理服务传递的数据及失效请求。

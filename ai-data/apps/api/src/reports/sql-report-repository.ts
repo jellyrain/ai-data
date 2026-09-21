@@ -6,15 +6,22 @@ import {
   stableStringify,
   type SavedReport,
 } from "@ai-data/contracts";
-import type { MetadataTransactionalExecutor } from "@ai-data/metadata";
+import type { MetadataQueryExecutor, MetadataTransactionalExecutor } from "@ai-data/metadata";
 import type { AuthContext } from "../auth/auth-types";
 import { ApplicationError } from "../errors/application-error";
 import { parseStoredRecord } from "../metadata/parse-stored-record";
 import type { ReportRepository, ReportSnapshot, RunReportGuard } from "./report-types";
 import { runTimeMilliseconds } from "../analysis-runs/run-time";
+import { persistReportArtifact } from "./report-artifact";
 
 class SqlReportRepository implements ReportRepository {
   constructor(private readonly database: MetadataTransactionalExecutor) {}
+  async transaction<T>(
+    operation: (executor: MetadataQueryExecutor) => Promise<T>,
+    executor?: MetadataQueryExecutor,
+  ): Promise<T> {
+    return executor ? operation(executor) : this.database.transaction(operation);
+  }
   async find(
     organizationId: string,
     reportId: string,
@@ -40,8 +47,9 @@ class SqlReportRepository implements ReportRepository {
     reportId?: string,
     expectedVersion?: number,
     guard?: RunReportGuard,
+    executor?: MetadataQueryExecutor,
   ): Promise<SavedReport> {
-    return this.database.transaction(async (executor) => {
+    return this.transaction(async (executor) => {
       if (guard) {
         const current = await executor.execute({
           sql: "SELECT s.state_json FROM dbo.analysis_run_states s WITH (UPDLOCK,HOLDLOCK) JOIN dbo.analysis_runs r ON r.id=s.analysis_run_id WHERE r.id=@run AND r.user_id=@user AND r.organization_id=@org",
@@ -115,8 +123,9 @@ class SqlReportRepository implements ReportRepository {
           { name: "json", type: "string", value: JSON.stringify(report) },
         ],
       });
+      await persistReportArtifact(executor, report);
       return report;
-    });
+    }, executor);
   }
 }
 export { SqlReportRepository };

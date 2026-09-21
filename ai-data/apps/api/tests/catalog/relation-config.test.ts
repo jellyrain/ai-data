@@ -65,6 +65,16 @@ function setup() {
 }
 
 describe("业务关联键与基数配置保存", () => {
+  it("被现有入向关系引用的唯一键不能在配置更新时移除", async () => {
+    const { service, config, target, repository } = setup();
+    target.object_id = "detail";
+    config.approved_relations[0].target_object_id = "detail";
+    repository.listBySourceId = async () => [config, target];
+    await expect(service.saveConfig({ ...target, unique_keys: [["name"]] })).rejects.toMatchObject({
+      code: "INVALID_INPUT",
+    });
+    expect(repository.save).not.toHaveBeenCalled();
+  });
   it("双方唯一键均覆盖Join字段时保存一对一并读取目标配置", async () => {
     const { service, config, repository } = setup();
     await service.saveConfig(config);

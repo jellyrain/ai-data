@@ -1,4 +1,5 @@
 import { generateKeyPairSync, randomUUID } from "node:crypto";
+import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { mkdirSync, mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
@@ -34,8 +35,14 @@ import { registerAnalysisRoutes } from "../../src/routes/analysis-routes";
 import { registerContractErrorHandler } from "../../src/routes/contract-error";
 import { config } from "../support/api-fixtures";
 import { DialogueDasFixture, readDialogueConnection } from "./dialogue-das-fixture";
-import { configuredDialogueHarness } from "./dialogue-model-fixture";
+import { configuredDialogueHarness, readConfiguredDialogueRuntime } from "./dialogue-model-fixture";
+import { createAgentConfiguration } from "../../src/agents/create-agent-configuration";
+import type { ExecutorDependencies } from "../../src/runtime/runtime-types";
 import { SkillResources } from "../../src/skills/skill-resources";
+
+// 普通 SQL 验收不会连接模型配置库；只有显式启用真实模型专项时读取已发布版本。
+const configuredModel =
+  process.env.LOCAL_MODEL_ACCEPTANCE === "1" ? await readConfiguredDialogueRuntime() : undefined;
 
 /** 两个科室共享一条就诊号，分科计数与全量去重的结果分别为 2+2 和 3。 */
 const groupedQuery = queryDslSchema.parse({
@@ -83,6 +90,7 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
   let app: FastifyInstance;
   let runs: AnalysisRunService;
   let tools: AnalysisTools;
+  let toolDependencies: ConstructorParameters<typeof AnalysisTools>[0];
   let repository: SqlRuntimeRepository;
   let auth: AuthService;
   let full: Identity;
@@ -220,7 +228,7 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
       client,
       refreshContext,
     });
-    tools = new AnalysisTools({
+    toolDependencies = {
       skills,
       runs,
       catalog,
@@ -228,7 +236,8 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
       listSourceIds: async () => ["dialogue"],
       metrics: new MetricService(new SqlMetricRepository(database), authorization, runs),
       reports: new ReportService(new SqlReportRepository(database), runs, authorization),
-    });
+    };
+    tools = new AnalysisTools(toolDependencies);
     repository = new SqlRuntimeRepository(database);
     app = Fastify({ logger: false });
     registerContractErrorHandler(app);
@@ -294,6 +303,7 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
   function executor(
     harness: AnalysisHarness,
     instructions = "根据业务目录和证据分析就诊人次。",
+    resolveConfiguration?: ExecutorDependencies["resolveConfiguration"],
   ): AnalysisExecutor {
     const instance = new AnalysisExecutor({
       runs,
@@ -302,6 +312,7 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
       harness,
       refreshContext: auth.refreshContext.bind(auth),
       instructions,
+      resolveConfiguration,
     });
     executors.push(instance);
     return instance;
@@ -563,12 +574,149 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
     }
   });
 
+  it("绑定 Agent 的工具通过 DAS 取得授权 SQL 结果，运行快照返回实际版本", async () => {
+    mkdirSync(resolve("secrets"), { recursive: true });
+    const directory = mkdtempSync(join(resolve("secrets"), "agent-dialogue-scripted-"));
+    try {
+      const services = createAgentConfiguration({
+        database,
+        config: apiConfigSchema.shape.analysis_runtime.parse({
+          enabled: false,
+          state_directory: directory,
+        }),
+        startupDirectory: process.cwd(),
+        skillsDirectory: fileURLToPath(new URL("../../../../packages/skills", import.meta.url)),
+      });
+      const manager = { ...restricted.context, roles: ["system_admin"] };
+      await services.models.publish(manager, {
+        model_id: "scripted-model",
+        version: 1,
+        name: "脚本测试",
+        protocol: "responses",
+        base_url: "http://localhost/v1",
+        model: "scripted",
+      });
+      await services.agents.publish(manager, {
+        agent_id: "scripted-agent",
+        version: 1,
+        name: "授权分析",
+        model_id: "scripted-model",
+        model_version: 1,
+        tool_names: ["query_dataset", "read_skill_reference"],
+        skill_names: ["query-dsl"],
+        limits: { timeout_ms: 10000, max_tool_calls: 5, max_context_bytes: 65536 },
+      });
+      const conversation = await new ConversationService(new SqlConversationRepository(database), {
+        selectAgent: (ctx, id, version) => services.runtime.selectAgent(ctx, id, version),
+        authorizeRun: (ctx, id) => runs.get(ctx, id),
+      }).create(restricted.context, "固定 Agent", { agent_id: "scripted-agent" });
+      const submitted = await submit(restricted, "统计九月科室人次", conversation.id);
+      const resolveConfiguration: NonNullable<
+        ExecutorDependencies["resolveConfiguration"]
+      > = async (ctx, id) => {
+        const bound = await services.runtime.resolveRun(ctx, id);
+        return {
+          ...bound,
+          tools: new AnalysisTools({
+            ...toolDependencies,
+            skills: bound.configuration.skills,
+            allowedNames: bound.agent.tool_names,
+          }),
+          instructions: bound.agent.instructions,
+          maxToolCalls: bound.agent.limits.max_tool_calls,
+          maxContextBytes: bound.agent.limits.max_context_bytes,
+        };
+      };
+      const runtime = executor(
+        {
+          run: async (request) => {
+            expect(request.configuration?.provider.model).toBe("scripted");
+            expect(request.tools.map((tool) => tool.name).sort()).toEqual([
+              "query_dataset",
+              "read_skill_reference",
+            ]);
+            expect(
+              await request.executeTool(
+                "query_dataset",
+                { query: groupedQuery },
+                "configured-query",
+              ),
+            ).toMatchObject({ success: true, output: { rows: [{ department: "A", visits: 2 }] } });
+            return { status: "completed", content: "A 科室 2 人次" };
+          },
+        },
+        undefined,
+        resolveConfiguration,
+      );
+      await runtime.execute(restricted.context, submitted.runId);
+      expect(await runs.get(restricted.context, submitted.runId)).toMatchObject({
+        status: "completed",
+        agent_id: "scripted-agent",
+        agent_version: 1,
+      });
+      expect(await queryAudit(submitted.runId)).toEqual([
+        expect.objectContaining({ row_filter_injected: true, user_id: restricted.context.userId }),
+      ]);
+      await runtime.close();
+    } finally {
+      assert.equal(dirname(directory), resolve("secrets"), "测试目录超出项目范围");
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it.runIf(process.env.LOCAL_MODEL_ACCEPTANCE === "1")(
     "本地模型通过普通函数查询授权科室，重启后恢复同一官方线程回答追问",
     async () => {
       mkdirSync(resolve("secrets"), { recursive: true });
       modelStateDirectory = mkdtempSync(join(resolve("secrets"), "ai-data-dialogue-model-"));
-      let model = configuredDialogueHarness(modelStateDirectory, skills);
+      const { runtime: runtimeConfig, agent, provider } = configuredModel!;
+      const instructions = agent.instructions;
+      const selected = createAgentConfiguration({
+        database,
+        config: { ...runtimeConfig, state_directory: modelStateDirectory },
+        startupDirectory: process.cwd(),
+        skillsDirectory: fileURLToPath(new URL("../../../../packages/skills", import.meta.url)),
+      });
+      const manager = { ...restricted.context, roles: ["system_admin"] };
+      await selected.models.publish(manager, {
+        model_id: "acceptance-model",
+        version: 1,
+        name: "验收模型",
+        protocol: "responses",
+        base_url: provider.baseUrl,
+        model: provider.model,
+        api_key: provider.apiKey,
+        headers: provider.headers,
+        context_window: provider.contextWindow,
+      });
+      await selected.agents.publish(manager, {
+        agent_id: "default",
+        version: 1,
+        name: "验收助手",
+        instructions,
+        model_id: "acceptance-model",
+        model_version: 1,
+        tool_names: agent.tool_names,
+        skill_names: agent.skill_names,
+        limits: agent.limits,
+      });
+      const resolveConfiguration: NonNullable<
+        ExecutorDependencies["resolveConfiguration"]
+      > = async (context, runId) => {
+        const result = await selected.runtime.resolveRun(context, runId);
+        return {
+          ...result,
+          tools: new AnalysisTools({
+            ...toolDependencies,
+            skills: result.configuration.skills,
+            allowedNames: result.agent.tool_names,
+          }),
+          instructions: result.agent.instructions,
+          maxToolCalls: result.agent.limits.max_tool_calls,
+          maxContextBytes: result.agent.limits.max_context_bytes,
+        };
+      };
+      let model = configuredDialogueHarness(modelStateDirectory);
       models.push(model);
       const threadIds: string[] = [];
       const attempts: { name: string; input: unknown; output: unknown }[] = [];
@@ -591,9 +739,7 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
         restricted,
         "请统计 2026 年 9 月各科室的去重就诊人次，按科室列出结果。数据源 dialogue 的就诊样本表是 dialogue_visits，就诊日期字段为 visited_on、就诊号为 visit_id、科室为 department。请先核对业务目录，再查询我有权查看的范围。",
       );
-      const instructions =
-        "你是业务数据分析助手。按 query-analysis 与 query-dsl Skill 分析用户问题，通过已提供的业务工具获取目录和查询证据，再给出有依据的结论。";
-      const runtime = executor(harness, instructions);
+      const runtime = executor(harness, instructions, resolveConfiguration);
       await runtime.execute(restricted.context, submitted.runId);
       const state = await runs.get(restricted.context, submitted.runId);
       expect(state.status, JSON.stringify({ error: state.error, attempts })).toBe("completed");
@@ -606,6 +752,13 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
             return values.includes("A") && values.some((value) => value === 2 || value === "2");
           }),
         ),
+        JSON.stringify({
+          evidence: evidence.map((item) => ({
+            query: item.authorized_query,
+            rows: item.result.rows,
+          })),
+          attempts,
+        }),
       ).toBe(true);
       expect(
         evidence.every((item) =>
@@ -638,26 +791,41 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
       expect(answer).toMatchObject({ content: expect.stringMatching(/\b2\b|两|二/) });
       await runtime.close();
       await model.close();
-      model = configuredDialogueHarness(modelStateDirectory, skills);
+      model = configuredDialogueHarness(modelStateDirectory);
       models.push(model);
       const next = await submit(
         restricted,
         "刚才 A 科室的就诊人次加 1 是多少？直接使用上轮结果回答。",
         submitted.conversationId,
       );
-      await executor(harness, instructions).execute(restricted.context, next.runId);
+      await executor(harness, instructions, resolveConfiguration).execute(
+        restricted.context,
+        next.runId,
+      );
       const continued = await runs.get(restricted.context, next.runId);
       expect(continued.status, JSON.stringify({ error: continued.error, attempts })).toBe(
         "completed",
       );
       expect(threadIds).toHaveLength(2);
       expect(threadIds[1]).toBe(threadIds[0]);
+      const bindings = await database.execute({
+        sql: "SELECT agent_id,agent_version FROM dbo.analysis_runs WHERE id IN (@first,@next)",
+        parameters: [
+          { name: "first", type: "string", value: submitted.runId },
+          { name: "next", type: "string", value: next.runId },
+        ],
+      });
+      expect(bindings.rows).toEqual([
+        { agent_id: "default", agent_version: 1 },
+        { agent_id: "default", agent_version: 1 },
+      ]);
       expect(await queryAudit(next.runId)).toHaveLength(0);
       const nextAnswer = (await runs.events(restricted.context, next.runId, 0)).find(
         (event) => event.type === "final_answer",
       );
       expect(nextAnswer).toMatchObject({ content: expect.stringMatching(/\b3\b|三/) });
     },
-    240000,
+    // 查询与重建后追问各有一轮完整预算，额外预留 60 秒用于流程装配和收尾。
+    configuredModel ? configuredModel.agent.limits.timeout_ms * 2 + 60000 : 240000,
   );
 });

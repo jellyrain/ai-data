@@ -4,7 +4,7 @@ import { ApplicationError } from "../../src/errors/application-error";
 import { context } from "../support/api-fixtures";
 import type { HarnessRequest, HarnessResult } from "../../src/harness/harness-types";
 
-function setup() {
+function setup(overrides: Record<string, unknown> = {}) {
   const lease = { owner: "worker", epoch: 1, expires_at: "2026-09-14 23:00:00" };
   const runs = {
     claim: vi.fn(async () => lease),
@@ -18,6 +18,7 @@ function setup() {
     get: vi.fn(async () => ({})),
     evidence: vi.fn(async () => []),
     recordCompaction: vi.fn(async () => {}),
+    recordMemoryContext: vi.fn(async () => {}),
   };
   const harness = {
     run: vi.fn<(request: HarnessRequest) => Promise<HarnessResult>>(async () => ({
@@ -47,11 +48,56 @@ function setup() {
     refreshContext: async () => context,
     instructions: "查询分析",
     heartbeatMs: 1000,
+    ...overrides,
   } as unknown as ConstructorParameters<typeof AnalysisExecutor>[0]);
   return { runs, harness, tools, repository, executor };
 }
 
 describe("分析执行器", () => {
+  it("当前账号记忆与生效知识进入上下文，后续版本变化更新线程摘要", async () => {
+    let version = 1;
+    const loadMemory = vi.fn(async () => ({
+      preferences: [{ key: "year", version }],
+      knowledge: [],
+    }));
+    const h = setup({ loadMemory });
+    await h.executor.execute(context, "run");
+    const firstKey = (h.repository.loadInput.mock.calls as unknown[][])[0]?.[2];
+    expect(JSON.parse(h.harness.run.mock.calls[0]![0].input)).toMatchObject({
+      memory: { preferences: [{ version: 1 }] },
+    });
+    version = 2;
+    await h.executor.execute(context, "run2");
+    expect((h.repository.loadInput.mock.calls as unknown[][])[2]?.[2]).not.toBe(firstKey);
+  });
+  it("根据会话绑定版本装配指令和工具，工具预算来自该版本", async () => {
+    const selectedTools = {
+      definitions: () => [{ name: "selected", description: "所选工具", inputSchema: {} }],
+      execute: vi.fn(async () => ({ success: true, output: {} })),
+    };
+    const resolveConfiguration = vi.fn(async () => ({
+      tools: selectedTools,
+      instructions: "固定版本指令",
+      runtimeKey: "agent-v1",
+      maxToolCalls: 1,
+      maxContextBytes: 65536,
+    }));
+    const h = setup({ resolveConfiguration });
+    h.harness.run.mockImplementation(async (request) => {
+      expect(request.instructions).toBe("固定版本指令");
+      expect(request.tools.map((tool) => tool.name)).toEqual(["selected"]);
+      await request.executeTool("selected", {}, "1");
+      await expect(request.executeTool("selected", {}, "2")).rejects.toMatchObject({
+        code: "QUERY_LIMIT_EXCEEDED",
+      });
+      return { status: "completed", content: "完成" };
+    });
+    await h.executor.execute(context, "run");
+    expect(resolveConfiguration).toHaveBeenCalledWith(context, "run");
+    expect(selectedTools.execute).toHaveBeenCalledOnce();
+    expect(h.tools.execute).not.toHaveBeenCalled();
+    expect(h.runs.complete).toHaveBeenCalledOnce();
+  });
   it("把压缩事件绑定当前业务身份、运行和租约", async () => {
     const h = setup();
     h.harness.run.mockImplementation(async (request) => {

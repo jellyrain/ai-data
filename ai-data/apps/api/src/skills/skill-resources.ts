@@ -4,16 +4,29 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { ApplicationError } from "../errors/application-error";
 
+/** Skill 名称用于目录定位，限制为单级标识并拒绝重复绑定。 */
+function validateSkillNames(names: readonly string[]): void {
+  if (
+    names.some((name) => !/^[a-z0-9][a-z0-9-]{0,63}$/.test(name)) ||
+    new Set(names).size !== names.length
+  )
+    throw new ApplicationError("INVALID_INPUT", "Skill 名称无效或重复");
+}
+
 /** 启动时固定已加载 Skill 的完整资源，供目录复制、按需读取和线程版本判断共用。 */
 class SkillResources {
   private readonly files = new Map<string, Map<string, Buffer>>();
   readonly fingerprint: string;
 
   constructor(directory: string, names: readonly string[] = ["query-analysis", "query-dsl"]) {
+    validateSkillNames(names);
     const hash = createHash("sha256");
+    if (names.length) {
+      const stat = lstatSync(directory);
+      if (stat.isSymbolicLink() || !stat.isDirectory())
+        throw new ApplicationError("INVALID_INPUT", "Skill 源目录必须是普通目录");
+    }
     for (const name of [...names].sort()) {
-      if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(name) || this.files.has(name))
-        throw new ApplicationError("INVALID_INPUT", "Skill 名称无效或重复");
       const root = resolve(directory, name);
       const files = new Map<string, Buffer>();
       const collect = (path: string, relativePath: string) => {
@@ -29,7 +42,13 @@ class SkillResources {
           hash.update(JSON.stringify([name, relativePath, content.length])).update(content);
         } else throw new ApplicationError("INVALID_INPUT", "Skill 资源仅支持普通文件和目录");
       };
-      collect(root, "");
+      try {
+        collect(root, "");
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT")
+          throw new ApplicationError("INVALID_INPUT", "Skill 不存在或资源缺失", { cause: error });
+        throw error;
+      }
       if (!files.has("SKILL.md")) throw new ApplicationError("INVALID_INPUT", "Skill 缺少入口文件");
       this.files.set(name, files);
     }
@@ -76,4 +95,4 @@ class SkillResources {
   }
 }
 
-export { SkillResources };
+export { SkillResources, validateSkillNames };

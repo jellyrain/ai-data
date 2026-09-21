@@ -1,8 +1,8 @@
 # 分析运行、指标和报告
 
-API 实例通过一个常驻官方 app-server 管理多个业务线程，并将上下文压缩开始、完成状态持久化为 `context_compaction` SSE 事件。状态目录以项目启动工作目录为基准。当前实现、前台展示约定和最新复验限制见[交付说明](../任务交接/第7步常驻运行与状态推送.md)。
+API 实例通过一个常驻官方 app-server 管理多个业务线程，并将上下文压缩开始、完成状态持久化为 `context_compaction` SSE 事件。状态目录以项目启动工作目录为基准。压缩展示约定见[第 7 步说明](../任务交接/第7步常驻运行与状态推送.md)，Agent 装配和最新验证见[第 8 步交付说明](../任务交接/第8步交付说明.md)。
 
-API 提供自动分析运行、结构化查询、指标口径、证据和报告接口。启动时执行 `002_department_scopes` 至 `007_codex_threads` 迁移。元数据库与模型配置使用本地 `apps/api/config/api.config.json`；模型提供方、预算和部署命令见[模型运行时配置](MODEL-RUNTIME.md)。
+API 提供自动分析运行、结构化查询、指标口径、证据和报告接口。启动通过 `000_schema_migrations.sql` 与 `001_initial_api_schema.sql` 建立版本登记表和完整业务结构。管理员通过接口发布数据库中的模型与 Agent，会话固定 Agent 版本；模型认证加密保存，主密钥由服务端本地密钥库管理。元数据库连接、进程与调度参数使用本地 `apps/api/config/api.config.json`，空模型库可先启动登录再配置。接口见[Agent 配置接口](AGENT-CONFIGURATION.md)，运行与部署见[模型运行时配置](MODEL-RUNTIME.md)。
 
 ## 运行入口
 
@@ -35,13 +35,13 @@ API 提供自动分析运行、结构化查询、指标口径、证据和报告�
 
 状态、事件、证据、步骤和操作幂等记录由事务仓储一起提交。运行仅对所属用户和组织开放。SSE 使用已提交事件；断开连接结束读取，查询取消通过取消接口执行。
 
-自动分析加载 Git 管理的 `query-analysis` 和 `query-dsl` Skill：先提供 `SKILL.md` 入口，再通过 `read_skill_reference` 按需读取同一 Skill 目录内的 Markdown 子文档。API 启动时固定完整资源快照，子文档修改也参与线程版本判断。业务工具包括 `list_sources`、`search_catalog`、`list_datasets`、`describe_dataset`、`list_metrics`、`describe_metric`、`query_dataset`、`query_metric`、`request_clarification` 和 `save_report`。
+自动分析加载会话所绑定 Agent 的 Skill 快照：首轮提供 `SKILL.md` 入口，再通过 `read_skill_reference` 按需读取快照内 Markdown。发布 Agent 时固定完整资源，源文件更新后通过新版本用于新会话。默认 Agent 选择 `query-analysis` 和 `query-dsl`。业务工具从目录中选择，工具范围与用户数据权限共同约束执行。`GET /analysis-runs/:id` 返回已绑定的 `agent_id`、`agent_version`，历史未绑定记录省略这两个字段。
 
 `describe_dataset` 返回已授权数据集、统计粒度 `grain`、可见字段构成的 `unique_keys`，以及目标对象和连接字段均可访问的 `approved_relations`。单个工具输出上限为 64 KiB。
 
 ## 指标口径
 
-`POST /admin/metrics` 发布 `MetricDefinition`，需要系统管理员或 `catalog:manage` 权限。`GET /metrics` 列出当前可访问指标，`GET /metrics/:id?version=1` 读取指定版本。发布版本从 1 顺序增加且不可覆盖；更换时间依据或主来源时使用独立指标标识。
+`POST /admin/metrics` 接收 `MetricDefinition` 并返回待审候选，需要系统管理员、`knowledge:manage` 或 `catalog:manage` 权限。候选经负责人审核后发布；`GET /metrics` 列出当前可访问且已生效的正式指标，`GET /metrics/:id?version=1` 读取指定版本。发布版本从 1 顺序增加且不可覆盖；更换时间依据或主来源时使用独立指标标识。审核、停用及回滚接口见[知识与记忆](MEMORY-KNOWLEDGE.md)。
 
 定义包含统计粒度说明、去重键、固定日期字段、允许维度、聚合查询模板，以及取值列或分子分母。查询模板显式表达 `count_distinct`、预聚合等统计操作；发布时检查目录、字段和查询能力。
 

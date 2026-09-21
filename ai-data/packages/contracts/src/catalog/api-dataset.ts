@@ -37,6 +37,12 @@ const approvedRelationSchema = z
     column_pairs: z.array(relationColumnPairSchema).min(1),
     /** 管理员确认的当前对象到目标对象基数；省略时由 API 按可验证的唯一键判定。 */
     cardinality: relationCardinalitySchema.optional(),
+    /** 省略时沿用已有三种连接能力；发布接口会保存明确列表。 */
+    allowed_join_types: z
+      .array(z.enum(["inner", "left", "right"]))
+      .min(1)
+      .max(3)
+      .optional(),
   })
   .strict();
 

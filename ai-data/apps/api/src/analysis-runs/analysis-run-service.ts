@@ -1,11 +1,14 @@
 import { createHash, randomUUID } from "node:crypto";
 import dayjs from "dayjs";
+import type { MetadataQueryExecutor } from "@ai-data/metadata";
 import {
   analysisStepSchema,
   clarificationSchema,
   clarificationAnswerSchema,
   queryEvidenceSchema,
   stableStringify,
+  memoryIntentSchema,
+  memoryContextSchema,
   type AnalysisRunState,
   type RunLease,
   type QueryEvidence,
@@ -36,6 +39,62 @@ class AnalysisRunService {
   constructor(private readonly dependencies: RunDependencies) {
     this.now = dependencies.now ?? (() => dayjs().valueOf());
     this.leaseMilliseconds = dependencies.leaseMilliseconds ?? 30000;
+  }
+
+  /** 设置操作与租约检查共用事务，取消或接管后不能留下迟到写入。 */
+  async recordMemoryContext(
+    context: AuthContext,
+    runId: string,
+    lease: RunLease,
+    input: unknown,
+  ): Promise<void> {
+    const memoryContext = memoryContextSchema.parse(input);
+    await this.dependencies.repository.change(context, runId, (state) => {
+      this.assertLease(state, lease);
+      return { memoryContext };
+    });
+  }
+
+  /** 设置操作与租约检查共用事务，取消或接管后不能留下迟到写入。 */
+  async withLease<T>(
+    context: AuthContext,
+    runId: string,
+    lease: RunLease,
+    operation: (executor: MetadataQueryExecutor) => Promise<T>,
+  ): Promise<T> {
+    let result: T;
+    await this.dependencies.repository.change(context, runId, (state) => {
+      this.assertLease(state, lease);
+      return {
+        apply: async (executor) => {
+          result = await operation(executor);
+          this.assertLease(state, lease);
+        },
+      };
+    });
+    return result!;
+  }
+
+  /** 意图归属由运行核对，失败或取消的运行不会派发后台任务。 */
+  async remember(
+    context: AuthContext,
+    runId: string,
+    lease: RunLease,
+    input: unknown,
+  ): Promise<void> {
+    const intent = memoryIntentSchema.parse(input);
+    await this.dependencies.repository.change(context, runId, (state) => {
+      this.assertLease(state, lease);
+      const source = intent.type === "query_habit" ? intent.source : intent.candidate.source;
+      if (
+        !source ||
+        source.analysis_run_id !== runId ||
+        source.conversation_id !== state.conversation_id ||
+        source.evidence_ids.some((id) => !state.evidence_ids.includes(id))
+      )
+        throw new ApplicationError("INVALID_INPUT", "记忆来源不属于当前运行");
+      return { memoryIntents: [intent] };
+    });
   }
 
   async get(context: AuthContext, runId: string): Promise<AnalysisRunState> {
@@ -185,6 +244,23 @@ class AnalysisRunService {
         state.clarification = null;
         state.updated_at = runTime(this.now());
         return {
+          ...(question.preference_confirmation_id
+            ? {
+                apply: async (executor: MetadataQueryExecutor) => {
+                  if (!this.dependencies.applyPreferenceAnswer)
+                    throw new ApplicationError("INTERNAL_ERROR", "偏好确认服务未配置");
+                  if (!["approve", "reject"].includes(answer.option_id ?? ""))
+                    throw new ApplicationError("INVALID_INPUT", "个人偏好确认需要选择同意或拒绝");
+                  await this.dependencies.applyPreferenceAnswer(
+                    context,
+                    question.preference_confirmation_id!,
+                    answer.option_id === "approve",
+                    answer.idempotency_key,
+                    executor,
+                  );
+                },
+              }
+            : {}),
           messages: [
             {
               role: "user",
@@ -233,14 +309,26 @@ class AnalysisRunService {
     runId: string,
     lease: RunLease,
     content: string,
+    operation?: (executor: MetadataQueryExecutor) => Promise<void>,
   ): Promise<AnalysisRunState> {
     await this.get(context, runId);
     return this.dependencies.repository.change(context, runId, (state) => {
       this.assertLease(state, lease);
+      const expiresAt = state.lease!.expires_at;
       state.status = "completed";
       state.lease = null;
       state.updated_at = runTime(this.now());
       return {
+        ...(operation || this.dependencies.completeOperation
+          ? {
+              apply: async (executor: MetadataQueryExecutor) => {
+                await this.dependencies.completeOperation?.(context, runId, executor, content);
+                await operation?.(executor);
+                if (!dayjs(runTimeMilliseconds(expiresAt)).isAfter(this.now()))
+                  throw new ApplicationError("CONFLICT", "提交时运行租约已过期");
+              },
+            }
+          : {}),
         messages: [{ role: "assistant", content }],
         events: [{ type: "final_answer", content }, { type: "run_completed" }],
       };

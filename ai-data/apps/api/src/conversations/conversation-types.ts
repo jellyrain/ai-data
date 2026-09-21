@@ -27,6 +27,10 @@ interface ConversationRepository {
 
 /** 当前用户所属组织中的对话会话。 */
 type Conversation = {
+  /** 创建会话时固定的 Agent 标识；第 8 步前的记录在首次运行时补绑定。 */
+  agentId?: string;
+  /** 与 Agent 标识配套保存的不可变配置版本。 */
+  agentVersion?: number;
   /** 会话主键。 */
   id: string;
   /** 会话所属组织。 */

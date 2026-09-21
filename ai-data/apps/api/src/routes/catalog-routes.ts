@@ -21,6 +21,10 @@ import { bearerToken } from "./auth-routes";
 const sourceParamsSchema = z.object({ sourceId: z.string().min(1) }).strict();
 /** 目录详情在数据源参数上增加对象标识，仍拒绝未知字段。 */
 const datasetParamsSchema = sourceParamsSchema.extend({ objectId: z.string().min(1) }).strict();
+/** 旧完整配置增加并发版本；首次创建可以用 0，省略时由服务捕获当前基线。 */
+const configInputSchema = apiDatasetConfigSchema.safeExtend({
+  expected_version: z.number().int().nonnegative().optional(),
+});
 /** 搜索参数拒绝未知字段；limit 从 URL 文本转整数，默认 20，最多返回 100 项。 */
 const searchQuerySchema = z
   .object({ query: z.string().min(1), limit: z.coerce.number().int().min(1).max(100).default(20) })
@@ -78,17 +82,23 @@ function registerCatalogRoutes(
   /** 返回画布和业务目录需要的批准关联关系及字段策略配置。 */
   app.get("/catalog/datasets/:sourceId/:objectId/business-config", async (request, reply) => {
     const { sourceId, objectId } = datasetParamsSchema.parse(request.params);
-    const config = await catalogService.getAuthorizedConfig(
-      await currentContext(request, authService),
-      sourceId,
-      objectId,
-    );
+    const context = await currentContext(request, authService);
+    const version = await catalogService.getConfigVersion(sourceId, objectId);
+    const config = await catalogService.getAuthorizedConfig(context, sourceId, objectId);
     if (!config) throw new ApplicationError("NOT_FOUND", "数据集配置不存在或无权限访问");
+    if (version !== (await catalogService.getConfigVersion(sourceId, objectId)))
+      throw new ApplicationError("CONFLICT", "目录配置正在更新，请重新读取");
+    reply.header("x-config-version", version);
     return reply.send(config);
   });
   app.put("/admin/catalog/datasets", async (request, reply) => {
     requireCatalogAdmin(await currentContext(request, authService));
-    await catalogService.saveConfig(apiDatasetConfigSchema.parse(request.body));
+    const { expected_version, ...config } = configInputSchema.parse(request.body);
+    const version =
+      expected_version ??
+      (await catalogService.getConfigVersion(config.source_id, config.object_id));
+    await catalogService.saveConfig(config, version);
+    reply.header("x-config-version", version + 1);
     return reply.code(204).send();
   });
   app.put("/admin/catalog/object-permissions", async (request, reply) => {

@@ -46,20 +46,7 @@
   },
   "analysis_runtime": {
     "enabled": false,
-    "active_provider": "local",
-    "providers": [
-      {
-        "id": "local",
-        "protocol": "responses",
-        "base_url": "http://127.0.0.1:8000/v1",
-        "model": "your-model"
-      }
-    ],
-    "timeout_ms": 180000,
     "state_directory": "secrets/codex-runtime",
-    "context_window": 32768,
-    "max_context_bytes": 65536,
-    "max_tool_calls": 30,
     "concurrency": 2,
     "poll_ms": 1000
   }

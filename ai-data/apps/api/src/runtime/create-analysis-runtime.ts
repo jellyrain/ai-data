@@ -12,8 +12,12 @@ import { AnalysisTools } from "./analysis-tools";
 import { AnalysisExecutor } from "./analysis-executor";
 import { PollingAnalysisDispatcher } from "./analysis-dispatcher";
 import { SqlRuntimeRepository } from "./sql-runtime-repository";
+import type { AgentRuntime } from "./agent-runtime";
+import type { MemoryRuntime } from "../memory/memory-runtime";
+import type { ReportRevisionService } from "../reports/report-revision-service";
+import type { ReportExecutionService } from "../reports/report-execution-service";
 
-/** 选择部署配置中的模型提供方，业务服务与模型传输分别装配。 */
+/** 启动服务级调度与官方进程，每次运行按会话绑定装配数据库模型及 Agent 预算。 */
 function createAnalysisRuntime(dependencies: {
   config: NonNullable<ApiConfig["analysis_runtime"]>;
   database: MetadataTransactionalExecutor;
@@ -22,41 +26,51 @@ function createAnalysisRuntime(dependencies: {
   metrics: MetricService;
   reports: ReportService;
   refreshContext: (context: AuthContext) => Promise<AuthContext>;
-  instructions: string;
   startupDirectory: string;
   skillsDirectory: string;
   onError: (error: unknown) => void;
   listSourceIds: () => Promise<string[]>;
+  agents: Pick<AgentRuntime, "resolveRun">;
+  memory?: MemoryRuntime;
+  reportEditing?: ReportRevisionService;
+  reportExecutions?: ReportExecutionService;
 }) {
   const { config } = dependencies;
-  const selected = config.providers.find((provider) => provider.id === config.active_provider)!;
-  const skills = new SkillResources(dependencies.skillsDirectory);
+  const skills = new SkillResources(dependencies.skillsDirectory, []);
   const harness = new CodexAnalysisHarness({
-    provider: {
-      id: selected.id,
-      baseUrl: selected.base_url,
-      model: selected.model,
-      apiKey: selected.api_key,
-      headers: selected.headers,
-    },
-    timeoutMs: config.timeout_ms,
     stateDirectory: resolve(dependencies.startupDirectory, config.state_directory),
-    skills,
-    contextWindow: config.context_window,
   });
   const repository = new SqlRuntimeRepository(dependencies.database);
   const tools = new AnalysisTools({ ...dependencies, skills });
   const executor = new AnalysisExecutor({
     ...dependencies,
     repository,
+    ...(dependencies.reportEditing
+      ? {
+          loadReportContext: (context: AuthContext, runId: string) =>
+            dependencies.reportEditing!.read(context, runId),
+        }
+      : {}),
+    ...(dependencies.memory
+      ? { loadMemory: (context: AuthContext) => dependencies.memory!.snapshot(context) }
+      : {}),
     tools,
     harness,
-    runtimeKey: JSON.stringify({
-      provider: { id: selected.id, model: selected.model, baseUrl: selected.base_url },
-      skills: skills.fingerprint,
-    }),
-    maxToolCalls: config.max_tool_calls,
-    maxContextBytes: config.max_context_bytes,
+    instructions: "",
+    resolveConfiguration: async (context: AuthContext, runId: string) => {
+      const selected = await dependencies.agents.resolveRun(context, runId);
+      return {
+        ...selected,
+        instructions: selected.agent.instructions,
+        tools: new AnalysisTools({
+          ...dependencies,
+          skills: selected.configuration.skills,
+          allowedNames: selected.agent.tool_names,
+        }),
+        maxToolCalls: selected.agent.limits.max_tool_calls,
+        maxContextBytes: selected.agent.limits.max_context_bytes,
+      };
+    },
   });
   const dispatcher = new PollingAnalysisDispatcher({
     repository,

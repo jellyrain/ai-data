@@ -135,7 +135,7 @@ function setup(
     repository,
     repository,
   );
-  return { service: new QueryAuthorizationService(catalog, jwt), catalog };
+  return { service: new QueryAuthorizationService(catalog, jwt), catalog, configs };
 }
 
 async function authorize(
@@ -158,6 +158,17 @@ async function authorize(
 }
 
 describe("关系查询的对象行授权", () => {
+  it("同一批准字段对只允许当前关系声明的连接类型", async () => {
+    const { service, configs } = setup();
+    for (const config of configs)
+      for (const relation of config.approved_relations) relation.allowed_join_types = ["left"];
+    await expect(
+      service.authorize({ ...baseQuery, joins: [{ ...join, type: "inner" }] }, context),
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED_OBJECT" });
+    expect(
+      (await service.authorize({ ...baseQuery, joins: [join] }, context)).request.query,
+    ).toMatchObject({ joins: [{ type: "left" }] });
+  });
   it("带值 ON 保留匹配条件并纳入请求签名", async () => {
     const on_filters = {
       logic: "or",

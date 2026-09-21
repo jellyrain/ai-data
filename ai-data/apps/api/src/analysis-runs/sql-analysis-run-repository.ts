@@ -14,6 +14,7 @@ import { ApplicationError } from "../errors/application-error";
 import type { AnalysisRunRepository, RunChange, RunReceipt } from "./analysis-run-types";
 import { persistRunMessages } from "./persist-run-messages";
 import { toolAuditSchema } from "./tool-audit";
+import { persistMemoryIntents, enqueueMemoryIntents } from "../memory/persist-memory-intents";
 
 /** 持久化 JSON 在仓储边界校验，损坏记录按内部故障处理。 */
 function parseRecord<T>(value: unknown, schema: z.ZodType<T>): T {
@@ -39,13 +40,24 @@ class SqlAnalysisRunRepository implements AnalysisRunRepository {
     lock = false,
   ): Promise<AnalysisRunState> {
     const result = await executor.execute({
-      sql: `SELECT s.state_json FROM dbo.analysis_run_states s ${lock ? "WITH (UPDLOCK, HOLDLOCK)" : ""}
+      sql: `SELECT s.state_json,r.agent_id,r.agent_version FROM dbo.analysis_run_states s ${lock ? "WITH (UPDLOCK, HOLDLOCK)" : ""}
         JOIN dbo.analysis_runs r ON r.id = s.analysis_run_id
         WHERE r.id = @id AND r.user_id = @user AND r.organization_id = @org`,
       parameters: parameters(context, runId),
     });
     if (!result.rows[0]) throw new ApplicationError("NOT_FOUND", "分析运行不存在");
-    return parseRecord(result.rows[0].state_json, analysisRunSchema);
+    const row = result.rows[0];
+    const state = parseRecord(row.state_json, analysisRunSchema);
+    // 运行关联列是追溯来源，旧 JSON 快照在下一次状态提交时自然补齐。
+    return parseRecord(
+      JSON.stringify({
+        ...state,
+        ...(row.agent_id == null
+          ? {}
+          : { agent_id: row.agent_id, agent_version: row.agent_version }),
+      }),
+      analysisRunSchema,
+    );
   }
   get(context: AuthContext, runId: string): Promise<AnalysisRunState> {
     return this.read(this.database, context, runId);
@@ -78,7 +90,21 @@ class SqlAnalysisRunRepository implements AnalysisRunRepository {
           return state;
         }
       }
+      const previousStatus = state.status;
       const change = operation(state);
+      if (change.memoryContext)
+        await executor.execute({
+          sql: "INSERT dbo.analysis_memory_contexts(analysis_run_id,lease_epoch,context_json) VALUES(@id,@epoch,@json)",
+          parameters: [
+            { name: "id", type: "string", value: runId },
+            { name: "epoch", type: "integer", value: state.lease_epoch },
+            { name: "json", type: "string", value: JSON.stringify(change.memoryContext) },
+          ],
+        });
+      await change.apply?.(executor);
+      await persistMemoryIntents(executor, runId, change.memoryIntents ?? []);
+      if (previousStatus !== "completed" && state.status === "completed")
+        await enqueueMemoryIntents(executor, context, runId);
       await persistRunMessages(executor, state, change.messages);
       for (const input of change.audits ?? []) {
         const audit = toolAuditSchema.parse(input);

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import type { DataSourceConfig } from "../../src/data-sources/data-source-types";
 import type { EncryptedDataSourceSecret } from "../../src/secrets/secret-types";
-import { Aes256GcmSecretCipher } from "../../src/secrets/aes-256-gcm-secret-cipher";
+import { Aes256GcmSecretCipher } from "@ai-data/metadata/secrets";
 import { SecretResolver } from "../../src/secrets/secret-resolver";
 
 const sourceConfig: DataSourceConfig = {

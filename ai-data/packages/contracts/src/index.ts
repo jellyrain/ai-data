@@ -1,3 +1,44 @@
+import { memoryIntentSchema, memoryEventSummarySchema } from "./memory/memory-event";
+import type { MemoryIntent, MemoryEventSummary } from "./memory/memory-event-types";
+import { memoryContextSchema } from "./memory/memory-context";
+import type { MemoryContext } from "./memory/memory-context-types";
+import { memoryScopeSchema, memorySourceSchema } from "./memory/memory-common";
+import {
+  preferenceTimeRangeSchema,
+  userPreferenceValueSchema,
+  userPreferenceInputSchema,
+  userPreferenceSchema,
+  saveUserPreferenceInputSchema,
+  preferenceConfirmationSchema,
+  saveUserPreferenceResultSchema,
+} from "./memory/user-preference";
+import {
+  knowledgeContentSchema,
+  knowledgeCandidateInputSchema,
+  knowledgeCandidateSchema,
+  publishedKnowledgeSchema,
+  knowledgeReviewInputSchema,
+  knowledgePublishInputSchema,
+} from "./knowledge/knowledge";
+import type {
+  MemoryScope,
+  MemorySource,
+  PreferenceTimeRange,
+  UserPreferenceValue,
+  UserPreferenceInput,
+  UserPreference,
+  SaveUserPreferenceInput,
+  PreferenceConfirmation,
+  SaveUserPreferenceResult,
+} from "./memory/user-preference-types";
+import type {
+  KnowledgeContent,
+  KnowledgeCandidateInput,
+  KnowledgeCandidate,
+  PublishedKnowledge,
+  KnowledgeReviewInput,
+  KnowledgePublishInput,
+} from "./knowledge/knowledge-types";
 import { columnOperationSchema } from "./permission/column-operation";
 import {
   apiDatasetColumnDescriptionSchema,
@@ -119,6 +160,24 @@ import type { MaskingRule } from "./query/output-mask-types";
 
 // 统一出口：应用只从 @ai-data/contracts 引用，不直接依赖内部文件路径。
 export {
+  memoryContextSchema,
+  memoryIntentSchema,
+  memoryEventSummarySchema,
+  memoryScopeSchema,
+  memorySourceSchema,
+  preferenceTimeRangeSchema,
+  userPreferenceValueSchema,
+  userPreferenceInputSchema,
+  userPreferenceSchema,
+  saveUserPreferenceInputSchema,
+  preferenceConfirmationSchema,
+  saveUserPreferenceResultSchema,
+  knowledgeContentSchema,
+  knowledgeCandidateInputSchema,
+  knowledgeCandidateSchema,
+  publishedKnowledgeSchema,
+  knowledgeReviewInputSchema,
+  knowledgePublishInputSchema,
   aggregationCapabilitySchema,
   apiDatasetColumnDescriptionSchema,
   apiDatasetConfigSchema,
@@ -179,6 +238,24 @@ export {
 };
 
 export type {
+  MemoryContext,
+  MemoryIntent,
+  MemoryEventSummary,
+  MemoryScope,
+  MemorySource,
+  PreferenceTimeRange,
+  UserPreferenceValue,
+  UserPreferenceInput,
+  UserPreference,
+  SaveUserPreferenceInput,
+  PreferenceConfirmation,
+  SaveUserPreferenceResult,
+  KnowledgeContent,
+  KnowledgeCandidateInput,
+  KnowledgeCandidate,
+  PublishedKnowledge,
+  KnowledgeReviewInput,
+  KnowledgePublishInput,
   DataAccessSession,
   ApiDatasetColumnDescription,
   ApiDatasetConfig,
@@ -262,3 +339,97 @@ export {
   MAX_QUERY_RESPONSE_BYTES,
 } from "./query/query-limits";
 export { queryResultDeliverySchema } from "./query/query-result";
+export {
+  agentLimitsSchema,
+  agentDefinitionSchema,
+  agentVersionSchema,
+  skillCatalogEntrySchema,
+  agentToolEntrySchema,
+  createConversationSchema,
+} from "./agents/agent";
+export type {
+  AgentLimits,
+  AgentDefinition,
+  AgentVersion,
+  SkillCatalogEntry,
+  AgentToolEntry,
+  CreateConversation,
+} from "./agents/agent-types";
+export {
+  modelConfigurationInputSchema,
+  modelConfigurationSchema,
+} from "./agents/model-configuration";
+export type {
+  ModelConfigurationInput,
+  ModelConfiguration,
+} from "./agents/model-configuration-types";
+export {
+  publishedRelationInputSchema,
+  catalogRelationSchema,
+  relationPublishInputSchema,
+  relationGraphSchema,
+} from "./catalog/catalog-relations";
+export type {
+  PublishedRelationInput,
+  CatalogRelation,
+  RelationPublishInput,
+  RelationGraph,
+} from "./catalog/catalog-relations-types";
+export {
+  reportParameterValueSchema,
+  reportParameterSchema,
+  reportParameterBindingSchema,
+  reportRelationalQuerySchema,
+  reportMetricQuerySchema,
+  reportQueryItemSchema,
+  reportPresentationBlockSchema,
+  reportDefinitionSchema,
+  saveReportDefinitionInputSchema,
+  reportDefinitionVersionSchema,
+  reusableReportBlockSchema,
+  reportRevisionInputSchema,
+} from "./reports/report-definition";
+export type {
+  ReportParameter,
+  ReportParameterBinding,
+  ReportQueryItem,
+  ReportDefinition,
+  SaveReportDefinitionInput,
+  ReportDefinitionVersion,
+  ReusableReportBlock,
+  ReportRevisionInput,
+} from "./reports/report-definition-types";
+export {
+  reportExecutionInputSchema,
+  reportExecutionResultSchema,
+  reportExecutionSchema,
+  reportNarrativeSchema,
+  reportExecutionExportContentSchema,
+} from "./reports/report-execution";
+export type {
+  ReportExecutionInput,
+  ReportExecutionResult,
+  ReportExecution,
+  ReportNarrative,
+  ReportExecutionExportContent,
+} from "./reports/report-execution-types";
+export {
+  reportSharingInputSchema,
+  analysisArtifactSchema,
+  reportSummarySchema,
+  reportListInputSchema,
+  reportListSchema,
+  exportEvidenceSchema,
+  reportExportContentSchema,
+  conversationExportContentSchema,
+  reportVersionListSchema,
+} from "./reports/report-management";
+export type {
+  AnalysisArtifact,
+  ReportSummary,
+  ReportListInput,
+  ReportList,
+  ReportExportContent,
+  ConversationExportContent,
+  ReportVersionList,
+} from "./reports/report-management-types";

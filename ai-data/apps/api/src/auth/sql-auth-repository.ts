@@ -192,11 +192,13 @@ class SqlAuthRepository implements UserAdminRepository {
           INSERT INTO dbo.permissions (id, code, name) VALUES ('permission-user-manage', 'user:manage', N'用户管理');
         IF NOT EXISTS (SELECT 1 FROM dbo.permissions WHERE code = 'catalog:manage')
           INSERT INTO dbo.permissions (id, code, name) VALUES ('permission-catalog-manage', 'catalog:manage', N'目录管理');
+        IF NOT EXISTS (SELECT 1 FROM dbo.permissions WHERE code = 'knowledge:manage')
+          INSERT INTO dbo.permissions (id, code, name) VALUES ('permission-knowledge-manage', 'knowledge:manage', N'知识管理');
         IF NOT EXISTS (SELECT 1 FROM dbo.roles WHERE code = 'system_admin')
           INSERT INTO dbo.roles (id, code, name) VALUES ('role-system-admin', 'system_admin', N'系统管理员');
         INSERT INTO dbo.role_permissions (role_id, permission_id)
           SELECT r.id, p.id FROM dbo.roles r CROSS JOIN dbo.permissions p
-          WHERE r.code = 'system_admin' AND p.code IN ('user:manage', 'catalog:manage')
+          WHERE r.code = 'system_admin' AND p.code IN ('user:manage', 'catalog:manage', 'knowledge:manage')
             AND NOT EXISTS (SELECT 1 FROM dbo.role_permissions rp WHERE rp.role_id = r.id AND rp.permission_id = p.id);
         IF NOT EXISTS (SELECT 1 FROM dbo.users WHERE organization_id = @organization_id AND username = @username)
           INSERT INTO dbo.users (id, organization_id, username, display_name, password_hash, status)

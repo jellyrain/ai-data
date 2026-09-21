@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { z } from "zod";
+import { stableStringify } from "@ai-data/contracts";
 import { ApplicationError } from "../errors/application-error";
 import { CodexAppServer, resolveCodexCommand } from "./codex-app-server";
 import { CodexSessionRouter } from "./codex-session-router";
@@ -11,6 +12,7 @@ import type {
   CodexHarnessOptions,
   HarnessRequest,
   HarnessResult,
+  CodexModelProviderConfig,
 } from "./harness-types";
 
 const record = (value: unknown) => z.record(z.string(), z.unknown()).parse(value);
@@ -25,6 +27,9 @@ class CodexAnalysisHarness implements AnalysisHarness {
   private readonly sessions = new Map<string, CodexSessionRouter>();
   private readonly active = new Map<string, Promise<HarnessResult>>();
   private readonly skillInputs: { type: "skill"; name: string; path: string }[] = [];
+  private admission = Promise.resolve();
+  private readonly executing = new Set<Promise<HarnessResult>>();
+  private readonly providers = new Map<string, CodexModelProviderConfig>();
 
   constructor(
     private readonly options: CodexHarnessOptions,
@@ -78,15 +83,16 @@ class CodexAnalysisHarness implements AnalysisHarness {
       XDG_CONFIG_HOME: join(home, "config"),
       XDG_DATA_HOME: join(home, "share"),
     });
-    if (provider.apiKey) env.AI_DATA_MODEL_API_KEY = provider.apiKey;
+    if (provider?.apiKey) env.AI_DATA_MODEL_API_KEY = provider.apiKey;
+    for (const [key, configured] of this.providers) {
+      if (configured.apiKey) env[`AI_DATA_${key}_KEY`] = configured.apiKey;
+      Object.entries(configured.headers ?? {})
+        .sort(([a], [b]) => a.localeCompare(b))
+        .forEach(([, value], index) => {
+          env[`AI_DATA_${key}_HEADER_${index}`] = value;
+        });
+    }
     const config: Record<string, string | number | boolean | string[]> = {
-      model_provider: "analysis_provider",
-      "model_providers.analysis_provider.name": provider.id,
-      "model_providers.analysis_provider.base_url": provider.baseUrl,
-      "model_providers.analysis_provider.wire_api": "responses",
-      "model_providers.analysis_provider.request_max_retries": 0,
-      "model_providers.analysis_provider.stream_max_retries": 0,
-      "model_providers.analysis_provider.stream_idle_timeout_ms": this.options.timeoutMs,
       check_for_update_on_startup: false,
       project_root_markers: [],
       project_doc_max_bytes: 0,
@@ -102,12 +108,24 @@ class CodexAnalysisHarness implements AnalysisHarness {
       "features.view_image": false,
       "features.image_generation": false,
       "features.skill_mcp_dependency_install": false,
+      "features.apps": false,
+      "features.plugins": false,
       web_search: "disabled",
     };
-    if (provider.apiKey)
+    if (provider)
+      Object.assign(config, {
+        model_provider: "analysis_provider",
+        "model_providers.analysis_provider.name": provider.id,
+        "model_providers.analysis_provider.base_url": provider.baseUrl,
+        "model_providers.analysis_provider.wire_api": "responses",
+        "model_providers.analysis_provider.request_max_retries": 0,
+        "model_providers.analysis_provider.stream_max_retries": 0,
+        "model_providers.analysis_provider.stream_idle_timeout_ms":
+          this.options.timeoutMs ?? 180000,
+      });
+    if (provider?.apiKey)
       config["model_providers.analysis_provider.env_key"] = "AI_DATA_MODEL_API_KEY";
-    if (this.options.contextWindow) config.model_context_window = this.options.contextWindow;
-    Object.entries(provider.headers ?? {}).forEach(([name, value], index) => {
+    Object.entries(provider?.headers ?? {}).forEach(([name, value], index) => {
       const key = `AI_DATA_MODEL_HEADER_${index}`;
       env[key] = value;
       config[`model_providers.analysis_provider.env_http_headers.${JSON.stringify(name)}`] = key;
@@ -170,14 +188,79 @@ class CodexAnalysisHarness implements AnalysisHarness {
       return Promise.reject(new ApplicationError("CANCELLED", "分析已取消"));
     if (this.active.has(request.sessionKey))
       return Promise.reject(new ApplicationError("CONFLICT", "当前会话已有分析执行"));
-    const task = this.execute(request).finally(() => {
-      this.active.delete(request.sessionKey);
+    // 入场顺序保证添加环境认证时先排空旧进程；已注册提供方的轮次仍可并发。
+    const admitted = this.admission.then(async () => {
+      const assertAdmission = () => {
+        if (this.closed || request.signal.aborted)
+          throw new ApplicationError("CANCELLED", "分析已取消");
+      };
+      assertAdmission();
+      const provider = request.configuration?.provider;
+      const key = provider && this.providerKey(provider);
+      if (provider && key && !this.providers.has(key)) {
+        await Promise.allSettled(this.executing);
+        await this.starting;
+        assertAdmission();
+        this.providers.set(key, provider);
+        if (this.client)
+          this.retire(this.client, new ApplicationError("CANCELLED", "模型认证配置更新"));
+        await this.retiring;
+      }
+      assertAdmission();
+      const running = this.execute(request).finally(() => {
+        this.executing.delete(running);
+      });
+      this.executing.add(running);
+      return { running };
     });
+    this.admission = admitted.then(
+      () => {},
+      () => {},
+    );
+    let abort!: () => void;
+    const cancelled = new Promise<never>((_resolve, reject) => {
+      abort = () => reject(new ApplicationError("CANCELLED", "分析已取消"));
+      request.signal.addEventListener("abort", abort, { once: true });
+    });
+    const task = Promise.race([admitted, cancelled])
+      .then(({ running }) => {
+        request.signal.removeEventListener("abort", abort);
+        return running;
+      })
+      .finally(() => {
+        request.signal.removeEventListener("abort", abort);
+        this.active.delete(request.sessionKey);
+      });
     this.active.set(request.sessionKey, task);
     return task;
   }
 
+  /** 凭据变化形成新的进程环境槽位；旧配置仍可用于已绑定会话。 */
+  private providerKey(provider: CodexModelProviderConfig): string {
+    return `provider_${createHash("sha256").update(stableStringify(provider)).digest("hex")}`;
+  }
+
+  private providerSettings(provider: CodexModelProviderConfig, timeoutMs: number) {
+    const key = this.providerKey(provider);
+    return {
+      name: provider.id,
+      base_url: provider.baseUrl,
+      wire_api: "responses",
+      request_max_retries: 0,
+      stream_max_retries: 0,
+      stream_idle_timeout_ms: timeoutMs,
+      ...(provider.apiKey ? { env_key: `AI_DATA_${key}_KEY` } : {}),
+      env_http_headers: Object.fromEntries(
+        Object.keys(provider.headers ?? {})
+          .sort((a, b) => a.localeCompare(b))
+          .map((name, index) => [name, `AI_DATA_${key}_HEADER_${index}`]),
+      ),
+    };
+  }
+
   private async execute(request: HarnessRequest): Promise<HarnessResult> {
+    const provider = request.configuration?.provider ?? this.options.provider;
+    if (!provider) throw new ApplicationError("INVALID_INPUT", "当前运行未绑定模型配置");
     let session: CodexSessionRouter | undefined;
     let client: CodexAppServer | undefined;
     let stopped = false;
@@ -193,7 +276,7 @@ class CodexAnalysisHarness implements AnalysisHarness {
     const onAbort = () => cancel();
     const timer = setTimeout(
       () => cancel(new ApplicationError("QUERY_TIMEOUT", "分析运行超时")),
-      this.options.timeoutMs,
+      request.configuration?.timeoutMs ?? this.options.timeoutMs ?? 180000,
     );
     request.signal.addEventListener("abort", onAbort, { once: true });
     const assertActive = () => {
@@ -208,16 +291,46 @@ class CodexAnalysisHarness implements AnalysisHarness {
       if (request.threadId && this.sessions.has(request.threadId))
         throw new ApplicationError("CONFLICT", "官方线程仍有未结束轮次");
       const scope = createHash("sha256").update(request.sessionKey).digest("hex");
-      const cwd = resolve(this.options.stateDirectory, "work", scope);
+      const configured = request.configuration;
+      const cwd = configured?.cwd ?? resolve(this.options.stateDirectory, "work", scope);
       await mkdir(cwd, { recursive: true });
       assertActive();
+      const configuration: Record<string, unknown> = {};
+      let skills = this.skillInputs;
+      if (configured) {
+        const providerKey = this.providerKey(provider);
+        configuration[`model_providers.${providerKey}`] = this.providerSettings(
+          provider,
+          configured.timeoutMs,
+        );
+        skills = configured.skills.names.map((name) => ({
+          type: "skill",
+          name,
+          path: join(cwd, ".agents", "skills", name, "SKILL.md"),
+        }));
+        const allowed = new Set(skills.map((skill) => resolve(skill.path)));
+        const listed = record(
+          await client.request("skills/list", { cwds: [cwd], forceReload: true }),
+        );
+        const discovered = z
+          .array(z.object({ skills: z.array(z.object({ path: z.string() })) }))
+          .parse(listed.data)
+          .flatMap((entry) => entry.skills);
+        configuration["skills.config"] = discovered.map((skill) => ({
+          path: skill.path,
+          enabled: allowed.has(resolve(skill.path)),
+        }));
+      }
+      const contextWindow = configured ? configured.contextWindow : this.options.contextWindow;
+      if (contextWindow) configuration.model_context_window = contextWindow;
       const settings = {
-        model: this.options.provider.model,
-        modelProvider: "analysis_provider",
+        model: provider.model,
+        modelProvider: configured ? this.providerKey(provider) : "analysis_provider",
         cwd,
         approvalPolicy: "never",
         sandbox: "read-only",
         baseInstructions: request.instructions,
+        config: configuration,
       };
       const result = await client.request(
         request.threadId ? "thread/resume" : "thread/start",
@@ -242,7 +355,7 @@ class CodexAnalysisHarness implements AnalysisHarness {
       assertActive();
       const started = await client.request("turn/start", {
         threadId,
-        input: [{ type: "text", text: request.input }, ...this.skillInputs],
+        input: [{ type: "text", text: request.input }, ...(request.threadId ? [] : skills)],
       });
       session.bindTurn(record(record(started).turn).id);
     })();

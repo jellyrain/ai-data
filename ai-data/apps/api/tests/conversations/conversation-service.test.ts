@@ -81,6 +81,30 @@ class MemoryConversationRepository implements ConversationRepository {
 }
 
 describe("会话服务", () => {
+  it("创建会话时固定选择的 Agent 版本，配置后续变化不会改写会话", async () => {
+    const repository = new MemoryConversationRepository();
+    const context = {
+      userId: "user",
+      organizationId: "org",
+      sessionId: "session",
+      roles: [],
+      permissions: [],
+      dataPolicies: [],
+    };
+    const service = new ConversationService(repository, {
+      authorizeRun: async () => {},
+      selectAgent: async (_context, id, version) => ({
+        agentId: id ?? "default",
+        agentVersion: version ?? 1,
+      }),
+    });
+    const conversation = await service.create(context, "测试", {
+      agent_id: "outpatient",
+      agent_version: 2,
+    });
+    expect(conversation).toMatchObject({ agentId: "outpatient", agentVersion: 2 });
+    expect((await service.get(context, conversation.id))?.conversation.agentVersion).toBe(2);
+  });
   it("创建会话并提交用户消息", async () => {
     const repository = new MemoryConversationRepository();
     const service = new ConversationService(repository);

@@ -20,6 +20,8 @@ const submitMessageSchema = z
 const clarificationSchema = z
   .object({
     clarification_id: id,
+    /** API 绑定的个人偏好确认；模型普通澄清参数不开放该字段。 */
+    preference_confirmation_id: id.optional(),
     question: z.string().min(1).max(8000),
     options: z.array(z.object({ id, label: z.string().min(1).max(2000) }).strict()).max(100),
     allow_custom_input: z.boolean(),
@@ -55,6 +57,9 @@ const analysisRunSchema = z
     conversation_id: id,
     organization_id: id,
     user_id: id,
+    /** 实际运行绑定的 Agent 版本；迁移前尚未装配的历史记录省略这两个字段。 */
+    agent_id: id.optional(),
+    agent_version: z.number().int().positive().optional(),
     status: analysisRunStatusSchema,
     created_at: dateTimeSchema,
     updated_at: dateTimeSchema,
@@ -68,7 +73,11 @@ const analysisRunSchema = z
       .strict()
       .nullable(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (value) => (value.agent_id === undefined) === (value.agent_version === undefined),
+    "Agent 标识与版本必须同时提供",
+  );
 
 export {
   analysisRunStatusSchema,

@@ -103,6 +103,7 @@ const sseEventSchema = z
       ),
       /** 是否允许用户输入自定义内容。 */
       allow_custom_input: z.boolean(),
+      preference_confirmation_id: z.string().min(1).max(128).optional(),
     }),
 
     /** 最终自然语言结论。 */

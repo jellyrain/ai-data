@@ -1,16 +1,11 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { z } from "zod";
-import { submitMessageSchema } from "@ai-data/contracts";
+import { createConversationSchema, submitMessageSchema } from "@ai-data/contracts";
 
 import { ApplicationError } from "../errors/application-error";
 import type { ApiAuthService, ApiConversationService } from "../app-types";
 import type { AuthContext } from "../auth/auth-types";
 import { bearerToken } from "./auth-routes";
 
-/** 创建会话输入，拒绝未知字段；标题省略时由服务保存为 null，长度限制对应持久化列。 */
-const createConversationSchema = z
-  .object({ title: z.string().min(1).max(512).optional() })
-  .strict();
 /** 从 Access JWT 加载当前可信身份上下文。 */
 async function currentContext(
   request: FastifyRequest,
@@ -26,12 +21,16 @@ function registerConversationRoutes(
   conversationService: ApiConversationService,
 ): void {
   app.post("/conversations", async (request, reply) => {
+    const input = createConversationSchema.parse(request.body);
     return reply
       .code(201)
       .send(
         await conversationService.create(
           await currentContext(request, authService),
-          createConversationSchema.parse(request.body).title,
+          input.title,
+          ...(input.agent_id
+            ? [{ agent_id: input.agent_id, agent_version: input.agent_version }]
+            : []),
         ),
       );
   });

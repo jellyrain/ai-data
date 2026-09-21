@@ -63,6 +63,56 @@ function createApiDependencies() {
       get: vi.fn(async () => null),
       submitUserMessage: vi.fn(async () => null),
     },
+    memory: {
+      preferences: {
+        list: vi.fn(async () => []),
+        get: vi.fn(unexpectedCall),
+        save: vi.fn(unexpectedCall),
+        delete: vi.fn(unexpectedCall),
+        setAutoApply: vi.fn(unexpectedCall),
+        listPendingConfirmations: vi.fn(async () => []),
+      },
+      knowledge: {
+        submit: vi.fn(unexpectedCall),
+        submitMetric: vi.fn(unexpectedCall),
+        getCandidate: vi.fn(unexpectedCall),
+        listCandidates: vi.fn(async () => []),
+        listSources: vi.fn(async () => []),
+        support: vi.fn(unexpectedCall),
+        update: vi.fn(unexpectedCall),
+        withdraw: vi.fn(unexpectedCall),
+        assignOwner: vi.fn(unexpectedCall),
+        review: vi.fn(unexpectedCall),
+        publish: vi.fn(unexpectedCall),
+        listReviews: vi.fn(async () => []),
+        listPublished: vi.fn(async () => []),
+        getPublished: vi.fn(unexpectedCall),
+        listVersions: vi.fn(async () => []),
+        setEnabled: vi.fn(unexpectedCall),
+        rollback: vi.fn(unexpectedCall),
+      },
+      events: { list: vi.fn(async () => []), retry: vi.fn(unexpectedCall) },
+    },
+    agentConfiguration: {
+      agents: {
+        publish: vi.fn(unexpectedCall),
+        get: vi.fn(unexpectedCall),
+        list: vi.fn(async () => []),
+        setEnabled: vi.fn(unexpectedCall),
+      },
+      models: {
+        publish: vi.fn(unexpectedCall),
+        get: vi.fn(unexpectedCall),
+        list: vi.fn(async () => []),
+        setEnabled: vi.fn(unexpectedCall),
+      },
+      skills: {
+        list: vi.fn(() => []),
+        read: vi.fn(() => {
+          throw new Error("测试未配置此调用");
+        }),
+      },
+    },
     analysis: {
       runs: {
         get: vi.fn<ApiAnalysisServices["runs"]["get"]>(unexpectedCall),
@@ -74,12 +124,42 @@ function createApiDependencies() {
         execute: vi.fn(unexpectedCall),
       },
       metrics: {
-        publish: vi.fn(unexpectedCall),
         list: vi.fn(unexpectedCall),
         get: vi.fn(unexpectedCall),
         execute: vi.fn(unexpectedCall),
       },
       reports: { save: vi.fn(unexpectedCall), get: vi.fn(unexpectedCall) },
+    },
+    reporting: {
+      definitions: {
+        get: vi.fn(unexpectedCall),
+        save: vi.fn(unexpectedCall),
+        share: vi.fn(unexpectedCall),
+        versions: vi.fn(unexpectedCall),
+        list: vi.fn(unexpectedCall),
+        getBlock: vi.fn(unexpectedCall),
+        saveBlock: vi.fn(unexpectedCall),
+        listBlocks: vi.fn(unexpectedCall),
+        listTemplates: vi.fn(unexpectedCall),
+      },
+      management: {
+        list: vi.fn(unexpectedCall),
+        versions: vi.fn(unexpectedCall),
+        share: vi.fn(unexpectedCall),
+        exportReport: vi.fn(unexpectedCall),
+        exportConversation: vi.fn(unexpectedCall),
+        artifacts: vi.fn(unexpectedCall),
+      },
+      executions: {
+        execute: vi.fn(unexpectedCall),
+        get: vi.fn(unexpectedCall),
+        exportContent: vi.fn(unexpectedCall),
+      },
+      revisions: {
+        revise: vi.fn(unexpectedCall),
+        narrate: vi.fn(unexpectedCall),
+        narratives: vi.fn(unexpectedCall),
+      },
     },
     dataAccess: {
       registry: {
@@ -92,6 +172,7 @@ function createApiDependencies() {
       managementClient: { execute: vi.fn(unexpectedCall) },
     },
     catalog: {
+      relations: { graph: vi.fn(unexpectedCall), publish: vi.fn(unexpectedCall) },
       admin: {
         saveObjectPermission: vi.fn(unexpectedCall),
         saveColumnPermission: vi.fn(unexpectedCall),
@@ -106,6 +187,7 @@ function createApiDependencies() {
         getAuthorized: vi.fn(async () => null),
         getAuthorizedConfig: vi.fn(async () => null),
         saveConfig: vi.fn(async () => {}),
+        getConfigVersion: vi.fn(async () => 0),
       },
       permissions: {
         saveObjectPermission: vi.fn(async () => {}),

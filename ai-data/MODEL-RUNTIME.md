@@ -6,65 +6,52 @@ Node API 通过项目依赖中的官方 Codex app-server 运行 Codex Harness。
 
 当前 API 声明 `@openai/codex-sdk@0.154.0`。代码先解析 SDK 的 ESM 入口，再从其依赖位置定位 `@openai/codex@0.154.0` 及对应平台的原生程序，启动 `app-server`。普通函数接入使用 app-server 的 `dynamicTools`。依赖安装与调整由用户操作。
 
-部署保留 API 的 `dist`、`migrations`、本地 `config`、生产 `node_modules` 中的 Codex 运行时及目标平台可选依赖，以及 `packages/skills/query-analysis/` 和 `packages/skills/query-dsl/` 的完整目录结构（含 `SKILL.md` 与子文档）。原生程序不包含在 JavaScript bundle 中。部署按锁文件安装依赖，并为部署操作系统保留对应平台包。
+构建生成 `release/<platform>-<arch>/api`，包含 `dist`、`migrations`、配置示例、生产 `node_modules` 中的 Codex 运行时及目标平台可选依赖，以及 `skills/` 的完整目录结构（含 `SKILL.md` 与子文档）。部署时整体复制到对应平台的实例目录，操作见[部署说明](DEPLOYMENT.md)。
 
-API 构建目标为 Node.js 24，工作区要求 `>=24.19.0 <25`；正式入口为 `node dist/index.js`。启动自动执行元数据库迁移；新增 `007_codex_threads` 保存业务会话对应的官方线程标识及上下文摘要。
+API 构建目标为 Node.js 24，工作区要求 `>=24.19.0 <25`；正式入口为 `node dist/index.js`。启动自动执行元数据库迁移：`000_schema_migrations.sql` 建立版本登记表，`001_initial_api_schema.sql` 建立完整业务结构，包含官方线程映射、Agent 与模型版本及会话/运行关联。使用旧迁移基线的开发库需另行重建后切换。管理接口见 [Agent 配置接口](AGENT-CONFIGURATION.md)。
 
 ## 本地配置
 
-API 默认读取 `apps/api/config/api.config.json`，也可通过 `API_CONFIG_PATH` 指定。模型标识与地址由部署方填写：
+API 默认读取应用目录的 `config/api.config.json`，开发配置位于 `apps/api/config/api.config.json`，也可通过 `API_CONFIG_PATH` 指定。`analysis_runtime` 管理进程和任务调度：
 
 ```json
 {
   "analysis_runtime": {
     "enabled": true,
-    "active_provider": "local-model",
-    "providers": [
-      {
-        "id": "local-model",
-        "protocol": "responses",
-        "base_url": "http://127.0.0.1:8000/v1",
-        "model": "example-model",
-        "api_key": "replace-with-provider-key",
-        "headers": {}
-      }
-    ],
     "state_directory": "secrets/codex-runtime",
-    "context_window": 32768,
-    "timeout_ms": 180000,
-    "max_context_bytes": 65536,
-    "max_tool_calls": 30,
+    "skills_directory": "skills",
     "concurrency": 2,
     "poll_ms": 1000
   }
 }
 ```
 
-`providers` 支持 1–20 个唯一标识的提供方，`active_provider` 选择当前条目。服务须支持 Responses 流式响应、普通函数工具及工具结果续接；仅支持 Chat Completions 的服务需先验证兼容性。配置在 API 启动时读取，切换后重启生效。认证密钥与自定义请求头通过子进程专用环境变量传递。
+上述 `skills_directory: "skills"` 对应发布实例；开发配置可省略该项，使用项目的 `packages/skills`。API 可在空模型库中启动并登录。管理员通过 `POST /models` 发布模型，再通过 `POST /agents` 发布绑定该模型版本的 Agent；默认对话入口使用 `agent_id: "default"`。首次配置步骤见[部署说明](DEPLOYMENT.md#首次发布模型与-agent)。
 
-省略 `analysis_runtime` 或设置 `enabled: false` 时只启用结构化业务接口。
+模型版本在数据库保存 Responses 地址、模型名称、上下文容量和加密认证，Agent 版本保存指令、工具、Skill 与执行预算。运行按会话绑定的版本读取。服务须支持 Responses 流式响应、普通函数工具及工具结果续接；认证密钥与自定义请求头通过子进程专用环境变量传递。
 
-| 配置                | 默认值                  | 作用                                                   |
-| ------------------- | ----------------------- | ------------------------------------------------------ |
-| `state_directory`   | `secrets/codex-runtime` | 相对项目启动工作目录解析，保存官方历史、日志和临时文件 |
-| `context_window`    | 官方模型配置            | 4096–2097152 token，填写所选服务实际支持的上下文容量   |
-| `timeout_ms`        | 180000                  | 1000–600000 ms，一次 Harness 执行总时限                |
-| `max_context_bytes` | 65536                   | 4096–1048576 字节，本次提交的业务消息与证据输入上限    |
-| `max_tool_calls`    | 30                      | 1–100，单次执行器调用的工具次数上限                    |
-| `concurrency`       | 2                       | 1–20，当前 API 实例的并发运行数                        |
-| `poll_ms`           | 1000                    | 100–30000 ms，SQL 待执行任务扫描间隔                   |
+省略 `analysis_runtime` 或设置 `enabled: false` 时保留配置管理及结构化业务接口，自动分析调度关闭。
 
-提供方请求和流重试设为 0。超时、工具次数或输入容量超限时保存失败状态；最终助手文本上限为 64000 字符。`max_context_bytes` 不包含官方恢复的完整线程历史，该历史由 Harness 管理。旧配置的 `max_steps`、`max_output_tokens` 已移除，当前适配器没有逐次生成的输出 token 配额开关。
+| 配置               | 默认值                         | 作用                                                   |
+| ------------------ | ------------------------------ | ------------------------------------------------------ |
+| `state_directory`  | `secrets/codex-runtime`        | 相对项目启动工作目录解析，保存官方历史、日志和临时文件 |
+| `skills_directory` | 随项目提供的 `packages/skills` | 公共源库，相对路径以 API 启动目录解析                  |
+| `concurrency`      | 2                              | 1–20，当前 API 实例的并发运行数                        |
+| `poll_ms`          | 1000                           | 100–30000 ms，SQL 待执行任务扫描间隔                   |
+
+Agent 的 `limits.timeout_ms`、`limits.max_tool_calls`、`limits.max_context_bytes` 分别管理单轮时限、工具次数和本次输入容量，范围见[Agent 配置接口](AGENT-CONFIGURATION.md)。模型的 `context_window` 可由 Agent 的同名限制覆盖。提供方请求和流重试设为 0。预算超限时保存失败状态；最终助手文本上限为 64000 字符。输入容量不包含官方恢复的完整线程历史，该历史由 Harness 管理。
+
+升级旧配置时移除 `analysis_runtime` 内的 `active_provider`、`providers`、`context_window`、`timeout_ms`、`max_context_bytes`、`max_tool_calls`；当前严格配置校验会拒绝这些字段。已有数据库模型、Agent 及其主密钥继续保留，配置更新通过管理接口发布新版本。
 
 ## 函数调用与会话恢复
 
-API 使用 stdio 与项目原生进程通信。`initialize` 开启实验性协议，`thread/start.dynamicTools` 注册普通函数，`item/tool/call` 调回 Node 业务函数，再将结果交给 Harness 继续分析。两份 Skill 以 `turn/start` 的 Skill 输入加载。`dynamicTools` 为当前版本的实验性接口，升级后需重跑协议与实际模型验收。
+API 使用 stdio 与项目原生进程通信。`initialize` 开启实验性协议，`thread/start.dynamicTools` 注册 Agent 选定的普通函数，`item/tool/call` 调回 Node 业务函数，再将结果交给 Harness 继续分析。首轮 `turn/start` 以 Skill 输入加载选定入口；恢复线程沿用已加载历史。`dynamicTools` 为当前版本的实验性接口，升级后需重跑协议与实际模型验收。
 
-API 启动时固定已加载 Skill 的完整目录快照，复制到 `state_directory/home/skills`。模型先读取 `SKILL.md` 入口，再按索引调用 `read_skill_reference` 获取需要的 Markdown 子文档。该函数只查询本次加载的资源快照，参数为 `skill_name` 和相对 Skill 目录的 `relative_path`。整份快照（包括子文档）参与线程版本判断；文件修改在重启 API 后生效。
+发布 Agent 时固定 Skill 的完整目录快照，复制到 `state_directory/agents/<组织和 Agent 的摘要>/versions/<版本>/.agents/skills`。模型先读取 `SKILL.md` 入口，再调用 `read_skill_reference` 获取绑定快照内的 Markdown 子文档。参数为 `skill_name` 和相对路径 `relative_path`。源文件变化通过发布新的 Agent 版本生效；已有会话保持绑定内容。创建和恢复线程时按路径禁用其他发现资源，包括旧共享目录和系统 Skill。
 
-API 启动时初始化一个常驻 app-server，然后启动 SQL 任务派发。不同会话分别使用官方线程，API 按线程、轮次和业务租约路由调用与事件。官方 `CODEX_HOME` 统一为 `state_directory/home`；各业务会话的工作目录为 `state_directory/work/<会话授权摘要>`。跨线程记忆的生成和使用关闭，业务权限由 API 校验。
+API 启动时初始化一个常驻 app-server，然后启动 SQL 任务派发。不同会话分别使用官方线程，API 按线程、轮次和业务租约路由调用与事件。官方 `CODEX_HOME` 为 `state_directory/home`；工作目录为绑定 Agent 的版本目录，同版本会话共用资源。跨线程记忆的生成和使用关闭，业务权限由 API 校验。新提供方首次运行前等待在途轮次结束，重建进程装入该版本环境认证，随后恢复正常并发。
 
-相对路径以 `process.cwd()` 为基准。例如在 `apps/api` 下启动，默认根目录为 `apps/api/secrets/codex-runtime`；在工作区根目录执行 API 构建入口，则为工作区的 `secrets/codex-runtime`。`home` 保存历史、Skill 和状态，`logs` 保存官方日志，`tmp` 用于子进程的 `TEMP`、`TMP`、`TMPDIR`。重启部署应保持启动目录与配置一致。该目录包含对话和证据样本，应持久化并仅供 API 服务账号访问。
+相对路径以 `process.cwd()` 为基准。例如在 `apps/api` 下启动，默认根目录为 `apps/api/secrets/codex-runtime`；在工作区根目录执行 API 构建入口，则为工作区的 `secrets/codex-runtime`。`home` 保存官方历史和状态，`agents` 保存版本资源，`model-keys` 保存 AES 主密钥及活动版本引用，`logs` 保存官方日志，`tmp` 用于子进程临时文件。模型 `api_key` 和请求头值以 AES-256-GCM 密文保存在 SQL，运行时使用共享加密模块及对应主密钥解密。重启部署保持启动目录与配置一致，整个状态目录与 SQL 配套持久化，仅供 API 服务账号访问。
 
 SQL 映射和官方历史共同支持重启恢复。多实例恢复要求目标实例能够访问相应状态；当前方案按单 API 实例管理一个进程。
 

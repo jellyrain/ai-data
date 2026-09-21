@@ -215,18 +215,61 @@ describe("真实 SQL Server：迁移、结果截断与分层聚合", () => {
         parameters: [],
       });
       expect(versions.rows.map((row) => row.migration_id)).toEqual(
-        kind === "api"
-          ? [
-              "001_initial_auth_schema",
-              "002_department_scopes",
-              "003_analysis_runtime",
-              "004_metrics_and_reports",
-              "005_catalog_policy_versions",
-              "006_analysis_dispatch",
-            ]
-          : ["001_initial_das_metadata_schema"],
+        kind === "api" ? ["001_initial_api_schema"] : ["001_initial_das_metadata_schema"],
       );
-      if (kind === "das") {
+      if (kind === "api") {
+        const columns = await database.execute({
+          sql: `SELECT t.name AS table_name, c.name AS column_name, c.is_nullable
+            FROM sys.tables t JOIN sys.columns c ON c.object_id = t.object_id
+            WHERE (t.name IN ('conversations', 'analysis_runs') AND c.name IN ('agent_id', 'agent_version'))
+              OR (t.name = 'conversation_messages' AND c.name = 'analysis_run_id')
+              OR (t.name = 'model_configuration_versions' AND c.name IN ('key_id', 'encrypted_payload', 'encryption_metadata_json'))
+            ORDER BY t.name, c.name;`,
+          parameters: [],
+        });
+        expect(columns.rows).toEqual([
+          { table_name: "analysis_runs", column_name: "agent_id", is_nullable: true },
+          { table_name: "analysis_runs", column_name: "agent_version", is_nullable: true },
+          {
+            table_name: "conversation_messages",
+            column_name: "analysis_run_id",
+            is_nullable: true,
+          },
+          { table_name: "conversations", column_name: "agent_id", is_nullable: true },
+          { table_name: "conversations", column_name: "agent_version", is_nullable: true },
+          {
+            table_name: "model_configuration_versions",
+            column_name: "encrypted_payload",
+            is_nullable: false,
+          },
+          {
+            table_name: "model_configuration_versions",
+            column_name: "encryption_metadata_json",
+            is_nullable: false,
+          },
+          { table_name: "model_configuration_versions", column_name: "key_id", is_nullable: false },
+        ]);
+        const constraints = await database.execute({
+          sql: `SELECT name FROM sys.check_constraints
+            WHERE name IN ('CK_conversations_agent_binding', 'CK_analysis_runs_agent_binding')
+            ORDER BY name;`,
+          parameters: [],
+        });
+        expect(constraints.rows).toEqual([
+          { name: "CK_analysis_runs_agent_binding" },
+          { name: "CK_conversations_agent_binding" },
+        ]);
+        const indexes = await database.execute({
+          sql: `SELECT name FROM sys.indexes
+            WHERE name IN ('IX_analysis_runs_dispatch', 'ix_catalog_policy_role_versions')
+            ORDER BY name;`,
+          parameters: [],
+        });
+        expect(indexes.rows).toEqual([
+          { name: "IX_analysis_runs_dispatch" },
+          { name: "ix_catalog_policy_role_versions" },
+        ]);
+      } else {
         const column = await database.execute({
           sql: "SELECT COL_LENGTH(N'dbo.exposed_source_objects', N'procedure_definition_json') AS length;",
           parameters: [],
@@ -260,47 +303,51 @@ describe("真实 SQL Server：迁移、结果截断与分层聚合", () => {
     },
   );
 
-  it("迁移提交前失败时回滚业务表和版本标记，停止后续文件，并支持重新迁移", async () => {
-    const target = mkdtempSync(join(tmpdir(), "ai-data-sqlserver-integration-"));
-    temporaryDirectories.push(target);
-    const migrations = loadSqlServerMigrations(migrationDirectories.das);
-    for (const migration of migrations) {
-      let sql = migration.sql;
-      if (migration.fileName === "001_initial_das_metadata_schema.sql") {
-        // 在实际迁移写入版本标记之后、提交之前注入错误，验证表和标记的同一事务边界。
-        expect(sql.match(/COMMIT TRANSACTION;/g)).toHaveLength(1);
-        sql = sql.replace(
-          "COMMIT TRANSACTION;",
-          "THROW 51001, 'Intentional migration failure.', 1;\nCOMMIT TRANSACTION;",
-        );
+  it.each(["api", "das"] as const)(
+    "%s 迁移提交前失败时回滚业务表和版本标记，停止后续文件，并支持重新迁移",
+    async (kind) => {
+      const target = mkdtempSync(join(tmpdir(), "ai-data-sqlserver-integration-"));
+      temporaryDirectories.push(target);
+      const rollbackDatabase = kind === "api" ? await createDatabase("apirollback") : rollback;
+      const migrationId =
+        kind === "api" ? "001_initial_api_schema" : "001_initial_das_metadata_schema";
+      const migrations = loadSqlServerMigrations(migrationDirectories[kind]);
+      for (const migration of migrations) {
+        let sql = migration.sql;
+        if (migration.fileName === migrationId + ".sql") {
+          // 在实际迁移写入版本标记之后、提交之前注入错误，验证表和标记的同一事务边界。
+          expect(sql.match(/COMMIT TRANSACTION;/g)).toHaveLength(1);
+          sql = sql.replace(
+            "COMMIT TRANSACTION;",
+            "THROW 51001, 'Intentional migration failure.', 1;\nCOMMIT TRANSACTION;",
+          );
+        }
+        writeFileSync(join(target, migration.fileName), sql, "utf8");
       }
-      writeFileSync(join(target, migration.fileName), sql, "utf8");
-    }
-    writeFileSync(
-      join(target, "999_after_failure.sql"),
-      "CREATE TABLE dbo.after_failure (id INT);",
-      "utf8",
-    );
-    await expect(rollback.initializeSchema(target)).rejects.toThrow(
-      "Intentional migration failure",
-    );
-    const state = await rollback.execute({
-      sql: "SELECT OBJECT_ID(N'dbo.data_source_secrets', N'U') AS business_table, OBJECT_ID(N'dbo.after_failure', N'U') AS later_table, (SELECT COUNT(*) FROM dbo.schema_migrations) AS versions, @@TRANCOUNT AS transactions;",
-      parameters: [],
-    });
-    expect(state.rows).toEqual([
-      { business_table: null, later_table: null, versions: 0, transactions: 0 },
-    ]);
-    await rollback.initializeSchema(migrationDirectories.das);
-    await expect(
-      rollback.execute({
-        sql: "SELECT migration_id FROM dbo.schema_migrations ORDER BY migration_id",
+      writeFileSync(
+        join(target, "999_after_failure.sql"),
+        "CREATE TABLE dbo.after_failure (id INT);",
+        "utf8",
+      );
+      await expect(rollbackDatabase.initializeSchema(target)).rejects.toThrow(
+        "Intentional migration failure",
+      );
+      const state = await rollbackDatabase.execute({
+        sql: "SELECT (SELECT COUNT(*) FROM sys.tables WHERE name <> N'schema_migrations') AS business_tables, (SELECT COUNT(*) FROM dbo.schema_migrations) AS versions, @@TRANCOUNT AS transactions;",
         parameters: [],
-      }),
-    ).resolves.toMatchObject({
-      rows: [{ migration_id: "001_initial_das_metadata_schema" }],
-    });
-  });
+      });
+      expect(state.rows).toEqual([{ business_tables: 0, versions: 0, transactions: 0 }]);
+      await rollbackDatabase.initializeSchema(migrationDirectories[kind]);
+      await expect(
+        rollbackDatabase.execute({
+          sql: "SELECT migration_id FROM dbo.schema_migrations ORDER BY migration_id",
+          parameters: [],
+        }),
+      ).resolves.toMatchObject({
+        rows: [{ migration_id: migrationId }],
+      });
+    },
+  );
 
   it.each([0, 1, 2, 3])("关系查询实际有 %i 行时，真实 TOP 查询正确报告截断", async (count) => {
     const query: ExecutableRelationalQuery = {

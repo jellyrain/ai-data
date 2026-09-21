@@ -9,7 +9,15 @@ import type {
 /** API 数据集业务配置的持久化读写边界。 */
 interface ApiDatasetConfigRepository {
   /** 保存一项完整业务配置，按数据源和对象覆盖旧版本。 */
-  save(config: ApiDatasetConfig): Promise<void>;
+  save(config: ApiDatasetConfig, expectedVersion?: number): Promise<void>;
+  /** SQL 实现把配置语义复核和更新放在同一数据源锁内。 */
+  saveValidated?(
+    config: ApiDatasetConfig,
+    expectedVersion: number | undefined,
+    validate: (repository: ApiDatasetConfigRepository) => Promise<void>,
+  ): Promise<void>;
+  /** 未配置返回 0；生产 SQL 实现提供并发编辑版本。 */
+  getVersion?(sourceId: string, objectId: string): Promise<number>;
   /** 读取一项业务配置；尚未配置时返回空。 */
   find(sourceId: string, objectId: string): Promise<ApiDatasetConfig | null>;
   /** 读取一个数据源的全部业务配置。 */

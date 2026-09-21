@@ -21,6 +21,17 @@ type HarnessRequest = {
   tools: HarnessTool[];
   signal: AbortSignal;
   executeTool: (name: string, input: unknown, callId: string) => Promise<HarnessToolResult>;
+  /** 当前会话固定的 Agent 运行配置；旧接入省略时使用实例默认配置。 */
+  configuration?: HarnessConfiguration;
+};
+
+/** 每个 Agent 版本固定模型、资源目录与执行限制，官方线程间分别装配。 */
+type HarnessConfiguration = {
+  provider: CodexModelProviderConfig;
+  cwd: string;
+  skills: SkillResources;
+  timeoutMs: number;
+  contextWindow?: number;
 };
 
 /** 官方上下文压缩条目的实际生命周期。 */
@@ -34,7 +45,7 @@ interface AnalysisHarness {
   run(request: HarnessRequest): Promise<HarnessResult>;
 }
 
-/** 支持 Responses 的模型提供方；地址、模型和认证由部署配置提供。 */
+/** 支持 Responses 的模型提供方；业务运行从模型配置版本读取地址、模型及解密认证。 */
 type CodexModelProviderConfig = {
   id: string;
   baseUrl: string;
@@ -45,10 +56,12 @@ type CodexModelProviderConfig = {
 
 /** 官方运行时状态目录及单轮时限，工具次数由 API 执行器限制。 */
 type CodexHarnessOptions = {
-  provider: CodexModelProviderConfig;
+  /** 独立 Harness 调用可设置默认模型；业务服务在每次运行传入 Agent 配置。 */
+  provider?: CodexModelProviderConfig;
   stateDirectory: string;
   skills?: SkillResources;
-  timeoutMs: number;
+  /** 独立调用省略时使用 180 秒；Agent 运行使用自身的固定预算。 */
+  timeoutMs?: number;
   contextWindow?: number;
 };
 
@@ -61,4 +74,5 @@ export type {
   AnalysisHarness,
   CodexModelProviderConfig,
   CodexHarnessOptions,
+  HarnessConfiguration,
 };

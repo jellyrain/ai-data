@@ -1,0 +1,4 @@
+{
+  "api": ["@openai/codex-sdk"],
+  "das": ["oracledb"]
+}

@@ -1,4 +1,6 @@
 import dayjs from "dayjs";
+import type { CreateConversation } from "@ai-data/contracts";
+import { ApplicationError } from "../errors/application-error";
 import type { AnalysisDispatcher } from "../runtime/runtime-types";
 import type { AuthContext } from "../auth/auth-types";
 import type {
@@ -15,11 +17,27 @@ class ConversationService {
     private readonly runtime?: {
       dispatcher?: Pick<AnalysisDispatcher, "wake">;
       authorizeRun: (context: AuthContext, runId: string) => Promise<unknown>;
+      selectAgent?: (
+        context: AuthContext,
+        agentId?: string,
+        version?: number,
+      ) => Promise<{ agentId: string; agentVersion: number } | undefined>;
     },
   ) {}
 
   /** 创建当前用户所属组织的新会话。 */
-  async create(context: AuthContext, title?: string): Promise<Conversation> {
+  async create(
+    context: AuthContext,
+    title?: string,
+    selection?: Pick<CreateConversation, "agent_id" | "agent_version">,
+  ): Promise<Conversation> {
+    if (selection?.agent_id && !this.runtime?.selectAgent)
+      throw new ApplicationError("INVALID_INPUT", "当前服务未配置 Agent");
+    const agent = await this.runtime?.selectAgent?.(
+      context,
+      selection?.agent_id,
+      selection?.agent_version,
+    );
     const now = dayjs().toDate();
     const conversation: Conversation = {
       id: crypto.randomUUID(),
@@ -29,6 +47,7 @@ class ConversationService {
       status: "active",
       createdAt: now,
       updatedAt: now,
+      ...agent,
     };
     await this.repository.createConversation(conversation);
     return conversation;
