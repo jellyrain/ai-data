@@ -9,7 +9,7 @@
     "base_url": "http://127.0.0.1:3101",
     "heartbeat_path": "/internal/data-access/heartbeat",
     "registration_path": "/internal/data-access/register",
-    "registration_credential_path": "../secrets/api-registration.jwt",
+    "registration_secret": "replace-with-instance-specific-random-secret",
     "jwt_verification_public_key_path": "../secrets/api-public.pem"
   },
   "sqlserver_transports": {},

@@ -164,6 +164,7 @@ type ApiDependencies = {
       | "register"
       | "heartbeat"
       | "issueCredential"
+      | "exchangeCredential"
       | "listHealthyServices"
       | "listRegisteredServices"
     >;

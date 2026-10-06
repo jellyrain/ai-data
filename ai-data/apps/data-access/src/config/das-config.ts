@@ -35,14 +35,29 @@ const dasConfigSchema = z
           .regex(/^\/[A-Za-z0-9/_-]+$/)
           .refine((path) => !path.startsWith("//"))
           .optional(),
-        /** API 签发的实例接入凭证文件，相对路径以配置目录为基准。 */
-        registration_credential_path: z.string().min(1),
+        /** 实例专用随机密钥，供 DAS 自动领取接入 JWT；与凭据文件二选一。 */
+        registration_secret: z
+          .string()
+          .min(32)
+          .max(256)
+          .regex(/^[A-Za-z0-9_-]+$/)
+          .optional(),
+        /** API 签发的实例接入凭证文件，相对路径以配置目录为基准；文件接入时必填。 */
+        registration_credential_path: z.string().min(1).optional(),
         /** API 验签公钥文件路径；相对路径以启动配置所在目录为基准。 */
         jwt_verification_public_key_path: z
           .string()
           .min(1, "api.jwt_verification_public_key_path 不能为空"),
       })
-      .strict(),
+      .strict()
+      // 两种方式互斥，防止配置变更后静默使用另一份接入身份。
+      .refine(
+        (api) => Boolean(api.registration_secret) !== Boolean(api.registration_credential_path),
+        {
+          message: "api.registration_secret 与 api.registration_credential_path 必须且只能配置一项",
+          path: ["registration_secret"],
+        },
+      ),
     /** 按 source_id 配置业务 SQL Server 链路；省略的源默认加密并验证服务器证书。 */
     sqlserver_transports: z
       .record(
@@ -131,6 +146,7 @@ function loadApiVerificationPublicKey(config: DasConfig, baseDirectory = process
 
 /** 启动及重新注册时读取当前接入凭证，文件内容不进入日志。 */
 function loadRegistrationCredential(config: DasConfig, baseDirectory = process.cwd()): string {
+  if (!config.api.registration_credential_path) throw new Error("DAS 未配置文件接入路径");
   const credential = readFileSync(
     resolve(baseDirectory, config.api.registration_credential_path),
     "utf8",

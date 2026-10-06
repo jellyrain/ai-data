@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "checks": [
+    "DAS 在 API 尚未启动时仍可监听，等待自动重试",
+    "配置密钥后真实 DAS 自动领取 JWT 并注册，实例目录未生成 JWT 文件",
+    "API 签名管理请求通过 DAS 公钥文件验签",
+    "API 进程重启后，原 DAS 进程重新领取并恢复注册",
+    "错误密钥和跨实例领取请求返回 401",
+    "实例停用后不能领取或参与健康调度",
+    "密钥与版本轮换后旧身份失效，新密钥完成接入",
+    "API 公钥文件仍为启动必要项，整个验收期间原公钥内容保持一致",
+    "服务日志未包含本次接入密钥、JWT、会话或数据库认证信息"
+  ],
+  "cleanup": {
+    "stopped_processes": 7,
+    "dropped_isolated_databases": 2,
+    "removed_temporary_directories": 2
+  },
+  "finished_at": "2026-10-06 11:57:04"
+}

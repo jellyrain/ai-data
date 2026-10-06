@@ -3,6 +3,7 @@ import type { DataAccessHeartbeat } from "@ai-data/contracts";
 import { DataAccessSessionService } from "../../src/data-access/data-access-session-service";
 import { InMemoryDataAccessServiceRegistry } from "../../src/data-access/data-access-registry";
 import { createServiceJwt } from "../support/service-auth-fixtures";
+import type { ApiConfig } from "../../src/config/api-config";
 
 const heartbeat: DataAccessHeartbeat = {
   service_id: "das-a",
@@ -17,9 +18,19 @@ const url = "http://127.0.0.1:3102";
 /** 使用真实 JWT 和内存健康仓储检查注册、会话和调度之间的关系。 */
 async function createService() {
   const jwt = await createServiceJwt();
-  const trusted = [
-    { service_id: "das-a", credential_version: 1, enabled: true },
-    { service_id: "das-b", credential_version: 1, enabled: true },
+  const trusted: NonNullable<ApiConfig["trusted_data_access_services"]> = [
+    {
+      service_id: "das-a",
+      credential_version: 1,
+      enabled: true,
+      registration_secret: "a".repeat(43),
+    },
+    {
+      service_id: "das-b",
+      credential_version: 1,
+      enabled: true,
+      registration_secret: "b".repeat(43),
+    },
   ];
   const registry = new InMemoryDataAccessServiceRegistry();
   const write = vi.spyOn(registry, "registerHeartbeat");
@@ -30,6 +41,45 @@ async function createService() {
 }
 
 describe("DAS 注册和心跳会话", () => {
+  it("实例密钥领取当前版本的凭据后可完成注册", async () => {
+    const { service, jwt } = await createService();
+    const credential = await service.exchangeCredential("das-a", "a".repeat(43));
+    expect(await jwt.verifyRegistrationCredential(credential, "das-a")).toBe(1);
+    await service.register(heartbeat, url, credential);
+    expect(await service.listHealthyServices()).toHaveLength(1);
+  });
+  it.each(["wrong-secret", "wrong-service", "unknown", "disabled", "file-only"])(
+    "拒绝 %s 的凭据领取",
+    async (scenario) => {
+      const { service, jwt, trusted } = await createService();
+      if (scenario === "disabled") trusted[0].enabled = false;
+      if (scenario === "file-only") trusted[0].registration_secret = undefined;
+      const sign = vi.spyOn(jwt, "signRegistrationCredential");
+      await expect(
+        service.exchangeCredential(
+          scenario === "unknown" ? "unknown" : scenario === "wrong-service" ? "das-b" : "das-a",
+          scenario === "wrong-secret" ? "x".repeat(43) : "a".repeat(43),
+        ),
+      ).rejects.toMatchObject({ code: "AUTHENTICATION_FAILED" });
+      expect(sign).not.toHaveBeenCalled();
+    },
+  );
+  it("轮换实例密钥与版本后旧密钥、凭据和会话失效，新密钥恢复接入", async () => {
+    const { service, trusted, jwt } = await createService();
+    const old = await service.exchangeCredential("das-a", "a".repeat(43));
+    const session = await service.register(heartbeat, url, old);
+    trusted[0].registration_secret = "c".repeat(43);
+    trusted[0].credential_version = 2;
+    await expect(service.exchangeCredential("das-a", "a".repeat(43))).rejects.toMatchObject({
+      code: "AUTHENTICATION_FAILED",
+    });
+    await expect(service.register(heartbeat, url, old)).rejects.toThrow();
+    await expect(service.heartbeat(heartbeat, url, session.session_token)).rejects.toThrow();
+    const current = await service.exchangeCredential("das-a", "c".repeat(43));
+    expect(await jwt.verifyRegistrationCredential(current, "das-a")).toBe(2);
+    await service.register(heartbeat, url, current);
+    expect(await service.listHealthyServices()).toHaveLength(1);
+  });
   it("失联实例从执行发现移除，但保留在管理记录中", async () => {
     const { service, credential } = await createService();
     await service.register(heartbeat, url, credential);

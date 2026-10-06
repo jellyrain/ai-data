@@ -178,6 +178,7 @@ function createApiDependencies() {
         register: vi.fn(unexpectedCall),
         heartbeat: vi.fn(async () => {}),
         issueCredential: vi.fn(unexpectedCall),
+        exchangeCredential: vi.fn(unexpectedCall),
         listRegisteredServices: async () => [],
         listHealthyServices: vi.fn(async () => []),
       },

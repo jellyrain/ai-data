@@ -20,7 +20,12 @@ async function setup() {
   const dependencies = createApiDependencies();
   const raw = new InMemoryDataAccessServiceRegistry();
   const registry = new DataAccessSessionService(raw, await createServiceJwt(), [
-    { service_id: "das-test", credential_version: 1, enabled: true },
+    {
+      service_id: "das-test",
+      credential_version: 1,
+      enabled: true,
+      registration_secret: "s".repeat(43),
+    },
   ]);
   const execute = vi.fn(async () => ({ source_id: "source" }));
   const app = await createApp({
@@ -42,6 +47,62 @@ async function setup() {
 }
 
 describe("API 的 DAS 入口认证", () => {
+  it("实例凭配置密钥领取 JWT 并接入，使用服务身份完成认证", async () => {
+    const { app, registry, dependencies } = await setup();
+    try {
+      const issued = await app.inject({
+        method: "POST",
+        url: "/internal/data-access/credential",
+        headers: { authorization: `Bearer ${"s".repeat(43)}` },
+        payload: { service_id: "das-test" },
+      });
+      expect(issued.statusCode).toBe(200);
+      expect(issued.headers["cache-control"]).toBe("no-store");
+      expect(issued.json()).toMatchObject({
+        service_id: "das-test",
+        credential: expect.any(String),
+      });
+      expect(dependencies.auth.loadContext).not.toHaveBeenCalled();
+      const registered = await app.inject({
+        method: "POST",
+        url: "/internal/data-access/register",
+        headers: { authorization: `Bearer ${issued.json<{ credential: string }>().credential}` },
+        payload: heartbeat,
+      });
+      expect(registered.statusCode).toBe(200);
+      expect(await registry.listHealthyServices()).toHaveLength(1);
+    } finally {
+      await app.close();
+    }
+  });
+  it.each(["missing", "wrong", "unknown", "extra", "empty"])(
+    "拒绝 %s 的自动领取请求",
+    async (scenario) => {
+      const { app, registry } = await setup();
+      try {
+        const response = await app.inject({
+          method: "POST",
+          url: "/internal/data-access/credential",
+          headers:
+            scenario === "missing"
+              ? {}
+              : {
+                  authorization: `Bearer ${scenario === "wrong" ? "x".repeat(43) : "s".repeat(43)}`,
+                },
+          payload: {
+            service_id: scenario === "unknown" ? "unknown" : scenario === "empty" ? "" : "das-test",
+            ...(scenario === "extra" ? { credential_version: 999 } : {}),
+          },
+        });
+        expect(response.statusCode).toBe(["extra", "empty"].includes(scenario) ? 400 : 401);
+        expect(response.headers["cache-control"]).toBe("no-store");
+        expect(response.body).not.toContain("s".repeat(43));
+        expect(await registry.listHealthyServices()).toEqual([]);
+      } finally {
+        await app.close();
+      }
+    },
+  );
   it.each(["/internal/data-access/services", "/internal/data-access/catalog/clinical"])(
     "管理读取 %s 要求登录身份",
     async (url) => {

@@ -1,6 +1,20 @@
 import { z } from "zod";
 import { dateTimeSchema } from "../shared/data-values";
 
+/** DAS 凭实例密钥领取接入 JWT 的请求；密钥放在 Bearer 请求头，正文仅声明实例。 */
+const dataAccessCredentialRequestSchema = z
+  .object({
+    /** 已在 API 配置中批准的实例标识，上限与管理路由一致。 */
+    service_id: z.string().min(1, "service_id 不能为空").max(128),
+  })
+  .strict();
+
+/** 自动领取的结果仅供进程注册使用；拒绝额外字段，限制异常响应的凭据体积。 */
+const dataAccessCredentialResponseSchema = dataAccessCredentialRequestSchema.extend({
+  /** API 签发、绑定实例与当前凭据版本的注册 JWT。 */
+  credential: z.string().min(1, "credential 不能为空").max(16384),
+});
+
 /** API 完成 DAS 注册后返回的会话，只由服务进程保存。 */
 const dataAccessSessionSchema = z
   .object({
@@ -21,4 +35,9 @@ const dataAccessHeartbeatAckSchema = z
   })
   .strict();
 
-export { dataAccessSessionSchema, dataAccessHeartbeatAckSchema };
+export {
+  dataAccessSessionSchema,
+  dataAccessHeartbeatAckSchema,
+  dataAccessCredentialRequestSchema,
+  dataAccessCredentialResponseSchema,
+};

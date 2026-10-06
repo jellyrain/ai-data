@@ -1,0 +1,62 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "mode": "light",
+      "clicked": {
+        "outline": "none",
+        "outlineWidth": "3px",
+        "focused": true
+      },
+      "tabbed": {
+        "outline": "none",
+        "outlineWidth": "3px",
+        "focused": true
+      },
+      "invalid": {
+        "error": true,
+        "outline": "none",
+        "shadow": "rgb(245, 108, 108) 0px 0px 0px 1px inset"
+      },
+      "multiline": {
+        "outline": "none",
+        "outlineWidth": "3px",
+        "focused": true
+      },
+      "button": {
+        "outline": "solid",
+        "outlineWidth": "3px",
+        "focused": true
+      }
+    },
+    {
+      "mode": "dark",
+      "clicked": {
+        "outline": "none",
+        "outlineWidth": "3px",
+        "focused": true
+      },
+      "tabbed": {
+        "outline": "none",
+        "outlineWidth": "3px",
+        "focused": true
+      },
+      "invalid": {
+        "error": true,
+        "outline": "none",
+        "shadow": "rgb(245, 108, 108) 0px 0px 0px 1px inset"
+      },
+      "multiline": {
+        "outline": "none",
+        "outlineWidth": "3px",
+        "focused": true
+      },
+      "button": {
+        "outline": "solid",
+        "outlineWidth": "3px",
+        "focused": true
+      }
+    }
+  ],
+  "browser_errors": []
+}

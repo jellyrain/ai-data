@@ -21,7 +21,7 @@ a {
 }
 button:focus-visible,
 a:focus-visible,
-[tabindex]:focus-visible {
+[tabindex]:not(input):not(textarea):focus-visible {
   outline: 2px solid var(--app-primary);
   outline-offset: 4px;
 }

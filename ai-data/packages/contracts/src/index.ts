@@ -65,8 +65,14 @@ import { dataAccessHeartbeatSchema, sourceHealthSchema } from "./health/health";
 import {
   dataAccessSessionSchema,
   dataAccessHeartbeatAckSchema,
+  dataAccessCredentialRequestSchema,
+  dataAccessCredentialResponseSchema,
 } from "./health/data-access-session";
-import type { DataAccessSession } from "./health/data-access-session-types";
+import type {
+  DataAccessSession,
+  DataAccessCredentialRequest,
+  DataAccessCredentialResponse,
+} from "./health/data-access-session-types";
 import { contractErrorCodeSchema, contractErrorSchema } from "./errors/errors";
 import {
   describeDatasetInputSchema,
@@ -218,6 +224,8 @@ export {
   stableStringify,
   dataAccessSessionSchema,
   dataAccessHeartbeatAckSchema,
+  dataAccessCredentialRequestSchema,
+  dataAccessCredentialResponseSchema,
   queryParameterSchema,
   queryParameterPolicySchema,
   queryPermissionBindingSchema,
@@ -257,6 +265,8 @@ export type {
   KnowledgeReviewInput,
   KnowledgePublishInput,
   DataAccessSession,
+  DataAccessCredentialRequest,
+  DataAccessCredentialResponse,
   ApiDatasetColumnDescription,
   ApiDatasetConfig,
   ApiDatasetColumnPolicy,

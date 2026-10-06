@@ -218,6 +218,9 @@ it("独立发布包完成首建、注册、查询和官方线程恢复，程序�
       service_id: "release-das",
     };
     dasConfig.api.base_url = apiBase;
+    // 本专项继续覆盖既有文件接入；自动领取由独立的真实进程验收覆盖。
+    delete dasConfig.api.registration_secret;
+    dasConfig.api.registration_credential_path = "../secrets/api-registration.jwt";
     dasConfig.metadata_sqlserver = { ...connection, database: databases[1].name };
     dasConfig.sqlserver_transports = {
       release: {

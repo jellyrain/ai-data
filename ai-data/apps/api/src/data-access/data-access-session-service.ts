@@ -41,6 +41,19 @@ class DataAccessSessionService {
     );
   }
 
+  /** 实例以专用配置密钥领取当前版本 JWT；密钥只赋予该实例的接入能力。 */
+  async exchangeCredential(serviceId: string, secret: string): Promise<string> {
+    const trusted = this.trustedService(serviceId);
+    // 比较固定长度摘要，避免按密钥前缀或长度进行提前返回的字符串比较。
+    if (
+      !trusted.registration_secret ||
+      !/^[A-Za-z0-9_-]{32,256}$/.test(secret) ||
+      !timingSafeEqual(this.digest(trusted.registration_secret), this.digest(secret))
+    )
+      this.reject();
+    return this.issueCredential(serviceId);
+  }
+
   /** 注册是新增实例、切换地址和替换旧会话的唯一入口。 */
   async register(
     heartbeat: DataAccessHeartbeat,

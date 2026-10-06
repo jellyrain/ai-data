@@ -1,5 +1,10 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { dataAccessHeartbeatSchema, dataAccessSessionSchema } from "@ai-data/contracts";
+import {
+  dataAccessHeartbeatSchema,
+  dataAccessSessionSchema,
+  dataAccessCredentialRequestSchema,
+  dataAccessCredentialResponseSchema,
+} from "@ai-data/contracts";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { z } from "zod";
@@ -150,6 +155,17 @@ function registerDataAccessRoutes(
     };
   app.post("/internal/data-access/register", receive(true));
   app.post("/internal/data-access/heartbeat", receive(false));
+
+  // 实例凭配置密钥接入；密钥仅由专用服务校验，沿用全局限流与 Authorization 日志脱敏。
+  app.post("/internal/data-access/credential", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    const secret = bearerToken(request);
+    const input = dataAccessCredentialRequestSchema.parse(request.body);
+    const credential = await registry.exchangeCredential(input.service_id, secret);
+    return reply.send(
+      dataAccessCredentialResponseSchema.parse({ service_id: input.service_id, credential }),
+    );
+  });
 
   app.post<{ Params: { serviceId: string } }>(
     "/admin/data-access/services/:serviceId/credential",

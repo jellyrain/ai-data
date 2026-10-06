@@ -28,6 +28,24 @@ const validEnvironment = {
 };
 
 describe("API 启动配置", () => {
+  it("允许按实例配置自动领取密钥，也接受已有文件接入配置", () => {
+    const service = { service_id: "das-a", credential_version: 1, enabled: true };
+    const input = [
+      service,
+      { ...service, service_id: "das-b", registration_secret: "a".repeat(43) },
+    ];
+    expect(apiConfigSchema.shape.trusted_data_access_services.parse(input)).toEqual(input);
+  });
+  it.each(["", "short", "a".repeat(257), " ".repeat(43), "a".repeat(42) + "\n"])(
+    "拒绝非法实例密钥 %j",
+    (registration_secret) => {
+      expect(
+        apiConfigSchema.shape.trusted_data_access_services.safeParse([
+          { service_id: "das-a", credential_version: 1, enabled: true, registration_secret },
+        ]).success,
+      ).toBe(false);
+    },
+  );
   it("仅用服务运行参数即可启用分析调度，模型与 Agent 由管理接口配置", () => {
     const input = { enabled: true };
     expect(apiConfigSchema.shape.analysis_runtime.parse(input)).toMatchObject({

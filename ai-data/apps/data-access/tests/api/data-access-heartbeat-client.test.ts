@@ -107,3 +107,131 @@ describe("DAS 心跳客户端", () => {
     await Promise.all([first, second]);
   });
 });
+
+describe("DAS 自动领取接入凭据", () => {
+  const automatic = {
+    ...config,
+    registration_credential_path: undefined,
+    registration_secret: "s".repeat(43),
+  };
+  const issued = { service_id: "das-a", credential: "credential-v1" };
+  const endpoint = "/internal/data-access/credential";
+
+  it("首次领取 JWT 并注册，后续只发送会话心跳", async () => {
+    const load = vi.fn(() => {
+      throw new Error("自动领取不应读取 JWT 文件");
+    });
+    const post = vi
+      .fn()
+      .mockResolvedValueOnce({ status: 200, data: issued })
+      .mockResolvedValueOnce({ status: 200, data: session })
+      .mockResolvedValue({ status: 200, data: ack });
+    const client = new DataAccessHeartbeatClient(automatic, load, { post });
+    await client.send(heartbeat);
+    await client.send(heartbeat);
+    expect(load).not.toHaveBeenCalled();
+    expect(post.mock.calls[0]).toEqual([
+      endpoint,
+      { service_id: "das-a" },
+      { headers: { authorization: `Bearer ${automatic.registration_secret}` } },
+    ]);
+    expect(post.mock.calls[1][2].headers.authorization).toBe("Bearer credential-v1");
+    expect(post.mock.calls[2]).toEqual([
+      config.heartbeat_path,
+      heartbeat,
+      { headers: { authorization: `Bearer ${session.session_token}` } },
+    ]);
+  });
+
+  it("API 重启使会话失效后，重新领取当前凭据并注册", async () => {
+    const post = vi
+      .fn()
+      .mockResolvedValueOnce({ status: 200, data: issued })
+      .mockResolvedValueOnce({ status: 200, data: session })
+      .mockResolvedValueOnce({ status: 401 })
+      .mockResolvedValueOnce({ status: 200, data: { ...issued, credential: "credential-v2" } })
+      .mockResolvedValueOnce({ status: 200, data: { ...session, session_token: "b".repeat(43) } })
+      .mockResolvedValue({ status: 200, data: ack });
+    const client = new DataAccessHeartbeatClient(automatic, () => "unused", { post });
+    await client.send(heartbeat);
+    await client.send(heartbeat);
+    await client.send(heartbeat);
+    expect(post.mock.calls.map((call) => call[0])).toEqual([
+      endpoint,
+      "/internal/data-access/register",
+      config.heartbeat_path,
+      endpoint,
+      "/internal/data-access/register",
+      config.heartbeat_path,
+    ]);
+    expect(post.mock.calls[4][2].headers.authorization).toBe("Bearer credential-v2");
+    expect(post.mock.calls[5][2].headers.authorization).toBe(`Bearer ${"b".repeat(43)}`);
+  });
+
+  it.each([401, 503, 302])("领取被 API 以 %s 拒绝后下个周期继续领取", async (status) => {
+    const post = vi
+      .fn()
+      .mockResolvedValueOnce({ status, data: { secret: automatic.registration_secret } })
+      .mockResolvedValueOnce({ status: 200, data: issued })
+      .mockResolvedValueOnce({ status: 200, data: session });
+    const client = new DataAccessHeartbeatClient(automatic, () => "unused", { post });
+    const error = await client.send(heartbeat).catch((reason: Error) => reason);
+    expect(String(error)).toContain(String(status));
+    expect(String(error)).not.toContain(automatic.registration_secret);
+    await client.send(heartbeat);
+    expect(post.mock.calls.map((call) => call[0])).toEqual([
+      endpoint,
+      endpoint,
+      "/internal/data-access/register",
+    ]);
+  });
+
+  it("连接失败使用固定错误提示，下个周期可以重新接入", async () => {
+    const post = vi
+      .fn()
+      .mockRejectedValueOnce(new Error(`request failed with ${automatic.registration_secret}`))
+      .mockResolvedValueOnce({ status: 200, data: issued })
+      .mockResolvedValueOnce({ status: 200, data: session });
+    const client = new DataAccessHeartbeatClient(automatic, () => "unused", { post });
+    const error = await client.send(heartbeat).catch((reason: Error) => reason);
+    expect(String(error)).toContain("无法连接 API");
+    expect(String(error)).not.toContain(automatic.registration_secret);
+    await client.send(heartbeat);
+    expect(post).toHaveBeenCalledTimes(3);
+  });
+
+  it.each([
+    { ...issued, service_id: "das-b" },
+    { ...issued, credential: "" },
+    { ...issued, extra: true },
+    {},
+  ])("领取响应不符合合同或实例时拒绝注册 %j", async (data) => {
+    const post = vi.fn().mockResolvedValue({ status: 200, data });
+    const client = new DataAccessHeartbeatClient(automatic, () => "unused", { post });
+    await expect(client.send(heartbeat)).rejects.toThrow();
+    await expect(client.send(heartbeat)).rejects.toThrow();
+    expect(post.mock.calls.map((call) => call[0])).toEqual([endpoint, endpoint]);
+  });
+
+  it("并发上报合并为一次领取和一次注册", async () => {
+    let finish!: (value: unknown) => void;
+    const post = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      )
+      .mockResolvedValueOnce({ status: 200, data: session });
+    const client = new DataAccessHeartbeatClient(automatic, () => "unused", { post });
+    const first = client.send(heartbeat);
+    const second = client.send(heartbeat);
+    finish({ status: 200, data: issued });
+    await Promise.all([first, second]);
+    expect(post.mock.calls.map((call) => call[0])).toEqual([
+      endpoint,
+      "/internal/data-access/register",
+    ]);
+  });
+});

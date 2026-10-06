@@ -28,6 +28,7 @@
     {
       "service_id": "data-access-service",
       "credential_version": 1,
+      "registration_secret": "replace-with-instance-specific-random-secret",
       "enabled": true
     }
   ],

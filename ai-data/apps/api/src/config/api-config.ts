@@ -93,6 +93,13 @@ const apiConfigSchema = z
             service_id: z.string().min(1),
             credential_version: z.number().int().positive(),
             enabled: z.boolean(),
+            /** 实例专用随机密钥用于自动领取 JWT；省略时仅支持管理员签发。 */
+            registration_secret: z
+              .string()
+              .min(32)
+              .max(256)
+              .regex(/^[A-Za-z0-9_-]+$/)
+              .optional(),
           })
           .strict(),
       )

@@ -164,6 +164,8 @@ apps/web/src/
 - 向 API 返回纯数据源目录和查询结果；模型目录、业务说明和批准关系由 API 组合后提供给模型。不负责指标解析、自然语言意图理解、业务归因或学习。
 - 查询的执行、拒绝、超时和失败事件由 DAS 写入自己的 SQL Server 审计库；API 按 `analysis_run_id` 关联展示或补充自身业务审计。
 - 按固定间隔向 API 发送 `dataAccessHeartbeatSchema` 服务心跳；API 按 `service_id` 记录最后一次心跳，并在超过失联阈值后停止向该实例调度查询。心跳中的数据源健康状态只影响对应 `source_id` 的路由。
+
+- DAS 可在 `api.registration_secret` 配置实例专用随机密钥，与 API `trusted_data_access_services` 中同一实例的密钥对应。DAS 调用 `POST /internal/data-access/credential`，通过 Bearer 密钥及 `{ service_id }` 领取当前版本 JWT，再通过现有注册入口换取心跳会话。API 校验实例启用状态与密钥；JWT 绑定实例和 `credential_version`。DAS 在会话失效时重新领取并注册，失败由 30 秒上报周期重试。自动领取与 `registration_credential_path` 文件接入二选一；`jwt_verification_public_key_path` 继续是必填公钥文件。密钥轮换须同时递增凭据版本，以撤销旧 JWT 和会话；服务配置在重启后生效。
 - 详细合同见 [data-access-design.md](./data-access-design.md)。
 
 ## 5. Data Access Service 的多数据源模型

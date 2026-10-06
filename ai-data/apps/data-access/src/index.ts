@@ -85,7 +85,8 @@ async function start(): Promise<void> {
   const config = loadDasConfig(defaultConfigPath);
   // 在 DAS 启动阶段读取 API 公钥文件，后续 JWT 验签器复用已加载内容。
   const apiPublicKey = loadApiVerificationPublicKey(config, dirname(defaultConfigPath));
-  loadRegistrationCredential(config, dirname(defaultConfigPath));
+  if (config.api.registration_credential_path)
+    loadRegistrationCredential(config, dirname(defaultConfigPath));
   const heartbeatClient = new DataAccessHeartbeatClient(config.api, () =>
     loadRegistrationCredential(config, dirname(defaultConfigPath)),
   );
