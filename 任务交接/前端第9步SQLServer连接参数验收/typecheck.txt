@@ -1,0 +1,12 @@
+$ pnpm -r typecheck
+Scope: 5 of 6 workspace projects
+packages/contracts typecheck$ tsc -p tsconfig.json
+packages/metadata typecheck$ tsc -p tsconfig.json
+packages/metadata typecheck: Done
+packages/contracts typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json
+apps/data-access typecheck$ tsc -p tsconfig.json
+apps/web typecheck$ vue-tsc -p tsconfig.app.json && tsc -p tsconfig.node.json
+apps/data-access typecheck: Done
+apps/api typecheck: Done
+apps/web typecheck: Done

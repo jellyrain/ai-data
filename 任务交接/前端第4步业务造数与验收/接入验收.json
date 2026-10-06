@@ -1,0 +1,15 @@
+{
+  "source_id": "clinical-demo",
+  "table_count": 24,
+  "published_relations": 122,
+  "checks": [
+    {
+      "username": "demo_full",
+      "object_count": 24
+    },
+    {
+      "username": "demo_dept",
+      "object_count": 23
+    }
+  ]
+}

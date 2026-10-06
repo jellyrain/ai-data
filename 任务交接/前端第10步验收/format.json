@@ -1,0 +1,222 @@
+[
+  {
+    "file": "apps/web/src/features/knowledge/api/knowledge-api.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/knowledge/components/knowledge-board.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/knowledge/components/knowledge-content.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/knowledge/components/metric-form.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/knowledge/components/scope-editor.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/knowledge/components/source-picker.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/knowledge/knowledge.css",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/knowledge/pages/knowledge-page.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/knowledge/stores/metric-query-editing.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/preferences/api/preference-api.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/preferences/components/preference-form.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/preferences/components/preferences-panel.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/preferences/components/time-range-editor.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/tasks/api/task-api.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/tasks/pages/tasks-page.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/tests/features/knowledge/knowledge-api.test.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/tests/features/knowledge/metric-query-editing.test.ts",
+    "formatted": true
+  },
+  {
+    "file": "packages/contracts/src/knowledge/knowledge-management.ts",
+    "formatted": true
+  },
+  {
+    "file": "packages/contracts/src/knowledge/knowledge-management-types.ts",
+    "formatted": true
+  },
+  {
+    "file": "packages/contracts/src/memory/preference-management.ts",
+    "formatted": true
+  },
+  {
+    "file": "packages/contracts/src/memory/preference-management-types.ts",
+    "formatted": true
+  },
+  {
+    "file": "packages/contracts/src/index.ts",
+    "formatted": true
+  },
+  {
+    "file": "packages/contracts/tests/knowledge/knowledge-management.test.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/knowledge/knowledge-records.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/knowledge/knowledge-types.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/knowledge/knowledge-service.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/knowledge/sql-knowledge-repository.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/preferences/preference-service.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/reports/report-template-service.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/index.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/app-types.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/routes/knowledge-routes.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/routes/preference-routes.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/routes/memory-event-routes.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/routes/report-management-routes.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/src/routes/metric-report-routes.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/tests/preferences/preference-edit-state.test.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/tests/knowledge/knowledge-management.test.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/tests/routes/knowledge-management-routes.test.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/tests/knowledge/memory-knowledge-repository.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/tests/support/api-fixtures.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/tests/routes/preference-routes.test.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/tests/knowledge/report-template-knowledge.test.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/tests/integration/knowledge.integration.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/api/tests/integration/preferences.integration.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/app/router.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/main.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/reports/components/report-template-submit.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/reports/stores/report-editor.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/reports/pages/report-editor.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/reports/pages/report-detail.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/src/features/reports/pages/report-center.vue",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/tests/features/reports/editor.test.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/tests/support/knowledge-fixture.ts",
+    "formatted": true
+  },
+  {
+    "file": "apps/web/tests/e2e/knowledge.spec.ts",
+    "formatted": true
+  }
+]

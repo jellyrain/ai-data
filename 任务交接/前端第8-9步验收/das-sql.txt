@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/data-access
+
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  21:23:53
+   Duration  2.36s (transform 443ms, setup 0ms, import 1.35s, tests 669ms, environment 0ms)
+

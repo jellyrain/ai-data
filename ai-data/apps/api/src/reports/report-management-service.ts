@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import {
   analysisArtifactSchema,
   conversationExportContentSchema,
@@ -154,11 +155,23 @@ class ReportManagementService {
     const definition = await this.optional(() => this.dependencies.definitions.get(context, id));
     const snapshot = await this.optional(() => this.dependencies.reports.get(context, id));
     if (!definition && !snapshot) return null;
+    const blocks = definition
+      ? definition.definition.presentation.flatMap((section) => section.blocks)
+      : snapshot!.sections.flatMap((section) => section.blocks);
+    const data = blocks.filter((block) => block.type !== "text");
+    const first = data[0];
     return reportSummarySchema.parse({
       report_id: id,
       title: definition?.definition.title ?? snapshot!.title,
       user_id: definition?.user_id ?? snapshot!.user_id,
       created_at: definition?.created_at ?? snapshot!.created_at,
+      updated_at: [definition?.created_at, snapshot?.created_at]
+        .filter((time): time is string => !!time)
+        .sort((left, right) => dayjs(left).valueOf() - dayjs(right).valueOf())
+        .at(-1),
+      description: definition?.definition.description ?? snapshot?.description,
+      display_type:
+        data.length === 1 ? (first?.type === "chart" ? first.chart?.type : "table") : "legacy",
       shared_with: definition?.shared_with ?? snapshot!.shared_with,
       ...(definition ? { definition_version: definition.version } : {}),
       ...(snapshot ? { snapshot_version: snapshot.version } : {}),

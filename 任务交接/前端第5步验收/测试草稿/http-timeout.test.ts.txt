@@ -1,0 +1,11 @@
+// 加入 apps/web/tests/shared/http.test.ts 的 HTTP 场景组。
+it("报表可等待 150 秒，普通请求仍为 20 秒，超限等待被拒绝", async () => {
+  const timeout = vi.spyOn(AbortSignal, "timeout");
+  const send = createTransport(vi.fn<typeof fetch>().mockImplementation(async () => Response.json({ ok: true })));
+  await send("/api/reports");
+  expect(timeout).toHaveBeenLastCalledWith(20_000);
+  await send("/api/reports/r/execute", { timeoutMs: 150_000 });
+  expect(timeout).toHaveBeenLastCalledWith(150_000);
+  await expect(send("/api/reports", { timeoutMs: 150_001 })).rejects.toMatchObject({ code: "INVALID_TIMEOUT" });
+  timeout.mockRestore();
+});

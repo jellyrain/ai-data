@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { dataAccessHeartbeatSchema, dataAccessSessionSchema } from "@ai-data/contracts";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+import { z } from "zod";
 import { ApplicationError } from "../errors/application-error";
 import { sendInvalidInput } from "./contract-error";
 
@@ -17,7 +18,7 @@ async function requireServiceAdmin(
   auth: ApiAuthService,
   credentials = false,
 ): Promise<void> {
-  const context = await auth.loadContext(bearerToken(request));
+  const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
   if (
     !context.roles.includes("system_admin") &&
     (credentials || !context.permissions.includes("data-access:manage"))
@@ -49,6 +50,81 @@ function registerDataAccessRoutes(
   auth: ApiAuthService,
 ): void {
   const { registry, catalogClient, managementClient } = dataAccess;
+  app.get("/admin/data-access/services", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    await requireServiceAdmin(request, auth);
+    z.object({}).strict().parse(request.query);
+    return {
+      items: (await registry.listRegisteredServices()).map((service) => ({
+        service_id: service.serviceId,
+        service_url: service.serviceUrl,
+        service_version: service.serviceVersion,
+        status: service.status,
+        connection_status: service.connectionStatus,
+        last_heartbeat_at: dayjs(service.lastHeartbeatAt)
+          .utcOffset(8)
+          .format("YYYY-MM-DD HH:mm:ss"),
+        sources: service.sources,
+      })),
+    };
+  });
+  const serviceParams = z.object({ serviceId: z.string().min(1).max(128) }).strict();
+  const sourceParams = serviceParams.extend({ sourceId: z.string().min(1).max(128) }).strict();
+  for (const method of ["GET", "PUT"] as const) {
+    app.route({
+      method,
+      url: "/admin/data-access/services/:serviceId/data-source-secrets/:secretRef/sqlserver-transport",
+      handler: async (request, reply) => {
+        reply.header("cache-control", "no-store");
+        await requireServiceAdmin(request, auth);
+        z.object({}).strict().parse(request.query);
+        const input = serviceParams
+          .extend({ secretRef: z.string().min(1).max(256) })
+          .strict()
+          .parse(request.params);
+        const service = (await registry.listHealthyServices()).find(
+          (item) => item.serviceId === input.serviceId,
+        );
+        if (!service)
+          throw new ApplicationError("DATA_SOURCE_UNAVAILABLE", "DAS 实例尚未注册或不可用");
+        return managementClient.sqlServerTransport(
+          service.serviceId,
+          service.serviceUrl,
+          input.secretRef,
+          method,
+          method === "PUT" ? request.body : undefined,
+        );
+      },
+    });
+  }
+  for (const [suffix, operation] of [
+    ["data-sources", "sources"],
+    ["data-sources/:sourceId", "source"],
+    ["data-source-objects/:sourceId", "objects"],
+    ["data-source-secrets", "secrets"],
+  ] as const) {
+    app.get(`/admin/data-access/services/:serviceId/${suffix}`, async (request, reply) => {
+      reply.header("cache-control", "no-store");
+      await requireServiceAdmin(request, auth);
+      z.object({}).strict().parse(request.query);
+      const input = suffix.includes(":sourceId")
+        ? sourceParams.parse(request.params)
+        : serviceParams.parse(request.params);
+      const service = (await registry.listHealthyServices()).find(
+        (item) => item.serviceId === input.serviceId,
+      );
+      if (!service)
+        throw new ApplicationError("DATA_SOURCE_UNAVAILABLE", "DAS 实例尚未注册或不可用");
+      return reply.send(
+        await managementClient.read(
+          service.serviceId,
+          service.serviceUrl,
+          operation,
+          "sourceId" in input ? z.string().parse(input.sourceId) : undefined,
+        ),
+      );
+    });
+  }
   // 注册绑定实际来源地址、端口和协议；心跳逐次核对该绑定。
   const receive =
     (registration: boolean) => async (request: FastifyRequest, reply: FastifyReply) => {
@@ -78,6 +154,7 @@ function registerDataAccessRoutes(
   app.post<{ Params: { serviceId: string } }>(
     "/admin/data-access/services/:serviceId/credential",
     async (request, reply) => {
+      reply.header("cache-control", "no-store");
       await requireServiceAdmin(request, auth, true);
       const credential = await registry.issueCredential(request.params.serviceId);
       return reply
@@ -93,6 +170,7 @@ function registerDataAccessRoutes(
       method: managementOperations[operation].method,
       url: `/admin/data-access/services/:serviceId/${operation}`,
       handler: async (request, reply) => {
+        reply.header("cache-control", "no-store");
         await requireServiceAdmin(request, auth);
         const service = (await registry.listHealthyServices()).find(
           (item) => item.serviceId === request.params.serviceId,
@@ -113,6 +191,7 @@ function registerDataAccessRoutes(
 
   /** 返回 API 当前登记的健康 DAS 实例，供管理端诊断。 */
   app.get("/internal/data-access/services", async (request, reply) => {
+    reply.header("cache-control", "no-store");
     await requireServiceAdmin(request, auth);
     const services = await registry.listHealthyServices();
     return reply.send({
@@ -133,6 +212,7 @@ function registerDataAccessRoutes(
   app.get<{ Params: { sourceId: string } }>(
     "/internal/data-access/catalog/:sourceId",
     async (request, reply) => {
+      reply.header("cache-control", "no-store");
       await requireServiceAdmin(request, auth);
       const services = await registry.listHealthyServices();
       const service = services.find((item) =>

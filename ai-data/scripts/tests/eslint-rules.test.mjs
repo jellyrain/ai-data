@@ -6,6 +6,28 @@ import { ESLint } from "eslint";
 
 const workspace = fileURLToPath(new URL("../../", import.meta.url));
 const eslint = new ESLint({ cwd: workspace });
+
+test("Vue SFC 允许公共共享入口并检查纯类型导入", async () => {
+  const valid =
+    '<script setup lang="ts">import type { Dataset } from "@ai-data/contracts"; defineProps<{ dataset: Dataset }>();</script><template><div>{{ dataset }}</div></template>';
+  assert.deepEqual(await lint(valid, "apps/web/src/rule-example.vue"), []);
+  const messages = await lint(
+    valid.replace("import type", "import"),
+    "apps/web/src/rule-example.vue",
+  );
+  assert.ok(
+    messages.some((message) => message.ruleId === "@typescript-eslint/consistent-type-imports"),
+  );
+});
+test("Vue SFC 禁止跨应用和共享包内部导入", async () => {
+  for (const path of ["../../api/src/app", "@ai-data/contracts/src/catalog/dataset"]) {
+    const messages = await lint(
+      `<script setup lang="ts">import { value } from "${path}";</script><template><div>{{ value }}</div></template>`,
+      "apps/web/src/rule-example.vue",
+    );
+    assert.ok(messages.some((message) => message.ruleId === "workspace/import-boundaries"));
+  }
+});
 /** 通过实际工作区配置检查虚拟源码，不写入应用目录。 */
 async function lint(source, relativePath = "apps/api/src/rule-example.ts") {
   const [result] = await eslint.lintText(source, { filePath: resolve(workspace, relativePath) });

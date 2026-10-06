@@ -154,7 +154,15 @@ class CodexAnalysisHarness implements AnalysisHarness {
         return session.call(method, params);
       },
       onNotification: (method, params) => {
-        if (!["turn/started", "turn/completed", "item/started", "item/completed"].includes(method))
+        if (
+          ![
+            "turn/started",
+            "turn/completed",
+            "item/started",
+            "item/completed",
+            "item/agentMessage/delta",
+          ].includes(method)
+        )
           return;
         const value = record(params);
         if (typeof value.threadId === "string")
@@ -322,7 +330,12 @@ class CodexAnalysisHarness implements AnalysisHarness {
         }));
       }
       const contextWindow = configured ? configured.contextWindow : this.options.contextWindow;
-      if (contextWindow) configuration.model_context_window = contextWindow;
+      if (contextWindow) {
+        configuration.model_context_window = contextWindow;
+        configuration.model_auto_compact_token_limit =
+          (configured ? configured.autoCompactTokenLimit : this.options.autoCompactTokenLimit) ??
+          Math.floor(contextWindow * 0.75);
+      }
       const settings = {
         model: provider.model,
         modelProvider: configured ? this.providerKey(provider) : "analysis_provider",

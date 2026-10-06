@@ -105,6 +105,11 @@ function setup() {
 }
 
 describe("报表列表、产物和导出内容", () => {
+  it("卡片摘要从授权快照提供类型和更新时间，不交付结果内容", async () => {
+    const page = await setup().service.list(context);
+    expect(page.items[0]).toMatchObject({ display_type: "table", updated_at: report.created_at });
+    expect(page.items[0]).not.toHaveProperty("sources");
+  });
   it("列表过滤来源权限不足的全部摘要，游标按最后返回项推进", async () => {
     const h = setup();
     const page = await h.service.list(context, { limit: 1 });

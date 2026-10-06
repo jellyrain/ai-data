@@ -11,7 +11,13 @@ describe("组织报表模板审核", () => {
       metrics: { validateDefinition: async () => {} },
       authorizeScope: async () => {},
       validateSource: async () => {},
-      templates: { validate, assertSubmit: async () => {} },
+      templates: {
+        validate,
+        assertSubmit: async () => {},
+        preview: async () => {
+          throw new Error("此场景不读取定义");
+        },
+      },
     });
     const candidate = await service.submit(
       { ...context, userId: "author" },
@@ -59,4 +65,49 @@ describe("组织报表模板审核", () => {
     expect(rolled.content).toEqual(candidate.content);
     expect(validate).toHaveBeenCalled();
   });
+});
+
+it("模板预览先复核候选权限，普通业务规则不能走模板定义入口", async () => {
+  const preview = vi.fn(async () => {
+    throw new Error("已进入模板校验");
+  });
+  const service = new KnowledgeService({
+    repository: new MemoryKnowledgeRepository(),
+    metrics: { validateDefinition: async () => {} },
+    authorizeScope: async () => {},
+    validateSource: async () => {},
+    templates: { validate: async () => {}, assertSubmit: async () => {}, preview },
+  });
+  const candidate = await service.submit(
+    { ...context, organizationId: "org", userId: "author" },
+    {
+      idempotency_key: "preview",
+      content: {
+        type: "report_template",
+        report_id: "r",
+        definition_version: 2,
+        definition_hash: "a".repeat(64),
+      },
+      scope: {},
+    },
+  );
+  await expect(
+    service.templateDefinition(
+      { ...context, organizationId: "org", userId: "stranger", roles: [], permissions: [] },
+      candidate.candidate_id,
+    ),
+  ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  expect(preview).not.toHaveBeenCalled();
+  await expect(
+    service.templateDefinition(
+      { ...context, organizationId: "other", userId: "author" },
+      candidate.candidate_id,
+    ),
+  ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  await expect(
+    service.templateDefinition(
+      { ...context, organizationId: "org", userId: "author" },
+      candidate.candidate_id,
+    ),
+  ).rejects.toThrow("已进入模板校验");
 });

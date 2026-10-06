@@ -1,0 +1,1713 @@
+{
+  "sources": {
+    "items": [
+      {
+        "source_id": "clinical-demo"
+      }
+    ]
+  },
+  "metrics": {
+    "items": [
+      {
+        "metric_id": "demo-admissions",
+        "version": 1,
+        "name": "入院人次（入院时间）",
+        "description": "clinical-demo 演示指标，按 admitted_at 过滤日期；按 admission_id 去重计数。支持按科室名称分组，总计在完整授权范围重新计算。",
+        "aliases": [
+          "入院人次"
+        ],
+        "grain": "admissions",
+        "deduplication_keys": [
+          "t.admission_id"
+        ],
+        "date_basis": {
+          "field": "t.admitted_at",
+          "data_type": "datetime"
+        },
+        "query": {
+          "type": "relational_query",
+          "source_id": "clinical-demo",
+          "from": {
+            "object_id": "table.dbo.admissions",
+            "alias": "t"
+          },
+          "joins": [
+            {
+              "type": "inner",
+              "object_id": "table.dbo.departments",
+              "alias": "d",
+              "on": [
+                {
+                  "left": "t.department_id",
+                  "op": "eq",
+                  "right": "d.department_id"
+                }
+              ]
+            }
+          ],
+          "select": [
+            {
+              "field": "t.admission_id",
+              "aggregation": "count_distinct",
+              "as": "count"
+            }
+          ],
+          "filters": {
+            "logic": "and",
+            "items": []
+          },
+          "group_by": [],
+          "order_by": []
+        },
+        "dimensions": [
+          "d.name"
+        ],
+        "value": {
+          "type": "column",
+          "column": "count"
+        },
+        "total_rule": "recalculate"
+      },
+      {
+        "metric_id": "demo-discharges",
+        "version": 1,
+        "name": "出院人次（出院时间）",
+        "description": "clinical-demo 演示指标，按 discharged_at 过滤日期；按 admission_id 去重计数。支持按科室名称分组，总计在完整授权范围重新计算。",
+        "aliases": [
+          "出院人次"
+        ],
+        "grain": "admissions",
+        "deduplication_keys": [
+          "t.admission_id"
+        ],
+        "date_basis": {
+          "field": "t.discharged_at",
+          "data_type": "datetime"
+        },
+        "query": {
+          "type": "relational_query",
+          "source_id": "clinical-demo",
+          "from": {
+            "object_id": "table.dbo.admissions",
+            "alias": "t"
+          },
+          "joins": [
+            {
+              "type": "inner",
+              "object_id": "table.dbo.departments",
+              "alias": "d",
+              "on": [
+                {
+                  "left": "t.department_id",
+                  "op": "eq",
+                  "right": "d.department_id"
+                }
+              ]
+            }
+          ],
+          "select": [
+            {
+              "field": "t.admission_id",
+              "aggregation": "count_distinct",
+              "as": "count"
+            }
+          ],
+          "filters": {
+            "logic": "and",
+            "items": []
+          },
+          "group_by": [],
+          "order_by": []
+        },
+        "dimensions": [
+          "d.name"
+        ],
+        "value": {
+          "type": "column",
+          "column": "count"
+        },
+        "total_rule": "recalculate"
+      },
+      {
+        "metric_id": "demo-inpatient-fees",
+        "version": 2,
+        "name": "住院有效费用（费用发生时间）",
+        "description": "clinical-demo 演示指标，按 charged_at 过滤日期；金额单位为分，包含费用冲销负数，展示元时除以100。可按 c.name 费用分类或 d.name 科室分组，总计在完整授权范围重新计算。",
+        "aliases": [
+          "住院费用"
+        ],
+        "grain": "inpatient_charge_details",
+        "deduplication_keys": [
+          "t.charge_id"
+        ],
+        "date_basis": {
+          "field": "t.charged_at",
+          "data_type": "datetime"
+        },
+        "query": {
+          "type": "relational_query",
+          "source_id": "clinical-demo",
+          "from": {
+            "object_id": "table.dbo.inpatient_charge_details",
+            "alias": "t"
+          },
+          "joins": [
+            {
+              "type": "inner",
+              "object_id": "table.dbo.departments",
+              "alias": "d",
+              "on": [
+                {
+                  "left": "t.department_id",
+                  "op": "eq",
+                  "right": "d.department_id"
+                }
+              ]
+            },
+            {
+              "type": "inner",
+              "object_id": "table.dbo.charge_items",
+              "alias": "i",
+              "on": [
+                {
+                  "left": "t.item_id",
+                  "op": "eq",
+                  "right": "i.item_id"
+                }
+              ]
+            },
+            {
+              "type": "inner",
+              "object_id": "table.dbo.charge_categories",
+              "alias": "c",
+              "on": [
+                {
+                  "left": "i.category_id",
+                  "op": "eq",
+                  "right": "c.category_id"
+                }
+              ]
+            }
+          ],
+          "select": [
+            {
+              "field": "t.amount_cents",
+              "aggregation": "sum",
+              "as": "amount_cents"
+            }
+          ],
+          "filters": {
+            "logic": "and",
+            "items": []
+          },
+          "group_by": [],
+          "order_by": []
+        },
+        "dimensions": [
+          "d.name",
+          "c.name"
+        ],
+        "value": {
+          "type": "column",
+          "column": "amount_cents"
+        },
+        "total_rule": "recalculate"
+      },
+      {
+        "metric_id": "demo-outpatient-fees",
+        "version": 2,
+        "name": "门诊有效费用（费用发生时间）",
+        "description": "clinical-demo 演示指标，按 charged_at 过滤日期；金额单位为分，包含费用冲销负数，展示元时除以100。可按 c.name 费用分类或 d.name 科室分组，总计在完整授权范围重新计算。",
+        "aliases": [
+          "门诊费用"
+        ],
+        "grain": "outpatient_charge_details",
+        "deduplication_keys": [
+          "t.charge_id"
+        ],
+        "date_basis": {
+          "field": "t.charged_at",
+          "data_type": "datetime"
+        },
+        "query": {
+          "type": "relational_query",
+          "source_id": "clinical-demo",
+          "from": {
+            "object_id": "table.dbo.outpatient_charge_details",
+            "alias": "t"
+          },
+          "joins": [
+            {
+              "type": "inner",
+              "object_id": "table.dbo.departments",
+              "alias": "d",
+              "on": [
+                {
+                  "left": "t.department_id",
+                  "op": "eq",
+                  "right": "d.department_id"
+                }
+              ]
+            },
+            {
+              "type": "inner",
+              "object_id": "table.dbo.charge_items",
+              "alias": "i",
+              "on": [
+                {
+                  "left": "t.item_id",
+                  "op": "eq",
+                  "right": "i.item_id"
+                }
+              ]
+            },
+            {
+              "type": "inner",
+              "object_id": "table.dbo.charge_categories",
+              "alias": "c",
+              "on": [
+                {
+                  "left": "i.category_id",
+                  "op": "eq",
+                  "right": "c.category_id"
+                }
+              ]
+            }
+          ],
+          "select": [
+            {
+              "field": "t.amount_cents",
+              "aggregation": "sum",
+              "as": "amount_cents"
+            }
+          ],
+          "filters": {
+            "logic": "and",
+            "items": []
+          },
+          "group_by": [],
+          "order_by": []
+        },
+        "dimensions": [
+          "d.name",
+          "c.name"
+        ],
+        "value": {
+          "type": "column",
+          "column": "amount_cents"
+        },
+        "total_rule": "recalculate"
+      },
+      {
+        "metric_id": "demo-outpatient-patients",
+        "version": 1,
+        "name": "门诊患者人数（就诊时间）",
+        "description": "clinical-demo 演示指标，按 visited_at 过滤日期；按 patient_id 去重计数。支持按科室名称分组，总计在完整授权范围重新计算。",
+        "aliases": [
+          "去重患者人数"
+        ],
+        "grain": "visits",
+        "deduplication_keys": [
+          "t.patient_id"
+        ],
+        "date_basis": {
+          "field": "t.visited_at",
+          "data_type": "datetime"
+        },
+        "query": {
+          "type": "relational_query",
+          "source_id": "clinical-demo",
+          "from": {
+            "object_id": "table.dbo.visits",
+            "alias": "t"
+          },
+          "joins": [
+            {
+              "type": "inner",
+              "object_id": "table.dbo.departments",
+              "alias": "d",
+              "on": [
+                {
+                  "left": "t.department_id",
+                  "op": "eq",
+                  "right": "d.department_id"
+                }
+              ]
+            }
+          ],
+          "select": [
+            {
+              "field": "t.patient_id",
+              "aggregation": "count_distinct",
+              "as": "count"
+            }
+          ],
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "field": "t.status",
+                "op": "eq",
+                "data_type": "string",
+                "value": "completed"
+              }
+            ]
+          },
+          "group_by": [],
+          "order_by": []
+        },
+        "dimensions": [
+          "d.name"
+        ],
+        "value": {
+          "type": "column",
+          "column": "count"
+        },
+        "total_rule": "recalculate"
+      },
+      {
+        "metric_id": "demo-outpatient-visits",
+        "version": 1,
+        "name": "门诊就诊人次（就诊时间）",
+        "description": "clinical-demo 演示指标，按 visited_at 过滤日期；按 visit_id 去重计数。支持按科室名称分组，总计在完整授权范围重新计算。",
+        "aliases": [
+          "门诊人次"
+        ],
+        "grain": "visits",
+        "deduplication_keys": [
+          "t.visit_id"
+        ],
+        "date_basis": {
+          "field": "t.visited_at",
+          "data_type": "datetime"
+        },
+        "query": {
+          "type": "relational_query",
+          "source_id": "clinical-demo",
+          "from": {
+            "object_id": "table.dbo.visits",
+            "alias": "t"
+          },
+          "joins": [
+            {
+              "type": "inner",
+              "object_id": "table.dbo.departments",
+              "alias": "d",
+              "on": [
+                {
+                  "left": "t.department_id",
+                  "op": "eq",
+                  "right": "d.department_id"
+                }
+              ]
+            }
+          ],
+          "select": [
+            {
+              "field": "t.visit_id",
+              "aggregation": "count_distinct",
+              "as": "count"
+            }
+          ],
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "field": "t.status",
+                "op": "eq",
+                "data_type": "string",
+                "value": "completed"
+              }
+            ]
+          },
+          "group_by": [],
+          "order_by": []
+        },
+        "dimensions": [
+          "d.name"
+        ],
+        "value": {
+          "type": "column",
+          "column": "count"
+        },
+        "total_rule": "recalculate"
+      }
+    ]
+  },
+  "datasets": {
+    "items": [
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.admissions",
+        "name": "table.dbo.admissions",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "admission_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院记录编号"
+          },
+          {
+            "name": "patient_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "患者"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "discharge_department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "出院或当前科室"
+          },
+          {
+            "name": "doctor_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "主管医生"
+          },
+          {
+            "name": "admitted_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "入院时间"
+          },
+          {
+            "name": "discharged_at",
+            "data_type": "datetime",
+            "nullable": true,
+            "source_description": "出院时间"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "住院状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "住院记录。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.beds",
+        "name": "table.dbo.beds",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "bed_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "床位编号"
+          },
+          {
+            "name": "ward_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "病区"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "name",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "床号"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "床位状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "床位。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.campuses",
+        "name": "table.dbo.campuses",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "campus_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "院区编号"
+          },
+          {
+            "name": "name",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "院区名称"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "院区。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.charge_categories",
+        "name": "table.dbo.charge_categories",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "category_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "费用分类编号"
+          },
+          {
+            "name": "name",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "费用分类名称"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "费用分类。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.charge_items",
+        "name": "table.dbo.charge_items",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "item_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "收费项目编号"
+          },
+          {
+            "name": "category_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "费用分类"
+          },
+          {
+            "name": "name",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "项目名称"
+          },
+          {
+            "name": "unit",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "计价单位"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "收费项目。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.departments",
+        "name": "table.dbo.departments",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "科室编号"
+          },
+          {
+            "name": "campus_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属院区"
+          },
+          {
+            "name": "name",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "科室名称"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "科室。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.diagnoses",
+        "name": "table.dbo.diagnoses",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "diagnosis_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "诊断字典编号"
+          },
+          {
+            "name": "code",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "诊断代码"
+          },
+          {
+            "name": "name",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "诊断名称"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "诊断字典。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.doctors",
+        "name": "table.dbo.doctors",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "doctor_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "医生编号"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "name",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "医生姓名"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "医生。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.inpatient_charge_details",
+        "name": "table.dbo.inpatient_charge_details",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "charge_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院费用明细编号"
+          },
+          {
+            "name": "admission_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院记录"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "ordering_department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "开单科室"
+          },
+          {
+            "name": "executing_department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "执行科室"
+          },
+          {
+            "name": "doctor_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "开单医生"
+          },
+          {
+            "name": "item_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "收费项目"
+          },
+          {
+            "name": "settlement_id",
+            "data_type": "integer",
+            "nullable": true,
+            "source_description": "结算单"
+          },
+          {
+            "name": "quantity",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "数量"
+          },
+          {
+            "name": "unit_price_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "单价分"
+          },
+          {
+            "name": "amount_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "有符号费用分"
+          },
+          {
+            "name": "original_charge_id",
+            "data_type": "integer",
+            "nullable": true,
+            "source_description": "原费用"
+          },
+          {
+            "name": "charged_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "费用发生时间"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "费用状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "住院费用明细。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.inpatient_deposit_transactions",
+        "name": "table.dbo.inpatient_deposit_transactions",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "transaction_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院预交金台账编号"
+          },
+          {
+            "name": "admission_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "settlement_id",
+            "data_type": "integer",
+            "nullable": true,
+            "source_description": "关联结算"
+          },
+          {
+            "name": "original_transaction_id",
+            "data_type": "integer",
+            "nullable": true,
+            "source_description": "原台账"
+          },
+          {
+            "name": "kind",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "缴入抵扣或退回"
+          },
+          {
+            "name": "amount_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "变动金额分"
+          },
+          {
+            "name": "occurred_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "发生时间"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "住院预交金台账。演示数据截至2026-09-27；金额单位分。预交金 apply 为抵扣、receive 为收款、return 为余额退款；抵扣不重复计收入。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.inpatient_diagnoses",
+        "name": "table.dbo.inpatient_diagnoses",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "inpatient_diagnosis_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院诊断明细编号"
+          },
+          {
+            "name": "admission_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "diagnosis_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "诊断"
+          },
+          {
+            "name": "stage",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "入院或出院诊断"
+          },
+          {
+            "name": "is_primary",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "是否主诊断"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "住院诊断明细。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.inpatient_payments",
+        "name": "table.dbo.inpatient_payments",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "payment_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院支付流水编号"
+          },
+          {
+            "name": "settlement_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "结算单"
+          },
+          {
+            "name": "admission_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院记录"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "payer",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "付款方"
+          },
+          {
+            "name": "channel",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "支付渠道"
+          },
+          {
+            "name": "amount_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "支付金额分"
+          },
+          {
+            "name": "paid_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "支付时间"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "支付状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "住院支付流水。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.inpatient_refunds",
+        "name": "table.dbo.inpatient_refunds",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "refund_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院退款流水编号"
+          },
+          {
+            "name": "payment_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "原支付"
+          },
+          {
+            "name": "settlement_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "结算单"
+          },
+          {
+            "name": "admission_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院记录"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "amount_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "退款金额分"
+          },
+          {
+            "name": "refunded_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "退款时间"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "退款状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "住院退款流水。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.inpatient_settlements",
+        "name": "table.dbo.inpatient_settlements",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "settlement_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院结算单编号"
+          },
+          {
+            "name": "admission_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院记录"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "settled_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "结算时间"
+          },
+          {
+            "name": "kind",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "中途或最终结算"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "结算状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          },
+          {
+            "name": "fee_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "有效费用分"
+          },
+          {
+            "name": "discount_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "优惠分"
+          },
+          {
+            "name": "due_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "应付合计分"
+          },
+          {
+            "name": "patient_due_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "患者应付分"
+          },
+          {
+            "name": "insurance_due_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "医保应付分"
+          },
+          {
+            "name": "deposit_applied_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "预交金抵扣分"
+          },
+          {
+            "name": "unpaid_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "未收款分"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "住院结算单。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.inpatient_stays",
+        "name": "table.dbo.inpatient_stays",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "stay_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院科室床位轨迹编号"
+          },
+          {
+            "name": "admission_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "住院"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "bed_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "床位"
+          },
+          {
+            "name": "started_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "入科时间"
+          },
+          {
+            "name": "ended_at",
+            "data_type": "datetime",
+            "nullable": true,
+            "source_description": "离科时间"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "住院科室床位轨迹。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.outpatient_charge_details",
+        "name": "table.dbo.outpatient_charge_details",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "charge_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "门诊费用明细编号"
+          },
+          {
+            "name": "visit_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "门诊记录"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "ordering_department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "开单科室"
+          },
+          {
+            "name": "executing_department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "执行科室"
+          },
+          {
+            "name": "doctor_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "开单医生"
+          },
+          {
+            "name": "item_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "收费项目"
+          },
+          {
+            "name": "settlement_id",
+            "data_type": "integer",
+            "nullable": true,
+            "source_description": "结算单"
+          },
+          {
+            "name": "quantity",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "数量"
+          },
+          {
+            "name": "unit_price_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "单价分"
+          },
+          {
+            "name": "amount_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "有符号费用分"
+          },
+          {
+            "name": "original_charge_id",
+            "data_type": "integer",
+            "nullable": true,
+            "source_description": "原费用"
+          },
+          {
+            "name": "charged_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "费用发生时间"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "费用状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "门诊费用明细。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.outpatient_payments",
+        "name": "table.dbo.outpatient_payments",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "payment_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "门诊支付流水编号"
+          },
+          {
+            "name": "settlement_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "结算单"
+          },
+          {
+            "name": "visit_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "门诊记录"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "payer",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "付款方"
+          },
+          {
+            "name": "channel",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "支付渠道"
+          },
+          {
+            "name": "amount_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "支付金额分"
+          },
+          {
+            "name": "paid_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "支付时间"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "支付状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "门诊支付流水。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.outpatient_refunds",
+        "name": "table.dbo.outpatient_refunds",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "refund_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "门诊退款流水编号"
+          },
+          {
+            "name": "payment_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "原支付"
+          },
+          {
+            "name": "settlement_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "结算单"
+          },
+          {
+            "name": "visit_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "门诊记录"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "amount_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "退款金额分"
+          },
+          {
+            "name": "refunded_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "退款时间"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "退款状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "门诊退款流水。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.outpatient_settlements",
+        "name": "table.dbo.outpatient_settlements",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "settlement_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "门诊结算单编号"
+          },
+          {
+            "name": "visit_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "门诊记录"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "settled_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "结算时间"
+          },
+          {
+            "name": "kind",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "中途或最终结算"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "结算状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          },
+          {
+            "name": "fee_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "有效费用分"
+          },
+          {
+            "name": "discount_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "优惠分"
+          },
+          {
+            "name": "due_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "应付合计分"
+          },
+          {
+            "name": "patient_due_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "患者应付分"
+          },
+          {
+            "name": "insurance_due_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "医保应付分"
+          },
+          {
+            "name": "deposit_applied_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "预交金抵扣分"
+          },
+          {
+            "name": "unpaid_cents",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "未收款分"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "门诊结算单。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.patients",
+        "name": "table.dbo.patients",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "patient_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "合成患者编号"
+          },
+          {
+            "name": "name",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "患者姓名"
+          },
+          {
+            "name": "sex",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "性别"
+          },
+          {
+            "name": "born_on",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "出生日期"
+          },
+          {
+            "name": "contact",
+            "data_type": "string",
+            "nullable": true,
+            "source_description": "虚构联系方式"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "合成患者。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.registrations",
+        "name": "table.dbo.registrations",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "registration_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "门诊挂号编号"
+          },
+          {
+            "name": "patient_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "患者"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "doctor_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "挂号医生"
+          },
+          {
+            "name": "registered_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "挂号时间"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "挂号状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "门诊挂号。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.visit_diagnoses",
+        "name": "table.dbo.visit_diagnoses",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "visit_diagnosis_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "门诊诊断明细编号"
+          },
+          {
+            "name": "visit_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "就诊"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "diagnosis_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "诊断"
+          },
+          {
+            "name": "is_primary",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "是否主诊断"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "门诊诊断明细。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.visits",
+        "name": "table.dbo.visits",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "visit_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "门诊就诊编号"
+          },
+          {
+            "name": "registration_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "唯一挂号"
+          },
+          {
+            "name": "patient_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "患者"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "doctor_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "就诊医生"
+          },
+          {
+            "name": "visited_at",
+            "data_type": "datetime",
+            "nullable": false,
+            "source_description": "就诊时间"
+          },
+          {
+            "name": "status",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "就诊状态；completed为完成，partial为部分支付，inpatient为在院，discharged为出院，posted为有效费用。"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "门诊就诊。演示数据截至2026-09-27；金额单位分。"
+      },
+      {
+        "source_id": "clinical-demo",
+        "object_id": "table.dbo.wards",
+        "name": "table.dbo.wards",
+        "kind": "table",
+        "schema_name": "dbo",
+        "columns": [
+          {
+            "name": "ward_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "病区编号"
+          },
+          {
+            "name": "department_id",
+            "data_type": "integer",
+            "nullable": false,
+            "source_description": "所属科室"
+          },
+          {
+            "name": "name",
+            "data_type": "string",
+            "nullable": false,
+            "source_description": "病区名称"
+          }
+        ],
+        "query_capabilities": {},
+        "query_parameters": [],
+        "source_description": "病区。演示数据截至2026-09-27；金额单位分。"
+      }
+    ]
+  }
+}

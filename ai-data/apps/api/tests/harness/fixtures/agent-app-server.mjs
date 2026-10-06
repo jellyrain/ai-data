@@ -65,7 +65,11 @@ createInterface({ input: process.stdin }).on("line", (line) => {
       params: {
         threadId,
         turnId,
-        item: { type: "agentMessage", text: message.result.contentItems[0].text },
+        item: {
+          id: `message-${turnId}`,
+          type: "agentMessage",
+          text: message.result.contentItems[0].text,
+        },
       },
     });
     send({

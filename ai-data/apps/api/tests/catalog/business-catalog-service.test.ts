@@ -110,4 +110,16 @@ describe("业务目录服务", () => {
 
     expect(items.map((item) => item.dataset.object_id)).toEqual(["visit"]);
   });
+  it("多个关键词分别匹配当前可见目录，隐藏字段不参与搜索", async () => {
+    const repository = new MemoryCatalogRepository();
+    const service = new BusinessCatalogService(rawCatalog, repository, repository);
+    expect(
+      (await service.searchAuthorized(clinicianContext, "clinical", "就诊 visit 不存在", 20)).map(
+        (item) => item.dataset.object_id,
+      ),
+    ).toEqual(["visit"]);
+    expect(
+      await service.searchAuthorized(clinicianContext, "clinical", "patient_name", 20),
+    ).toEqual([]);
+  });
 });

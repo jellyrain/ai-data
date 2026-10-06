@@ -1,0 +1,123 @@
+{
+  "date": "2026-10-04",
+  "environment": "Web production build + isolated deterministic fixtures",
+  "images": [
+    {
+      "number": "01",
+      "title": "报表中心",
+      "file": "01-报表中心.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "卡片入口、名称与说明、搜索及排序；截图使用既有多内容报表样例。"
+    },
+    {
+      "number": "02",
+      "title": "单图表详情",
+      "file": "02-单图表详情.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "单个图表结果、顶部条件、实际运行范围；旧报表可选择其中一项内容。"
+    },
+    {
+      "number": "03",
+      "title": "明细表详情",
+      "file": "03-明细表详情.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "同一份结果切换明细表，支持选择显示列。"
+    },
+    {
+      "number": "04",
+      "title": "筛选条件",
+      "file": "04-筛选条件.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "筛选项、默认值、参数绑定及使用预览。"
+    },
+    {
+      "number": "05",
+      "title": "数据与展示",
+      "file": "05-数据与展示.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "名称、说明、展示方式与上次保存结果预览。"
+    },
+    {
+      "number": "06",
+      "title": "数据编排",
+      "file": "06-数据编排.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "已有查询节点、数据编排与属性面板。"
+    },
+    {
+      "number": "07",
+      "title": "AI修改",
+      "file": "07-AI修改.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "AI 修改侧栏；图中为提交前状态，过程回放和完成折叠另有行为测试。"
+    },
+    {
+      "number": "08",
+      "title": "分享设置",
+      "file": "08-分享设置.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "组织成员搜索、分页及报表访问授权。"
+    },
+    {
+      "number": "09",
+      "title": "导出文件",
+      "file": "09-导出文件.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "Excel、Word、PDF 格式选择与固定结果范围。"
+    },
+    {
+      "number": "10",
+      "title": "结果历史",
+      "file": "10-结果历史.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "固定结果版本、来源定义及历史切换。"
+    },
+    {
+      "number": "11",
+      "title": "从对话保存报表",
+      "file": "11-从对话保存报表.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "选择一份对话结果，填写名称和说明后保存为报表。"
+    },
+    {
+      "number": "12",
+      "title": "组织模板",
+      "file": "12-组织模板.png",
+      "width": 1920,
+      "height": 1080,
+      "kind": "desktop",
+      "note": "提交指定定义版本，进入组织模板审核流程。"
+    },
+    {
+      "number": "13",
+      "title": "手机编辑",
+      "file": "13-手机编辑.png",
+      "width": 390,
+      "height": 844,
+      "kind": "mobile",
+      "note": "390 × 844 窄屏编辑布局。"
+    }
+  ]
+}

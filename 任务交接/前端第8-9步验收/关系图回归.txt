@@ -1,0 +1,8 @@
+
+Running 1 test using 1 worker
+
+(node:48636) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › tests\e2e\management.spec.ts:178:1 › 发布关系后两端节点在各宽度下完整可见 (8.6s)
+
+  1 passed (18.5s)

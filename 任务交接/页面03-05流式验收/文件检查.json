@@ -1,0 +1,41 @@
+{
+  "images": [
+    {
+      "name": "03-文字生成中.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "04-工具执行中.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "05-工具后的说明.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "06-最终正文持续输出.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "07-最终完成.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "08-展开分析过程.png",
+      "width": 1920,
+      "height": 1080
+    }
+  ],
+  "video": {
+    "width": 1920,
+    "height": 1080,
+    "duration_seconds": 14.88
+  },
+  "checked_links": 10,
+  "errors": []
+}

@@ -52,7 +52,11 @@ function createAnalysisRuntime(dependencies: {
         }
       : {}),
     ...(dependencies.memory
-      ? { loadMemory: (context: AuthContext) => dependencies.memory!.snapshot(context) }
+      ? {
+          loadMemory: (context: AuthContext) => dependencies.memory!.snapshot(context),
+          loadMemoryFingerprint: (context: AuthContext) =>
+            dependencies.memory!.fingerprint(context),
+        }
       : {}),
     tools,
     harness,

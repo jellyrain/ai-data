@@ -8,6 +8,7 @@
     "node": ">=24.19.0 <25"
   },
   "scripts": {
+    "dev": "pnpm --parallel --filter @ai-data/api --filter @ai-data/data-access --filter @ai-data/web run dev",
     "dev:web": "pnpm --filter @ai-data/web dev",
     "dev:api": "pnpm --filter @ai-data/api dev",
     "dev:data-access": "pnpm --filter @ai-data/data-access dev",
@@ -23,10 +24,12 @@
     "test:release": "node scripts/test-release.mjs"
   },
   "devDependencies": {
-    "@eslint/js": "catalog:",
+    "@eslint/js": "^10.0.1",
     "eslint": "catalog:",
-    "eslint-config-prettier": "catalog:",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "10.11.1",
     "prettier": "catalog:",
-    "typescript-eslint": "catalog:"
+    "typescript-eslint": "^8.67.0",
+    "vue-eslint-parser": "10.4.1"
   }
 }

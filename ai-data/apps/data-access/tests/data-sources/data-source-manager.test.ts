@@ -22,6 +22,45 @@ const sourceConfig: DataSourceConfig = {
 
 // 用工厂创建次数、实例身份和关闭回调检查缓存生命周期，连接器替身不建立真实连接池。
 describe("运行时数据源管理器", () => {
+  it("凭据在连接初始化期间更新，旧结果不进入缓存", async () => {
+    let ready!: () => void;
+    const started = new Promise<void>((resolve) => {
+      ready = resolve;
+    });
+    let release!: () => void;
+    const waiting = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let count = 0,
+      closed = 0;
+    const manager = new DataSourceManager(
+      createSourceLookup(sourceConfig),
+      createSecretResolver(),
+      {
+        async create() {
+          count++;
+          if (count === 1) {
+            ready();
+            await waiting;
+          }
+          return createConnector(() => {
+            closed++;
+          });
+        },
+      },
+    );
+    const old = manager.get(sourceConfig.sourceId);
+    const rejected = expect(old).rejects.toThrow(/更新/);
+    await started;
+    const invalidation = manager.invalidateBySecretRef(sourceConfig.secretRef);
+    release();
+    await invalidation;
+    await rejected;
+    await manager.get(sourceConfig.sourceId);
+    expect(count).toBe(2);
+    expect(closed).toBe(1);
+    await manager.close();
+  });
   it("按 source_id 缓存连接器实例", async () => {
     const created: DataSourceConnector[] = [];
     const manager = new DataSourceManager(

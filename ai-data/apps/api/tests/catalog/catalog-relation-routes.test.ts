@@ -17,7 +17,11 @@ describe("批准关系 HTTP 入口", () => {
       })),
       publish: vi.fn(async () => []),
     };
-    registerCatalogRelationRoutes(app, { loadContext: async () => context }, service);
+    registerCatalogRelationRoutes(
+      app,
+      { loadContext: async () => context, refreshContext: async (value) => value },
+      service,
+    );
     const headers = { authorization: "Bearer token" };
     expect(
       (await app.inject({ url: "/admin/catalog/source/objects/a/relations", headers })).statusCode,

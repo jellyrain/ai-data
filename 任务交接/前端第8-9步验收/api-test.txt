@@ -1,0 +1,41 @@
+
+ RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/api
+
+{"level":30,"time":1790776316514,"service_id":"api-test","service_version":"1","reqId":"req-1","req":{"method":"GET","url":"/reports/report/sharing","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316632,"service_id":"api-test","service_version":"1","reqId":"req-1","req":{"method":"PUT","url":"/reports/report/sharing","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316531,"service_id":"api-test","service_version":"1","reqId":"req-1","res":{"statusCode":401},"responseTime":14.616900000000896,"msg":"request completed"}
+{"level":30,"time":1790776316534,"service_id":"api-test","service_version":"1","reqId":"req-2","req":{"method":"GET","url":"/reports/report/sharing","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316539,"service_id":"api-test","service_version":"1","reqId":"req-2","res":{"statusCode":200},"responseTime":5.153300000005402,"msg":"request completed"}
+{"level":30,"time":1790776316546,"service_id":"api-test","service_version":"1","reqId":"req-3","req":{"method":"GET","url":"/reports/report/share-candidates?search=%E7%A7%91&limit=20","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316549,"service_id":"api-test","service_version":"1","reqId":"req-3","res":{"statusCode":200},"responseTime":3.128499999998894,"msg":"request completed"}
+{"level":30,"time":1790776316551,"service_id":"api-test","service_version":"1","reqId":"req-4","req":{"method":"GET","url":"/reports/report/sharing?user_id=other","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316554,"service_id":"api-test","service_version":"1","reqId":"req-4","res":{"statusCode":400},"responseTime":2.708700000002864,"msg":"request completed"}
+{"level":30,"time":1790776316555,"service_id":"api-test","service_version":"1","reqId":"req-5","req":{"method":"GET","url":"/reports/report/share-candidates?organization_id=other","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316556,"service_id":"api-test","service_version":"1","reqId":"req-5","res":{"statusCode":400},"responseTime":1.599499999996624,"msg":"request completed"}
+{"level":30,"time":1790776316557,"service_id":"api-test","service_version":"1","reqId":"req-6","req":{"method":"GET","url":"/reports/report/share-candidates?limit=101","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316559,"service_id":"api-test","service_version":"1","reqId":"req-6","res":{"statusCode":400},"responseTime":1.3173999999999069,"msg":"request completed"}
+{"level":30,"time":1790776316639,"service_id":"api-test","service_version":"1","reqId":"req-1","res":{"statusCode":200},"responseTime":6.260299999994459,"msg":"request completed"}
+{"level":30,"time":1790776316640,"service_id":"api-test","service_version":"1","reqId":"req-2","req":{"method":"PUT","url":"/reports/report/sharing","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316691,"service_id":"api-test","service_version":"1","reqId":"req-1","req":{"method":"GET","url":"/reports/report/export-content?version=2","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316729,"service_id":"api-test","service_version":"1","reqId":"req-1","req":{"method":"GET","url":"/conversations/conversation/export-content","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316649,"service_id":"api-test","service_version":"1","reqId":"req-2","res":{"statusCode":401},"responseTime":9.365600000004633,"msg":"request completed"}
+{"level":30,"time":1790776316693,"service_id":"api-test","service_version":"1","reqId":"req-1","res":{"statusCode":200},"responseTime":1.8140999999959604,"msg":"request completed"}
+{"level":30,"time":1790776316695,"service_id":"api-test","service_version":"1","reqId":"req-2","req":{"method":"GET","url":"/reports/report/export-content?version=2","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316696,"service_id":"api-test","service_version":"1","reqId":"req-2","res":{"statusCode":401},"responseTime":1.0864000000001397,"msg":"request completed"}
+{"level":30,"time":1790776316730,"service_id":"api-test","service_version":"1","reqId":"req-1","res":{"statusCode":200},"responseTime":1.0137000000031549,"msg":"request completed"}
+{"level":30,"time":1790776316731,"service_id":"api-test","service_version":"1","reqId":"req-2","req":{"method":"GET","url":"/conversations/conversation/export-content","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776316731,"service_id":"api-test","service_version":"1","reqId":"req-2","res":{"statusCode":401},"responseTime":0.547100000003411,"msg":"request completed"}
+{"level":30,"time":1790776320952,"service_id":"api-test","service_version":"1","reqId":"req-1","req":{"method":"GET","url":"/reports/report/revisions/run","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776320967,"service_id":"api-test","service_version":"1","reqId":"req-1","res":{"statusCode":401},"responseTime":12.479800000000978,"msg":"request completed"}
+{"level":30,"time":1790776320970,"service_id":"api-test","service_version":"1","reqId":"req-2","req":{"method":"GET","url":"/reports/report/revisions/run?user_id=other","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776320976,"service_id":"api-test","service_version":"1","reqId":"req-2","res":{"statusCode":400},"responseTime":6.189800000000105,"msg":"request completed"}
+{"level":30,"time":1790776320977,"service_id":"api-test","service_version":"1","reqId":"req-3","req":{"method":"GET","url":"/reports/report/revisions/run","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776320978,"service_id":"api-test","service_version":"1","reqId":"req-3","res":{"statusCode":200},"responseTime":1.1565999999947962,"msg":"request completed"}
+{"level":30,"time":1790776320984,"service_id":"api-test","service_version":"1","reqId":"req-4","req":{"method":"GET","url":"/reports/report/revisions/run","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790776320985,"service_id":"api-test","service_version":"1","reqId":"req-4","res":{"statusCode":404},"responseTime":1.1800999999977648,"msg":"request completed"}
+
+ Test Files  86 passed (86)
+      Tests  667 passed (667)
+   Start at  21:51:08
+   Duration  133.64s (transform 4.20s, setup 0ms, import 53.43s, tests 38.02s, environment 25ms)
+

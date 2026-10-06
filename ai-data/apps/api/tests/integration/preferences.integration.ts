@@ -207,4 +207,33 @@ describe("SQL Server：账号记忆事务与确认", () => {
       ),
     ).toBe(false);
   });
+
+  it("删除版本基准可重新读取，恢复偏好仍受并发版本和账号隔离约束", async () => {
+    const key = "web-restore",
+      input = { ...preferenceInput, key, expected_version: 0, idempotency_key: "web-create" };
+    await service.save(preferenceUser, input, { origin: "user" });
+    await service.delete(preferenceUser, key, {
+      expected_version: 1,
+      idempotency_key: "web-delete",
+    });
+    const restored = createService();
+    expect(await restored.editState(preferenceUser, key)).toEqual({
+      status: "deleted",
+      version: 2,
+    });
+    expect(await restored.editState({ ...preferenceUser, userId: "other" }, key)).toEqual({
+      status: "missing",
+      version: 0,
+    });
+    await expect(
+      restored.save(preferenceUser, { ...input, idempotency_key: "stale" }, { origin: "user" }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(
+      await restored.save(
+        preferenceUser,
+        { ...input, expected_version: 2, idempotency_key: "web-restore" },
+        { origin: "user" },
+      ),
+    ).toMatchObject({ status: "saved", preference: { version: 3 } });
+  });
 });

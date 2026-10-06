@@ -1,0 +1,47 @@
+
+Running 1 test using 1 worker
+
+(node:56816) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › tests\e2e\management.spec.ts:178:1 › 发布关系后两端节点在各宽度下完整可见 (15.8s)
+
+
+  1) [chromium] › tests\e2e\management.spec.ts:178:1 › 发布关系后两端节点在各宽度下完整可见 ──────────────────────────
+
+    Error: 关系两端完整可见：1440px
+
+    关系两端完整可见：1440px
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+    Call Log:
+    - Timeout 8000ms exceeded while waiting on the predicate
+
+      207 |         return rect.width > 0 && rect.left >= bounds.left && rect.right <= bounds.right && rect.top >= bounds.top && rect.bottom <= bounds.bottom;
+      208 |       });
+    > 209 |     }), { message: `关系两端完整可见：${width}px` }).toBe(true);
+          |                                             ^
+      210 |   }
+      211 |   await page.setViewportSize({ width: 1440, height: 900 });
+      212 |   await graph.screenshot({ path: `${evidence}/relations-graph-light.png` });
+        at D:\porject_new_2026\ai-data\ai-data\apps\web\tests\e2e\management.spec.ts:209:45
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\management-发布关系后两端节点在各宽度下完整可见-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\management-发布关系后两端节点在各宽度下完整可见-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\management-发布关系后两端节点在各宽度下完整可见-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\management-发布关系后两端节点在各宽度下完整可见-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests\e2e\management.spec.ts:178:1 › 发布关系后两端节点在各宽度下完整可见 ───────────────────────────

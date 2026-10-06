@@ -16,34 +16,42 @@ const statusSchema = z.object({ enabled: z.boolean() }).strict();
 /** Agent 发布、读取和启停 HTTP 边界。 */
 function registerAgentRoutes(
   app: FastifyInstance,
-  auth: Pick<ApiAuthService, "loadContext">,
+  auth: Pick<ApiAuthService, "loadContext" | "refreshContext">,
   service: Pick<AgentService, "publish" | "get" | "list" | "setEnabled">,
 ): void {
   app.post("/agents", async (request, reply) =>
     reply
+      .header("cache-control", "no-store")
       .code(201)
-      .send(await service.publish(await auth.loadContext(bearerToken(request)), request.body)),
+      .send(
+        await service.publish(
+          await auth.refreshContext(await auth.loadContext(bearerToken(request))),
+          request.body,
+        ),
+      ),
   );
-  app.get("/agents", async (request) => {
-    const context = await auth.loadContext(bearerToken(request));
+  app.get("/agents", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
     listSchema.parse(request.query);
     return { items: await service.list(context) };
   });
-  app.get("/agents/:id", async (request) =>
-    service.get(
-      await auth.loadContext(bearerToken(request)),
+  app.get("/agents/:id", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    return service.get(
+      await auth.refreshContext(await auth.loadContext(bearerToken(request))),
       paramsSchema.parse(request.params).id,
       versionSchema.parse(request.query).version,
-    ),
-  );
+    );
+  });
   app.patch("/agents/:id/status", async (request, reply) => {
-    const context = await auth.loadContext(bearerToken(request));
+    const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
     await service.setEnabled(
       context,
       paramsSchema.parse(request.params).id,
       statusSchema.parse(request.body).enabled,
     );
-    return reply.code(204).send();
+    return reply.header("cache-control", "no-store").code(204).send();
   });
 }
 

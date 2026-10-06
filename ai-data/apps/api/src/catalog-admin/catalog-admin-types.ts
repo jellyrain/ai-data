@@ -24,6 +24,12 @@ type RoleAuthorization = Pick<
 >;
 /** 管理服务依赖的事务写入、版本读取及角色归属校验能力。 */
 interface CatalogAdminRepository {
+  /** 读取实际权限表的一致快照与最近角色版本。 */
+  currentState(
+    organizationId: string,
+    sourceId: string,
+    roleId: string,
+  ): Promise<{ version: number; snapshot: PolicySnapshot }>;
   loadRoleAuthorization(organizationId: string, roleId: string): Promise<RoleAuthorization | null>;
   saveChange(
     context: AuthContext,

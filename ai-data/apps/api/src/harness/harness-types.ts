@@ -16,6 +16,8 @@ type HarnessRequest = {
   onThreadStarted: (threadId: string) => Promise<void>;
   /** 官方压缩事件在返回最终结果前按顺序交由 API 持久化。 */
   onCompaction?: (event: HarnessCompaction) => Promise<void>;
+  /** 合并后的助手文字与工具共用有序提交队列。 */
+  onMessage?: (event: HarnessMessage) => Promise<void>;
   input: string;
   instructions: string;
   tools: HarnessTool[];
@@ -32,13 +34,26 @@ type HarnessConfiguration = {
   skills: SkillResources;
   timeoutMs: number;
   contextWindow?: number;
+  /** 按有效窗口计算的官方自动压缩触发点。 */
+  autoCompactTokenLimit?: number;
 };
 
 /** 官方上下文压缩条目的实际生命周期。 */
 type HarnessCompaction = { itemId: string; status: "started" | "completed" };
 
 /** 模型执行的正常结束状态；失败与取消通过已分类异常返回。 */
-type HarnessResult = { status: "completed"; content: string } | { status: "waiting_clarification" };
+type HarnessResult =
+  | { status: "completed"; content: string; messageId?: string }
+  | { status: "waiting_clarification" };
+
+/** 仅公开 agentMessage 正文，不消费 reasoning 通知。 */
+type HarnessMessage = {
+  itemId: string;
+  phase?: "commentary" | "final_answer";
+  status: "started" | "delta" | "completed";
+  content: string;
+};
+type HarnessMessageState = { content: string; phase?: HarnessMessage["phase"]; completed: boolean };
 
 /** 分析执行器依赖的官方 Harness 适配边界。 */
 interface AnalysisHarness {
@@ -63,6 +78,7 @@ type CodexHarnessOptions = {
   /** 独立调用省略时使用 180 秒；Agent 运行使用自身的固定预算。 */
   timeoutMs?: number;
   contextWindow?: number;
+  autoCompactTokenLimit?: number;
 };
 
 export type {
@@ -70,6 +86,8 @@ export type {
   HarnessToolResult,
   HarnessRequest,
   HarnessCompaction,
+  HarnessMessage,
+  HarnessMessageState,
   HarnessResult,
   AnalysisHarness,
   CodexModelProviderConfig,

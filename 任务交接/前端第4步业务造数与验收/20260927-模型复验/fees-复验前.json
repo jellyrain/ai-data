@@ -1,0 +1,799 @@
+{
+  "kind": "fees",
+  "prompt": "请查询 clinical-demo 数据源，统计2026年1月1日至9月27日的住院有效费用，按费用发生时间和费用分类汇总金额。金额字段单位是分，请在回答中换算成元，保留冲销负数。给出各分类费用和合计，并说明费用与支付流水的区别。",
+  "receipts": [
+    {
+      "message": {
+        "id": "4f9cee06-2e9e-4423-8619-42efee664e2e",
+        "conversationId": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+        "role": "user",
+        "content": "请查询 clinical-demo 数据源，统计2026年1月1日至9月27日的住院有效费用，按费用发生时间和费用分类汇总金额。金额字段单位是分，请在回答中换算成元，保留冲销负数。给出各分类费用和合计，并说明费用与支付流水的区别。",
+        "sequence": 0,
+        "createdAt": "2026-09-27T11:35:16.575Z"
+      },
+      "analysisRun": {
+        "id": "ac776310-7725-45b7-9609-4b865f729980",
+        "conversationId": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+        "organizationId": "organization-001",
+        "userId": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+        "status": "created",
+        "errorCode": null,
+        "errorMessage": null,
+        "startedAt": null,
+        "completedAt": null,
+        "createdAt": "2026-09-27T11:35:16.575Z"
+      }
+    }
+  ],
+  "runs": [
+    {
+      "id": "ac776310-7725-45b7-9609-4b865f729980",
+      "state": {
+        "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+        "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+        "organization_id": "organization-001",
+        "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+        "agent_id": "default",
+        "agent_version": 1,
+        "status": "failed",
+        "created_at": "2026-09-27 19:35:16",
+        "updated_at": "2026-09-27 19:39:33",
+        "lease_epoch": 1,
+        "lease": null,
+        "sequence": 24,
+        "clarification": null,
+        "evidence_ids": [
+          "e6b5161b-475c-443c-a2e3-08efb31898ad",
+          "bef74d98-2e91-4c90-9df7-354194d6d138"
+        ],
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "分析执行失败"
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "bef74d98-2e91-4c90-9df7-354194d6d138",
+          "tool_call_id": "398d879168959088763df41976c78b243e44f7824f27529f8536295427b4711f-total",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "organization_id": "organization-001",
+          "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+          "created_at": "2026-09-27 19:37:46",
+          "requested_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.departments",
+                "alias": "d",
+                "on": [
+                  {
+                    "left": "t.department_id",
+                    "op": "eq",
+                    "right": "d.department_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_items",
+                "alias": "i",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_categories",
+                "alias": "c",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": [
+                {
+                  "logic": "and",
+                  "items": []
+                },
+                {
+                  "field": "t.charged_at",
+                  "op": "between",
+                  "data_type": "datetime",
+                  "value": [
+                    "2026-01-01 00:00:00",
+                    "2026-09-27 23:59:59"
+                  ]
+                }
+              ]
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 1
+          },
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.departments",
+                "alias": "d",
+                "on": [
+                  {
+                    "left": "t.department_id",
+                    "op": "eq",
+                    "right": "d.department_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_items",
+                "alias": "i",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_categories",
+                "alias": "c",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": [
+                {
+                  "logic": "and",
+                  "items": []
+                },
+                {
+                  "field": "t.charged_at",
+                  "op": "between",
+                  "data_type": "datetime",
+                  "value": [
+                    "2026-01-01 00:00:00",
+                    "2026-09-27 23:59:59"
+                  ]
+                }
+              ]
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 1
+          },
+          "output_masks": [],
+          "metric": {
+            "metric_id": "demo-inpatient-fees",
+            "version": 2
+          },
+          "result": {
+            "columns": [
+              {
+                "name": "amount_cents",
+                "data_type": "integer"
+              }
+            ],
+            "rows": [
+              {
+                "amount_cents": 226315800
+              }
+            ],
+            "row_count": 1,
+            "truncated": false,
+            "delivery": {
+              "status": "complete",
+              "total_row_count": 1
+            }
+          }
+        },
+        {
+          "evidence_id": "e6b5161b-475c-443c-a2e3-08efb31898ad",
+          "tool_call_id": "398d879168959088763df41976c78b243e44f7824f27529f8536295427b4711f-groups",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "organization_id": "organization-001",
+          "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+          "created_at": "2026-09-27 19:37:46",
+          "requested_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.departments",
+                "alias": "d",
+                "on": [
+                  {
+                    "left": "t.department_id",
+                    "op": "eq",
+                    "right": "d.department_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_items",
+                "alias": "i",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_categories",
+                "alias": "c",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "c.name",
+                "as": "dimension_0"
+              },
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": [
+                {
+                  "logic": "and",
+                  "items": []
+                },
+                {
+                  "field": "t.charged_at",
+                  "op": "between",
+                  "data_type": "datetime",
+                  "value": [
+                    "2026-01-01 00:00:00",
+                    "2026-09-27 23:59:59"
+                  ]
+                }
+              ]
+            },
+            "group_by": [
+              "c.name"
+            ],
+            "order_by": [
+              {
+                "field": "c.name",
+                "direction": "asc"
+              }
+            ],
+            "limit": 5000
+          },
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.departments",
+                "alias": "d",
+                "on": [
+                  {
+                    "left": "t.department_id",
+                    "op": "eq",
+                    "right": "d.department_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_items",
+                "alias": "i",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_categories",
+                "alias": "c",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "c.name",
+                "as": "dimension_0"
+              },
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": [
+                {
+                  "logic": "and",
+                  "items": []
+                },
+                {
+                  "field": "t.charged_at",
+                  "op": "between",
+                  "data_type": "datetime",
+                  "value": [
+                    "2026-01-01 00:00:00",
+                    "2026-09-27 23:59:59"
+                  ]
+                }
+              ]
+            },
+            "group_by": [
+              "c.name"
+            ],
+            "order_by": [
+              {
+                "field": "c.name",
+                "direction": "asc"
+              }
+            ],
+            "limit": 5000
+          },
+          "output_masks": [],
+          "metric": {
+            "metric_id": "demo-inpatient-fees",
+            "version": 2
+          },
+          "result": {
+            "columns": [
+              {
+                "name": "dimension_0",
+                "data_type": "string"
+              },
+              {
+                "name": "amount_cents",
+                "data_type": "integer"
+              }
+            ],
+            "rows": [
+              {
+                "dimension_0": "材料",
+                "amount_cents": 22773200
+              },
+              {
+                "dimension_0": "床位",
+                "amount_cents": 22682080
+              },
+              {
+                "dimension_0": "护理",
+                "amount_cents": 22595080
+              },
+              {
+                "dimension_0": "检查",
+                "amount_cents": 22579880
+              },
+              {
+                "dimension_0": "检验",
+                "amount_cents": 22794760
+              },
+              {
+                "dimension_0": "其他",
+                "amount_cents": 22674760
+              },
+              {
+                "dimension_0": "手术",
+                "amount_cents": 22512200
+              },
+              {
+                "dimension_0": "药品",
+                "amount_cents": 22495880
+              },
+              {
+                "dimension_0": "诊察",
+                "amount_cents": 22587760
+              },
+              {
+                "dimension_0": "治疗",
+                "amount_cents": 22620200
+              }
+            ],
+            "row_count": 10,
+            "truncated": false,
+            "delivery": {
+              "status": "complete",
+              "total_row_count": 10
+            }
+          }
+        }
+      ],
+      "events": [
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 1,
+          "lease_epoch": 1,
+          "type": "run_started"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 2,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "09ea7f1ed592a3cff57278db13ae47c5a623dc652a7b5cc4044046abeabcd6b5",
+          "tool_name": "describe_metric",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 3,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "09ea7f1ed592a3cff57278db13ae47c5a623dc652a7b5cc4044046abeabcd6b5",
+          "tool_name": "describe_metric",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 4,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "9c78ee3ae13b2bed28979997c5f05bf458b67d76b819d7c8c36451802d602693",
+          "tool_name": "read_skill_reference",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 5,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "9c78ee3ae13b2bed28979997c5f05bf458b67d76b819d7c8c36451802d602693",
+          "tool_name": "read_skill_reference",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 6,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "b47169429ac5639d4f1c0220e9a89b78754ff67166f23ebbc107a67fe5a5de81",
+          "tool_name": "search_catalog",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 7,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "b47169429ac5639d4f1c0220e9a89b78754ff67166f23ebbc107a67fe5a5de81",
+          "tool_name": "search_catalog",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 8,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "6d3c9f304fb63d035a1f5760b5362ce06c5f65c2ae3d1e9b6f0d8a7f4d5e116f",
+          "tool_name": "query_metric",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 9,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "6d3c9f304fb63d035a1f5760b5362ce06c5f65c2ae3d1e9b6f0d8a7f4d5e116f",
+          "tool_name": "query_metric",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 10,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "7ad3824bb3723ef600c185f74944bbfc2e0dc7c656f0e01a99c1f1bcf2aae971",
+          "tool_name": "list_datasets",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 11,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "7ad3824bb3723ef600c185f74944bbfc2e0dc7c656f0e01a99c1f1bcf2aae971",
+          "tool_name": "list_datasets",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 12,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "208d34f4ba69decc0ff83b08e15b0c32b90c009af48183cf584bf51ca54ee2f1",
+          "tool_name": "query_metric",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 13,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "398d879168959088763df41976c78b243e44f7824f27529f8536295427b4711f-groups",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "返回 10 行"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 14,
+          "lease_epoch": 1,
+          "type": "table",
+          "evidence_id": "e6b5161b-475c-443c-a2e3-08efb31898ad",
+          "columns": [
+            {
+              "name": "dimension_0",
+              "data_type": "string"
+            },
+            {
+              "name": "amount_cents",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "dimension_0": "材料",
+              "amount_cents": 22773200
+            },
+            {
+              "dimension_0": "床位",
+              "amount_cents": 22682080
+            },
+            {
+              "dimension_0": "护理",
+              "amount_cents": 22595080
+            },
+            {
+              "dimension_0": "检查",
+              "amount_cents": 22579880
+            },
+            {
+              "dimension_0": "检验",
+              "amount_cents": 22794760
+            },
+            {
+              "dimension_0": "其他",
+              "amount_cents": 22674760
+            },
+            {
+              "dimension_0": "手术",
+              "amount_cents": 22512200
+            },
+            {
+              "dimension_0": "药品",
+              "amount_cents": 22495880
+            },
+            {
+              "dimension_0": "诊察",
+              "amount_cents": 22587760
+            },
+            {
+              "dimension_0": "治疗",
+              "amount_cents": 22620200
+            }
+          ],
+          "result_row_count": 10,
+          "result_truncated": false,
+          "sampled": false
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 15,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "398d879168959088763df41976c78b243e44f7824f27529f8536295427b4711f-total",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "返回 1 行"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 16,
+          "lease_epoch": 1,
+          "type": "table",
+          "evidence_id": "bef74d98-2e91-4c90-9df7-354194d6d138",
+          "columns": [
+            {
+              "name": "amount_cents",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "amount_cents": 226315800
+            }
+          ],
+          "result_row_count": 1,
+          "result_truncated": false,
+          "sampled": false
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 17,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "208d34f4ba69decc0ff83b08e15b0c32b90c009af48183cf584bf51ca54ee2f1",
+          "tool_name": "query_metric",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 18,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "734fcde6ddc9372a9d56a77a20b80e86d8fecb179873d82834d9b4ab6f0f24a0",
+          "tool_name": "search_catalog",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 19,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "734fcde6ddc9372a9d56a77a20b80e86d8fecb179873d82834d9b4ab6f0f24a0",
+          "tool_name": "search_catalog",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 20,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "f2bc9e698ad7cda2ef651b6996ca3cc555b492078ddc5f5297bc26764cf0680f",
+          "tool_name": "search_catalog",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 21,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "f2bc9e698ad7cda2ef651b6996ca3cc555b492078ddc5f5297bc26764cf0680f",
+          "tool_name": "search_catalog",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 22,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "c6158870a75715b8ac8006a98c2e72b385dce4b233fee804a7bf37017fb83efe",
+          "tool_name": "search_catalog",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 23,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "c6158870a75715b8ac8006a98c2e72b385dce4b233fee804a7bf37017fb83efe",
+          "tool_name": "search_catalog",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "e862f8cc-bdf8-4818-9e03-ecc4c0f514fb",
+          "analysis_run_id": "ac776310-7725-45b7-9609-4b865f729980",
+          "sequence": 24,
+          "lease_epoch": 1,
+          "type": "run_failed",
+          "code": "INTERNAL_ERROR",
+          "message": "分析执行失败"
+        }
+      ]
+    }
+  ],
+  "page_errors": [],
+  "sse": [
+    200
+  ]
+}

@@ -1,0 +1,41 @@
+
+ RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/data-access
+
+ ❯ tests/data-sources/data-source-manager.test.ts (6 tests | 1 failed) 21ms
+     × 凭据在连接初始化期间更新，旧结果不进入缓存 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/data-sources/data-source-manager.test.ts > 运行时数据源管理器 > 凭据在连接初始化期间更新，旧结果不进入缓存
+AssertionError: promise resolved "{ sourceId: 'clinical_reporting', …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "checkHealth": [Function checkHealth],
++   "close": [Function close],
++   "discoverCatalog": [Function discoverCatalog],
++   "execute": [Function execute],
++   "kind": "sqlserver",
++   "sourceId": "clinical_reporting",
+  }
+
+ ❯ tests/data-sources/data-source-manager.test.ts:39:33
+     37|     });
+     38|     const old = manager.get(sourceConfig.sourceId);
+     39|     const rejected = expect(old).rejects.toThrow(/更新/);
+       |                                 ^
+     40|     await started;
+     41|     const invalidation = manager.invalidateBySecretRef(sourceConfig.se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 12 passed (13)
+   Start at  11:01:38
+   Duration  1.70s (transform 602ms, setup 0ms, import 1.45s, tests 37ms, environment 0ms)
+

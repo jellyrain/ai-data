@@ -1,0 +1,429 @@
+{
+  "measurement": "token 来自模型 usage；体积为逐条 JSON 的 UTF-8 字节。输出只包含计量和公开工具失败信息。",
+  "before": {
+    "initial_input_tokens": 11365,
+    "tool_bytes": 37925,
+    "auto_compact_token_limit": 244800
+  },
+  "after": [
+    {
+      "rollout_file": "rollout-2026-09-27T22-55-35-01a0e35d-42a5-7f60-9e5a-f530a9f6cd66.jsonl",
+      "configured_context_window": {
+        "window_id": "01a0e35d-42a5-7f60-9e5a-f5474854bd53"
+      },
+      "initial_input_tokens": 5190,
+      "last_usage": {
+        "input_tokens": 14543,
+        "cached_input_tokens": 13934,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1623,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 16166
+      },
+      "tools_count": 19,
+      "tool_bytes": 11175,
+      "tools": [
+        {
+          "name": "get_tool_schema",
+          "bytes": 485
+        },
+        {
+          "name": "get_report_definition",
+          "bytes": 400
+        },
+        {
+          "name": "save_report_definition",
+          "bytes": 662
+        },
+        {
+          "name": "get_report_execution",
+          "bytes": 404
+        },
+        {
+          "name": "get_user_preferences",
+          "bytes": 347
+        },
+        {
+          "name": "save_user_preference",
+          "bytes": 712
+        },
+        {
+          "name": "get_published_knowledge",
+          "bytes": 924
+        },
+        {
+          "name": "create_knowledge_candidate",
+          "bytes": 638
+        },
+        {
+          "name": "read_skill_reference",
+          "bytes": 549
+        },
+        {
+          "name": "list_sources",
+          "bytes": 243
+        },
+        {
+          "name": "search_catalog",
+          "bytes": 520
+        },
+        {
+          "name": "list_datasets",
+          "bytes": 453
+        },
+        {
+          "name": "describe_dataset",
+          "bytes": 383
+        },
+        {
+          "name": "query_dataset",
+          "bytes": 539
+        },
+        {
+          "name": "list_metrics",
+          "bytes": 535
+        },
+        {
+          "name": "describe_metric",
+          "bytes": 406
+        },
+        {
+          "name": "query_metric",
+          "bytes": 675
+        },
+        {
+          "name": "request_clarification",
+          "bytes": 754
+        },
+        {
+          "name": "save_report",
+          "bytes": 1546
+        }
+      ],
+      "initial_prompt_bytes": 913,
+      "initial_memory_bytes": 545,
+      "initial_knowledge_count": 0,
+      "calls": [
+        {
+          "name": "list_sources",
+          "arguments_bytes": 2
+        },
+        {
+          "name": "search_catalog",
+          "arguments_bytes": 53
+        },
+        {
+          "name": "get_published_knowledge",
+          "arguments_bytes": 83
+        },
+        {
+          "name": "describe_dataset",
+          "arguments_bytes": 78
+        },
+        {
+          "name": "describe_dataset",
+          "arguments_bytes": 71
+        },
+        {
+          "name": "get_published_knowledge",
+          "arguments_bytes": 46
+        },
+        {
+          "name": "get_published_knowledge",
+          "arguments_bytes": 50
+        },
+        {
+          "name": "describe_dataset",
+          "arguments_bytes": 66
+        },
+        {
+          "name": "query_metric",
+          "arguments_bytes": 111
+        },
+        {
+          "name": "query_metric",
+          "arguments_bytes": 111
+        },
+        {
+          "name": "query_metric",
+          "arguments_bytes": 87
+        },
+        {
+          "name": "read_skill_reference",
+          "arguments_bytes": 77
+        },
+        {
+          "name": "query_metric",
+          "arguments_bytes": 129
+        },
+        {
+          "name": "describe_dataset",
+          "arguments_bytes": 72
+        }
+      ],
+      "output_bytes": 18374,
+      "errors": [
+        {
+          "code": "INVALID_INPUT",
+          "message": "指标时间类型或统计维度不符合定义"
+        },
+        {
+          "code": "INVALID_INPUT",
+          "message": "指标时间类型或统计维度不符合定义"
+        },
+        {
+          "code": "INVALID_INPUT",
+          "message": "指标时间类型或统计维度不符合定义"
+        }
+      ]
+    },
+    {
+      "rollout_file": "rollout-2026-09-27T22-59-14-01a0e360-9ab2-7963-b65f-836186cb9666.jsonl",
+      "configured_context_window": {
+        "window_id": "01a0e360-9ab2-7963-b65f-837f1d806262"
+      },
+      "initial_input_tokens": 5161,
+      "last_usage": {
+        "input_tokens": 8333,
+        "cached_input_tokens": 8122,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 491,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 8824
+      },
+      "tools_count": 19,
+      "tool_bytes": 11175,
+      "tools": [
+        {
+          "name": "get_tool_schema",
+          "bytes": 485
+        },
+        {
+          "name": "get_report_definition",
+          "bytes": 400
+        },
+        {
+          "name": "save_report_definition",
+          "bytes": 662
+        },
+        {
+          "name": "get_report_execution",
+          "bytes": 404
+        },
+        {
+          "name": "get_user_preferences",
+          "bytes": 347
+        },
+        {
+          "name": "save_user_preference",
+          "bytes": 712
+        },
+        {
+          "name": "get_published_knowledge",
+          "bytes": 924
+        },
+        {
+          "name": "create_knowledge_candidate",
+          "bytes": 638
+        },
+        {
+          "name": "read_skill_reference",
+          "bytes": 549
+        },
+        {
+          "name": "list_sources",
+          "bytes": 243
+        },
+        {
+          "name": "search_catalog",
+          "bytes": 520
+        },
+        {
+          "name": "list_datasets",
+          "bytes": 453
+        },
+        {
+          "name": "describe_dataset",
+          "bytes": 383
+        },
+        {
+          "name": "query_dataset",
+          "bytes": 539
+        },
+        {
+          "name": "list_metrics",
+          "bytes": 535
+        },
+        {
+          "name": "describe_metric",
+          "bytes": 406
+        },
+        {
+          "name": "query_metric",
+          "bytes": 675
+        },
+        {
+          "name": "request_clarification",
+          "bytes": 754
+        },
+        {
+          "name": "save_report",
+          "bytes": 1546
+        }
+      ],
+      "initial_prompt_bytes": 829,
+      "initial_memory_bytes": 545,
+      "initial_knowledge_count": 0,
+      "calls": [
+        {
+          "name": "list_sources",
+          "arguments_bytes": 2
+        },
+        {
+          "name": "get_tool_schema",
+          "arguments_bytes": 29
+        },
+        {
+          "name": "search_catalog",
+          "arguments_bytes": 70
+        },
+        {
+          "name": "describe_dataset",
+          "arguments_bytes": 71
+        },
+        {
+          "name": "query_dataset",
+          "arguments_bytes": 375
+        },
+        {
+          "name": "query_dataset",
+          "arguments_bytes": 371
+        }
+      ],
+      "output_bytes": 8001,
+      "errors": [
+        {
+          "code": "INVALID_INPUT",
+          "message": "工具调用失败，请检查业务条件",
+          "issues": [
+            {
+              "path": "query.select.0.as",
+              "message": "Invalid string: must match pattern /^[A-Za-z_][A-Za-z0-9_.]*$/"
+            },
+            {
+              "path": "query.select.1.as",
+              "message": "Invalid string: must match pattern /^[A-Za-z_][A-Za-z0-9_.]*$/"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rollout_file": "rollout-2026-09-27T23-00-42-01a0e361-f227-79d3-8c5e-b755039e8a78.jsonl",
+      "configured_context_window": {
+        "window_id": "01a0e361-f227-79d3-8c5e-b76ab48f4b53"
+      },
+      "initial_input_tokens": 5141,
+      "last_usage": {
+        "input_tokens": 5214,
+        "cached_input_tokens": 5190,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 63,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 5277
+      },
+      "tools_count": 19,
+      "tool_bytes": 11175,
+      "tools": [
+        {
+          "name": "get_tool_schema",
+          "bytes": 485
+        },
+        {
+          "name": "get_report_definition",
+          "bytes": 400
+        },
+        {
+          "name": "save_report_definition",
+          "bytes": 662
+        },
+        {
+          "name": "get_report_execution",
+          "bytes": 404
+        },
+        {
+          "name": "get_user_preferences",
+          "bytes": 347
+        },
+        {
+          "name": "save_user_preference",
+          "bytes": 712
+        },
+        {
+          "name": "get_published_knowledge",
+          "bytes": 924
+        },
+        {
+          "name": "create_knowledge_candidate",
+          "bytes": 638
+        },
+        {
+          "name": "read_skill_reference",
+          "bytes": 549
+        },
+        {
+          "name": "list_sources",
+          "bytes": 243
+        },
+        {
+          "name": "search_catalog",
+          "bytes": 520
+        },
+        {
+          "name": "list_datasets",
+          "bytes": 453
+        },
+        {
+          "name": "describe_dataset",
+          "bytes": 383
+        },
+        {
+          "name": "query_dataset",
+          "bytes": 539
+        },
+        {
+          "name": "list_metrics",
+          "bytes": 535
+        },
+        {
+          "name": "describe_metric",
+          "bytes": 406
+        },
+        {
+          "name": "query_metric",
+          "bytes": 675
+        },
+        {
+          "name": "request_clarification",
+          "bytes": 754
+        },
+        {
+          "name": "save_report",
+          "bytes": 1546
+        }
+      ],
+      "initial_prompt_bytes": 716,
+      "initial_memory_bytes": 545,
+      "initial_knowledge_count": 0,
+      "calls": [
+        {
+          "name": "list_sources",
+          "arguments_bytes": 2
+        }
+      ],
+      "output_bytes": 41,
+      "errors": []
+    }
+  ],
+  "fees_initial_token_reduction_percent": 54.3
+}

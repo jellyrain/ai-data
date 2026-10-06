@@ -37,6 +37,8 @@ type ExecutorDependencies = {
   instructions: string;
   runtimeKey?: string;
   loadMemory?: (context: AuthContext) => Promise<unknown>;
+  /** 所有当前可见知识的版本元信息，只用于恢复授权复核，不作为模型正文。 */
+  loadMemoryFingerprint?: (context: AuthContext) => Promise<unknown>;
   loadReportContext?: (context: AuthContext, runId: string) => Promise<unknown>;
   heartbeatMs?: number;
   maxToolCalls?: number;

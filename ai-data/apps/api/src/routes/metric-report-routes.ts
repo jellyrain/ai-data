@@ -18,9 +18,12 @@ function registerMetricReportRoutes(
   services: ApiAnalysisServices,
   knowledge: Pick<KnowledgeService, "submitMetric">,
 ): void {
-  app.get("/metrics", async (request) => ({
-    items: await services.metrics.list(await auth.loadContext(bearerToken(request))),
-  }));
+  app.get("/metrics", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
+    z.object({}).strict().parse(request.query);
+    return { items: await services.metrics.list(context) };
+  });
   app.post("/admin/metrics", async (request, reply) =>
     reply
       .code(201)
@@ -28,13 +31,15 @@ function registerMetricReportRoutes(
         await knowledge.submitMetric(await auth.loadContext(bearerToken(request)), request.body),
       ),
   );
-  app.get("/metrics/:id", async (request) =>
-    services.metrics.get(
-      await auth.loadContext(bearerToken(request)),
+  app.get("/metrics/:id", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
+    return services.metrics.get(
+      context,
       paramsSchema.parse(request.params).id,
       versionSchema.parse(request.query).version,
-    ),
-  );
+    );
+  });
   app.post("/metrics/:id/execute", async (request) =>
     services.metrics.execute(
       await auth.loadContext(bearerToken(request)),

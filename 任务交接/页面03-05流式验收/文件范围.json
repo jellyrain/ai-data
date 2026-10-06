@@ -1,0 +1,47 @@
+{
+  "api": [
+    "ai-data/apps/api/src/harness/codex-analysis-harness.ts",
+    "ai-data/apps/api/src/harness/codex-session-router.ts",
+    "ai-data/apps/api/src/harness/harness-types.ts",
+    "ai-data/apps/api/src/analysis-runs/analysis-run-service.ts",
+    "ai-data/apps/api/src/runtime/analysis-executor.ts",
+    "ai-data/apps/api/src/routes/analysis-routes.ts",
+    "ai-data/apps/api/src/app-types.ts",
+    "ai-data/apps/api/tests/harness/codex-message-stream.test.ts",
+    "ai-data/apps/api/tests/harness/fixtures/app-server.mjs",
+    "ai-data/apps/api/tests/harness/fixtures/agent-app-server.mjs",
+    "ai-data/apps/api/tests/runtime/analysis-executor.test.ts",
+    "ai-data/apps/api/tests/analysis-runs/analysis-run-service.test.ts",
+    "ai-data/apps/api/tests/routes/analysis-routes.test.ts",
+    "ai-data/apps/api/tests/support/web-analysis-fixture.ts",
+    "ai-data/apps/api/tests/integration/analysis.integration.ts",
+    "ai-data/apps/api/tests/integration/dialogue.integration.ts"
+  ],
+  "web": [
+    "ai-data/apps/web/src/features/analysis/components/run-panel.vue",
+    "ai-data/apps/web/src/features/analysis/pages/analysis-page.vue",
+    "ai-data/apps/web/src/features/analysis/stores/run-timeline-types.ts",
+    "ai-data/apps/web/src/features/analysis/stores/run-timeline.ts",
+    "ai-data/apps/web/src/features/analysis/stores/analysis-workspace.ts",
+    "ai-data/apps/web/src/shared/content/markdown-content.vue",
+    "ai-data/apps/web/src/shared/content/markdown.ts",
+    "ai-data/apps/web/tests/features/analysis/run-timeline.test.ts",
+    "ai-data/apps/web/tests/shared/content/markdown.test.ts",
+    "ai-data/apps/web/tests/shared/stream/run-stream.test.ts",
+    "ai-data/apps/web/tests/e2e/analysis-stream.spec.ts"
+  ],
+  "contracts": [
+    "ai-data/packages/contracts/src/sse/sse-events.ts",
+    "ai-data/packages/contracts/tests/sse/sse-events.test.ts"
+  ],
+  "handoff": [
+    "任务交接/页面03-05分析过程与文字流式输出修改清单.md",
+    "任务交接/页面03-05流式输出交付说明.md",
+    "任务交接/页面03-05流式验收/",
+    "任务交接/页面审核-2026-10-03/",
+    "任务交接/README.md"
+  ],
+  "dependency_operations": 0,
+  "schema_changes": 0,
+  "subagents": 0
+}

@@ -30,6 +30,16 @@ async function createService() {
 }
 
 describe("DAS 注册和心跳会话", () => {
+  it("失联实例从执行发现移除，但保留在管理记录中", async () => {
+    const { service, credential } = await createService();
+    await service.register(heartbeat, url, credential);
+    expect((await service.listRegisteredServices())[0]?.connectionStatus).toBe("online");
+    vi.setSystemTime(Date.now() + 90_000);
+    expect(await service.listHealthyServices()).toEqual([]);
+    expect(await service.listRegisteredServices()).toEqual([
+      expect.objectContaining({ serviceId: "das-a", connectionStatus: "offline" }),
+    ]);
+  });
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-09-13T04:00:00Z"));
@@ -117,6 +127,36 @@ describe("DAS 注册和心跳会话", () => {
     vi.setSystemTime(Date.now() + 90_000);
     expect(await service.listHealthyServices()).toEqual([]);
   });
+
+  it("事务健康读取复用注册会话且不借用根仓储连接", async () => {
+    const { service, registry, credential } = await createService();
+    await service.register(heartbeat, url, credential);
+    const rows = await registry.listHealthyServices();
+    const transaction = { listHealthyServices: vi.fn(async () => rows) };
+    const rootRead = vi
+      .spyOn(registry, "listHealthyServices")
+      .mockRejectedValue(new Error("根连接已被事务占用"));
+    expect(await service.listHealthyServices(transaction)).toEqual(rows);
+    expect(transaction.listHealthyServices).toHaveBeenCalledOnce();
+    expect(rootRead).not.toHaveBeenCalled();
+  });
+
+  it.each(["expired", "disabled", "version", "address", "restart"])(
+    "事务健康快照不能绕过 %s 会话检查",
+    async (change) => {
+      const { service, registry, trusted, jwt, credential } = await createService();
+      await service.register(heartbeat, url, credential);
+      const rows = await registry.listHealthyServices();
+      const transaction = { listHealthyServices: async () => rows };
+      if (change === "expired") vi.setSystemTime(Date.now() + 90_000);
+      if (change === "disabled") trusted[0].enabled = false;
+      if (change === "version") trusted[0].credential_version++;
+      if (change === "address") rows[0].serviceUrl = "http://127.0.0.2:3102";
+      const current =
+        change === "restart" ? new DataAccessSessionService(registry, jwt, trusted) : service;
+      expect(await current.listHealthyServices(transaction)).toEqual([]);
+    },
+  );
 
   it("登记持久化失败时不建立会话", async () => {
     const { service, credential, write } = await createService();

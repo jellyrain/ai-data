@@ -12,6 +12,7 @@ import {
 import { SqlServerMetadataDatabase } from "@ai-data/metadata/sqlserver";
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
 import { apiConfigSchema } from "../../src/config/api-config";
+import { memoryTaskConfigSchema } from "../../src/config/memory-task-config";
 import { SqlAuthRepository } from "../../src/auth/sql-auth-repository";
 import { JwtService } from "../../src/auth/jwt-service";
 import { SqlConversationRepository } from "../../src/conversations/sql-conversation-repository";
@@ -28,6 +29,9 @@ import { KnowledgeService } from "../../src/knowledge/knowledge-service";
 import { SqlKnowledgeRepository } from "../../src/knowledge/sql-knowledge-repository";
 import { MemoryAccess } from "../../src/memory/memory-access";
 import { serialExecutor } from "../../src/memory/serial-executor";
+import { createMemoryServices } from "../../src/memory/create-memory-services";
+import { DataAccessSessionService } from "../../src/data-access/data-access-session-service";
+import { SqlDataAccessServiceRegistry } from "../../src/data-access/sql-data-access-service-registry";
 import { createReportServices } from "../../src/reports/create-report-services";
 import { AnalysisTools } from "../../src/runtime/analysis-tools";
 import { AnalysisExecutor } from "../../src/runtime/analysis-executor";
@@ -85,6 +89,7 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
     runs: AnalysisRunService,
     conversations: ConversationService,
     knowledge: KnowledgeService;
+  let transactionMemory: ReturnType<typeof createMemoryServices>;
   let app: FastifyInstance, tools: AnalysisTools, client: DataAccessQueryClient;
   let execute: MockInstance<DataAccessQueryClient["execute"]>;
   const reader = {
@@ -203,6 +208,42 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
       refreshContext: async (current) => current,
       completeOperation: (current, id, tx, content) => reporting.complete(current, id, tx, content),
     });
+    const trusted = [{ service_id: das.serviceId, credential_version: 1, enabled: true }];
+    const dataAccessSessions = new DataAccessSessionService(
+      new SqlDataAccessServiceRegistry(database),
+      jwt,
+      trusted,
+    );
+    await dataAccessSessions.register(
+      {
+        service_id: das.serviceId,
+        service_port: Number(new URL(das.serviceUrl).port),
+        service_protocol: "http",
+        status: "healthy",
+        sent_at: "2026-09-27 18:00:00",
+        sources: [{ source_id: "dialogue", status: "healthy", checked_at: "2026-09-27 18:00:00" }],
+      },
+      das.serviceUrl,
+      await dataAccessSessions.issueCredential(das.serviceId),
+    );
+    transactionMemory = createMemoryServices({
+      database,
+      config: {
+        ...config,
+        trusted_data_access_services: trusted,
+        memory_tasks: memoryTaskConfigSchema.parse({ enabled: false }),
+      },
+      jwt,
+      catalogClient,
+      dataAccessSessions,
+      queryAuthorization: authorization,
+      runs,
+      refreshContext: async (current) => current,
+      isForegroundBusy: () => false,
+      onError: (error) => {
+        throw error;
+      },
+    });
     const access = new MemoryAccess({ database, catalog: catFor, authorization: authFor });
     const metricsFor = (executor: MetadataQueryExecutor) =>
       new MetricService(new SqlMetricRepository(executor), authFor(executor), runs, {
@@ -266,6 +307,15 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
     }
   });
   const headers = { authorization: "Bearer test" };
+  it("单连接 SQL 事务通过正式记忆工厂复用已注册 DAS 会话", async () => {
+    await database.transaction(async (executor) => {
+      await transactionMemory.access.scope(context, { source_id: "dialogue" }, executor);
+      const authorized = await transactionMemory
+        .authorizationForExecutor(executor)
+        .authorize(definition.queries[0].query, context);
+      expect(authorized.request.query.source_id).toBe("dialogue");
+    });
+  });
   it("API保存、追加科室参数、独立执行、重试和导出，两个展示只查询一次", async () => {
     const before = execute.mock.calls.length;
     const saved = await app.inject({
@@ -378,6 +428,24 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
       prompt: "改标题",
       idempotency_key: "edit",
     });
+    const queryCalls = execute.mock.calls.length;
+    const binding = {
+      report_id: saved.report_id,
+      analysis_run_id: run.analysis_run_id,
+      expected_version: 1,
+    };
+    expect(
+      await reporting.revisions.binding(context, saved.report_id, run.analysis_run_id),
+    ).toEqual(binding);
+    for (const identity of [reader, { ...context, organizationId: "other" }])
+      await expect(
+        reporting.revisions.binding(identity, saved.report_id, run.analysis_run_id),
+      ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(
+      reporting.revisions.binding(context, randomUUID(), run.analysis_run_id),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(execute.mock.calls.length).toBe(queryCalls);
+    expect((await reporting.definitions.get(context, saved.report_id)).version).toBe(1);
     const executor = new AnalysisExecutor({
       runs,
       tools,
@@ -405,6 +473,9 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
     await executor.execute(context, run.analysis_run_id);
     await executor.close();
     expect((await runs.get(context, run.analysis_run_id)).status).toBe("completed");
+    expect(
+      await reporting.revisions.binding(context, saved.report_id, run.analysis_run_id),
+    ).toEqual(binding);
     expect((await reporting.definitions.get(context, saved.report_id)).definition.title).toBe(
       "对话标题",
     );
@@ -449,9 +520,11 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
     const id = message!.analysisRun.id,
       lease = await runs.claim(context, id, "save");
     const evidence = await runs.query(context, id, lease, "query", definition.queries[0].query);
+    await runs.query(context, id, lease, "other-result", definition.queries[0].query);
     const input = {
       analysis_run_id: id,
       title: "对话报告",
+      description: "长期复用的科室查询",
       sections: [
         {
           section_id: "s",
@@ -471,6 +544,15 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
       (await reporting.definitions.get(context, snapshot.report_id)).definition.queries,
     ).toHaveLength(1);
     const manual = await reporting.reports.save(context, input);
+    expect(manual.sources.map((source) => source.evidence_id)).toEqual([evidence.evidence_id]);
+    expect(
+      (await reporting.definitions.get(context, manual.report_id)).definition.description,
+    ).toBe(input.description);
+    expect(
+      (await reporting.management.list(context)).items.find(
+        (item) => item.report_id === manual.report_id,
+      ),
+    ).toMatchObject({ display_type: "table", description: input.description });
     expect(
       (await reporting.definitions.get(context, manual.report_id)).source_analysis_run_id,
     ).toBe(id);
@@ -486,6 +568,9 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
       prompt: "说明结果",
       idempotency_key: "narrative",
     });
+    await expect(
+      reporting.revisions.binding(context, saved.report_id, createdRun.analysis_run_id),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
     const lease = await runs.claim(context, createdRun.analysis_run_id, "narrative");
     expect(
       (
@@ -523,6 +608,69 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
     expect(
       (await reporting.executions.exportContent(context, next.execution_id)).narratives,
     ).toEqual([]);
+  });
+  it("分享候选在真实 SQL 中隔离组织、状态、作者并按字面搜索和翻页", async () => {
+    await database.execute({
+      sql: "INSERT INTO dbo.organizations(id,code,name) VALUES('share-org','share-org',N'隔离组织'); INSERT INTO dbo.users(id,organization_id,username,display_name,status) VALUES('share-a','org','share-a',N'分享同名成员','active'),('share-b','org','share-b',N'分享同名成员','active'),('share-c','org','share-c',N'分享同名成员','disabled'),('share-d','share-org','share-d',N'分享同名成员','active'),('share-e','org','share-e',@literal,'active')",
+      parameters: [{ name: "literal", type: "string", value: "字面%_[测]\\字符" }],
+    });
+    const saved = await reporting.definitions.save(context, { definition });
+    const first = await reporting.sharing.candidates(context, saved.report_id, {
+      search: "分享同名",
+      limit: 1,
+    });
+    expect(first.items.map((item) => item.user_id)).toEqual(["share-a"]);
+    expect(first.next_cursor).toBe("share-a");
+    const last = await reporting.sharing.candidates(context, saved.report_id, {
+      search: "分享同名",
+      cursor: first.next_cursor,
+      limit: 1,
+    });
+    expect(last.items.map((item) => item.user_id)).toEqual(["share-b"]);
+    expect(last.next_cursor).toBeUndefined();
+    expect(
+      (
+        await reporting.sharing.candidates(context, saved.report_id, { search: "%_[测]\\" })
+      ).items.map((item) => item.user_id),
+    ).toEqual(["share-e"]);
+    expect(
+      (await reporting.sharing.candidates(context, saved.report_id, {})).items.some(
+        (item) => item.user_id === context.userId,
+      ),
+    ).toBe(false);
+    await expect(reporting.sharing.get(reader, saved.report_id)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+  it("分享读取保留停用账号，移除名单后采用真实新版本", async () => {
+    const saved = await reporting.definitions.save(context, {
+      definition,
+      shared_with: ["reader"],
+    });
+    await database.execute({
+      sql: "UPDATE dbo.users SET status='disabled' WHERE id='reader'",
+      parameters: [],
+    });
+    try {
+      const sharing = await reporting.sharing.get(context, saved.report_id);
+      expect(sharing.members).toEqual([
+        { user_id: "reader", username: "reader", display_name: "读者", status: "disabled" },
+      ]);
+      await reporting.management.share(context, saved.report_id, {
+        expected_version: sharing.expected_version,
+        shared_with: [],
+      });
+      expect(await reporting.sharing.get(context, saved.report_id)).toMatchObject({
+        expected_version: 2,
+        shared_with: [],
+        members: [],
+      });
+    } finally {
+      await database.execute({
+        sql: "UPDATE dbo.users SET status='active' WHERE id='reader'",
+        parameters: [],
+      });
+    }
   });
   it("组织模板审核发布固定版本，私有新版本不泄露，停用立即停止组织发现", async () => {
     const saved = await reporting.definitions.save(context, { definition });

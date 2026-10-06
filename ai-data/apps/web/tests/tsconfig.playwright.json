@@ -1,0 +1,8 @@
+{
+  "extends": "../tsconfig.node.json",
+  "compilerOptions": {
+    "paths": {
+      "dayjs/plugin/*": ["../node_modules/dayjs/plugin/*.js"]
+    }
+  }
+}

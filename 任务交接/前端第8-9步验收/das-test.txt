@@ -1,0 +1,25 @@
+
+ RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/data-access
+
+{"level":30,"time":1790774354475,"service_id":"data-access-test","service_version":"0.1.0","reqId":"cb9d1279-bbbd-42ac-9625-89b86e9968ed","req":{"method":"GET","url":"/internal/admin/data-sources/disabled","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790774354487,"service_id":"data-access-test","service_version":"0.1.0","reqId":"cb9d1279-bbbd-42ac-9625-89b86e9968ed","res":{"statusCode":200},"responseTime":10.372199999999793,"msg":"request completed"}
+{"level":30,"time":1790774354493,"service_id":"data-access-test","service_version":"0.1.0","reqId":"9ca23212-dbcb-420b-a98d-ba382573696f","req":{"method":"GET","url":"/internal/admin/data-sources/other","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790774354495,"service_id":"data-access-test","service_version":"0.1.0","reqId":"9ca23212-dbcb-420b-a98d-ba382573696f","res":{"statusCode":403},"responseTime":1.9784999999992579,"msg":"request completed"}
+{"level":30,"time":1790774354510,"service_id":"data-access-test","service_version":"0.1.0","reqId":"41f03f34-a458-4b1e-a98e-26461cd51ce0","req":{"method":"POST","url":"/internal/admin/database-targets","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790774354516,"service_id":"data-access-test","service_version":"0.1.0","reqId":"41f03f34-a458-4b1e-a98e-26461cd51ce0","res":{"statusCode":200},"responseTime":5.773600000000442,"msg":"request completed"}
+{"level":30,"time":1790774354527,"service_id":"data-access-test","service_version":"0.1.0","reqId":"22959dc1-2c1f-4140-a837-f9f6133abe7f","req":{"method":"POST","url":"/internal/admin/database-targets","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790774354530,"service_id":"data-access-test","service_version":"0.1.0","reqId":"22959dc1-2c1f-4140-a837-f9f6133abe7f","res":{"statusCode":400},"responseTime":2.423800000000483,"msg":"request completed"}
+{"level":30,"time":1790774355847,"service_id":"data-access-test","service_version":"0.1.0","reqId":"67deab92-ed1f-4725-926b-ec703b0a536d","req":{"method":"POST","url":"/internal/catalog","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790774355860,"service_id":"data-access-test","service_version":"0.1.0","reqId":"67deab92-ed1f-4725-926b-ec703b0a536d","res":{"statusCode":200},"responseTime":11.786699999998746,"msg":"request completed"}
+{"level":30,"time":1790774355877,"service_id":"data-access-test","service_version":"0.1.0","reqId":"bc75cc56-9f8e-45be-9e1d-2bfca550dfbf","req":{"method":"POST","url":"/internal/catalog","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790774355880,"service_id":"data-access-test","service_version":"0.1.0","reqId":"bc75cc56-9f8e-45be-9e1d-2bfca550dfbf","res":{"statusCode":400},"responseTime":3.1383999999998196,"msg":"request completed"}
+{"level":30,"time":1790774358192,"service_id":"data-access-test","service_version":"0.1.0","reqId":"1865dccb-3a16-4f84-8a4a-223a0b6f030a","req":{"method":"GET","url":"/health","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790774358216,"service_id":"data-access-test","service_version":"0.1.0","reqId":"44857c99-9bbe-4b2a-a213-6f5c999c779b","req":{"method":"GET","url":"/health","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790774358199,"service_id":"data-access-test","service_version":"0.1.0","reqId":"1865dccb-3a16-4f84-8a4a-223a0b6f030a","res":{"statusCode":200},"responseTime":6.087600000000748,"msg":"request completed"}
+{"level":30,"time":1790774358217,"service_id":"data-access-test","service_version":"0.1.0","reqId":"44857c99-9bbe-4b2a-a213-6f5c999c779b","res":{"statusCode":503},"responseTime":0.6279999999987922,"msg":"request completed"}
+
+ Test Files  45 passed (45)
+      Tests  414 passed (414)
+   Start at  21:19:04
+   Duration  43.78s (transform 1.80s, setup 0ms, import 23.15s, tests 4.79s, environment 9ms)
+

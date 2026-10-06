@@ -1,0 +1,35 @@
+
+ RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/data-access
+
+{"level":30,"time":1790998562561,"service_id":"data-access-test","service_version":"0.1.0","reqId":"dc28134d-f722-4364-89ef-c0c6812dc6dc","req":{"method":"POST","url":"/internal/catalog","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998562582,"service_id":"data-access-test","service_version":"0.1.0","reqId":"dc28134d-f722-4364-89ef-c0c6812dc6dc","res":{"statusCode":200},"responseTime":19.293899999998757,"msg":"request completed"}
+{"level":30,"time":1790998562608,"service_id":"data-access-test","service_version":"0.1.0","reqId":"2ec4afb1-9fde-412c-bc2e-6701d17728c2","req":{"method":"POST","url":"/internal/catalog","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998562615,"service_id":"data-access-test","service_version":"0.1.0","reqId":"2ec4afb1-9fde-412c-bc2e-6701d17728c2","res":{"statusCode":400},"responseTime":6.782600000000457,"msg":"request completed"}
+{"level":30,"time":1790998566375,"service_id":"data-access-test","service_version":"0.1.0","reqId":"d12627ce-5e44-46ad-9ecd-13477c2b7f86","req":{"method":"GET","url":"/health","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998566402,"service_id":"data-access-test","service_version":"0.1.0","reqId":"1a4f3fbb-f557-4614-83a7-459107a7edb7","req":{"method":"GET","url":"/health","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998566384,"service_id":"data-access-test","service_version":"0.1.0","reqId":"d12627ce-5e44-46ad-9ecd-13477c2b7f86","res":{"statusCode":200},"responseTime":7.15519999999924,"msg":"request completed"}
+{"level":30,"time":1790998566403,"service_id":"data-access-test","service_version":"0.1.0","reqId":"1a4f3fbb-f557-4614-83a7-459107a7edb7","res":{"statusCode":503},"responseTime":1.001800000000003,"msg":"request completed"}
+{"level":30,"time":1790998571603,"service_id":"data-access-test","service_version":"0.1.0","reqId":"dc63e027-2137-4a57-b450-1169c1860049","req":{"method":"GET","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998571606,"service_id":"data-access-test","service_version":"0.1.0","reqId":"dc63e027-2137-4a57-b450-1169c1860049","res":{"statusCode":401},"responseTime":1.3732999999992899,"msg":"request completed"}
+{"level":30,"time":1790998571612,"service_id":"data-access-test","service_version":"0.1.0","reqId":"b1a19ad2-07ce-4794-82e5-388d58e544ce","req":{"method":"GET","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998571619,"service_id":"data-access-test","service_version":"0.1.0","reqId":"b1a19ad2-07ce-4794-82e5-388d58e544ce","res":{"statusCode":200},"responseTime":6.7016999999978,"msg":"request completed"}
+{"level":30,"time":1790998571621,"service_id":"data-access-test","service_version":"0.1.0","reqId":"8125e7fa-dde3-4150-9c7a-12f21c600dd9","req":{"method":"PUT","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998571625,"service_id":"data-access-test","service_version":"0.1.0","reqId":"8125e7fa-dde3-4150-9c7a-12f21c600dd9","res":{"statusCode":401},"responseTime":2.2436000000016065,"msg":"request completed"}
+{"level":30,"time":1790998571629,"service_id":"data-access-test","service_version":"0.1.0","reqId":"8befb568-843c-4d42-85a0-c5e7abedafba","req":{"method":"PUT","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998571633,"service_id":"data-access-test","service_version":"0.1.0","reqId":"8befb568-843c-4d42-85a0-c5e7abedafba","res":{"statusCode":200},"responseTime":3.665499999999156,"msg":"request completed"}
+{"level":30,"time":1790998571640,"service_id":"data-access-test","service_version":"0.1.0","reqId":"a6a33f83-64f0-493f-8cb7-1f153ff18c68","req":{"method":"POST","url":"/internal/admin/database-targets","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998571644,"service_id":"data-access-test","service_version":"0.1.0","reqId":"a6a33f83-64f0-493f-8cb7-1f153ff18c68","res":{"statusCode":503},"responseTime":3.3620999999984633,"msg":"request completed"}
+{"level":30,"time":1790998571663,"service_id":"data-access-test","service_version":"0.1.0","reqId":"d7e7a81a-1a18-4cbb-a366-eb4edfead3ef","req":{"method":"GET","url":"/internal/admin/data-sources/disabled","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998571670,"service_id":"data-access-test","service_version":"0.1.0","reqId":"d7e7a81a-1a18-4cbb-a366-eb4edfead3ef","res":{"statusCode":200},"responseTime":7.122200000001612,"msg":"request completed"}
+{"level":30,"time":1790998571679,"service_id":"data-access-test","service_version":"0.1.0","reqId":"a8fcfeac-ba80-4006-8380-9f72aafc88b0","req":{"method":"GET","url":"/internal/admin/data-sources/other","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998571681,"service_id":"data-access-test","service_version":"0.1.0","reqId":"a8fcfeac-ba80-4006-8380-9f72aafc88b0","res":{"statusCode":403},"responseTime":1.3867000000027474,"msg":"request completed"}
+{"level":30,"time":1790998571703,"service_id":"data-access-test","service_version":"0.1.0","reqId":"e04adb4e-fe6e-4ee4-bd51-c927da7fcb76","req":{"method":"POST","url":"/internal/admin/database-targets","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998571706,"service_id":"data-access-test","service_version":"0.1.0","reqId":"e04adb4e-fe6e-4ee4-bd51-c927da7fcb76","res":{"statusCode":200},"responseTime":2.6590999999971245,"msg":"request completed"}
+{"level":30,"time":1790998571739,"service_id":"data-access-test","service_version":"0.1.0","reqId":"4da8c9da-42f8-46bd-b107-c87cb22d7f21","req":{"method":"POST","url":"/internal/admin/database-targets","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998571743,"service_id":"data-access-test","service_version":"0.1.0","reqId":"4da8c9da-42f8-46bd-b107-c87cb22d7f21","res":{"statusCode":400},"responseTime":3.639999999999418,"msg":"request completed"}
+
+ Test Files  47 passed (47)
+      Tests  426 passed (426)
+   Start at  11:35:55
+   Duration  68.86s (transform 2.70s, setup 0ms, import 35.89s, tests 6.51s, environment 15ms)
+

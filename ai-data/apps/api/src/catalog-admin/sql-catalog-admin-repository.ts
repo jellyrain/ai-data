@@ -71,6 +71,31 @@ function parseVersion(row: Record<string, unknown>): PolicyVersion {
 class SqlCatalogAdminRepository implements CatalogAdminRepository {
   constructor(private readonly database: MetadataTransactionalExecutor) {}
 
+  /** 与发布取得相同源范围锁，规则读取与版本基准对应同一时刻。 */
+  async currentState(organizationId: string, sourceId: string, roleId: string) {
+    return this.database.transaction(async (executor) => {
+      await executor.execute({
+        sql: `SELECT TOP (1) version FROM dbo.catalog_policy_versions WITH (UPDLOCK,HOLDLOCK) WHERE organization_id=@organization_id AND source_id=@source_id ORDER BY version DESC`,
+        parameters: policyParameters(organizationId, sourceId),
+      });
+      if ((await readRole(executor, organizationId, roleId, true)).length === 0)
+        throw new ApplicationError("NOT_FOUND", "角色不存在或不属于当前组织");
+      const result = await executor.execute({
+        sql: `SELECT TOP (1) record_json FROM dbo.catalog_policy_versions WHERE organization_id=@organization_id AND source_id=@source_id AND role_id=@role_id ORDER BY version DESC`,
+        parameters: policyParameters(organizationId, sourceId, roleId),
+      });
+      const permissions = new SqlCatalogRepository(executor);
+      return {
+        version: result.rows[0] ? parseVersion(result.rows[0]).version : 0,
+        snapshot: policySnapshotSchema.parse({
+          object_permissions: await permissions.listObjectPermissions([roleId], sourceId),
+          column_permissions: await permissions.listColumnPermissions([roleId], sourceId),
+          row_policies: await permissions.listRowPolicies([roleId], sourceId),
+        }),
+      };
+    });
+  }
+
   /** 复用本地认证的角色权限及角色范围表，读取指定角色的有效授权。 */
   async loadRoleAuthorization(
     organizationId: string,

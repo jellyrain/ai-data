@@ -1,0 +1,19 @@
+{
+  "page_errors": [],
+  "checks": [
+    "费用结果、工具记录、证据与刷新恢复通过",
+    "正式浏览器新会话使用 default v2 并完成工具调用",
+    "旧 default v1 会话继续固定旧版本，追问调用和答复通过"
+  ],
+  "new_default": {
+    "conversation_id": "97a194ae-84d9-45b6-9ff2-42df955e1b58",
+    "run_id": "608720ca-6c0c-45c8-8c8a-5f1ea5125981",
+    "agent_version": 2
+  },
+  "old_default": {
+    "conversation_id": "e0f93fac-4bba-4a56-96f5-8f165c93d188",
+    "run_id": "6e926503-493f-4edf-952e-6b7b363c9150",
+    "agent_version": 1
+  },
+  "passed": true
+}

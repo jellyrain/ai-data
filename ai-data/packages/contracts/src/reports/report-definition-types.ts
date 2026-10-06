@@ -8,6 +8,7 @@ import type {
   reportDefinitionVersionSchema,
   reusableReportBlockSchema,
   reportRevisionInputSchema,
+  reportRevisionBindingSchema,
 } from "./report-definition";
 /** 可编辑的报表参数。 */
 type ReportParameter = z.infer<typeof reportParameterSchema>;
@@ -25,6 +26,8 @@ type ReportDefinitionVersion = z.infer<typeof reportDefinitionVersionSchema>;
 type ReusableReportBlock = z.infer<typeof reusableReportBlockSchema>;
 /** 自然语言修改的目标版本与输入。 */
 type ReportRevisionInput = z.infer<typeof reportRevisionInputSchema>;
+/** 已核对身份和作者权限的修订恢复绑定。 */
+type ReportRevisionBinding = z.infer<typeof reportRevisionBindingSchema>;
 export type {
   ReportParameter,
   ReportParameterBinding,
@@ -34,4 +37,5 @@ export type {
   ReportDefinitionVersion,
   ReusableReportBlock,
   ReportRevisionInput,
+  ReportRevisionBinding,
 };

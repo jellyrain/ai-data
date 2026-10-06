@@ -1,0 +1,114 @@
+{
+  "checks": [
+    {
+      "conversation_id": "8d5b1c59-2b07-453e-9217-5bf6cef8505d",
+      "format": "Excel",
+      "bytes": 9547,
+      "messages": 1,
+      "runs": 1,
+      "passed": true
+    },
+    {
+      "conversation_id": "8d5b1c59-2b07-453e-9217-5bf6cef8505d",
+      "format": "Word",
+      "bytes": 11914,
+      "messages": 1,
+      "runs": 1,
+      "passed": true
+    },
+    {
+      "conversation_id": "8d5b1c59-2b07-453e-9217-5bf6cef8505d",
+      "format": "PDF",
+      "bytes": 119335,
+      "messages": 1,
+      "runs": 1,
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "before": [
+    {
+      "table_name": "report_templates",
+      "total": "3"
+    },
+    {
+      "table_name": "report_template_versions",
+      "total": "4"
+    },
+    {
+      "table_name": "saved_reports",
+      "total": "5"
+    },
+    {
+      "table_name": "report_executions",
+      "total": "5"
+    },
+    {
+      "table_name": "report_narratives",
+      "total": "0"
+    },
+    {
+      "table_name": "analysis_runs",
+      "total": "25"
+    },
+    {
+      "table_name": "analysis_evidence",
+      "total": "34"
+    },
+    {
+      "table_name": "analysis_tool_audits",
+      "total": "147"
+    },
+    {
+      "table_name": "analysis_run_events",
+      "total": "431"
+    },
+    {
+      "table_name": "model_configuration_versions",
+      "total": "1"
+    }
+  ],
+  "after": [
+    {
+      "table_name": "report_templates",
+      "total": "3"
+    },
+    {
+      "table_name": "report_template_versions",
+      "total": "4"
+    },
+    {
+      "table_name": "saved_reports",
+      "total": "5"
+    },
+    {
+      "table_name": "report_executions",
+      "total": "5"
+    },
+    {
+      "table_name": "report_narratives",
+      "total": "0"
+    },
+    {
+      "table_name": "analysis_runs",
+      "total": "25"
+    },
+    {
+      "table_name": "analysis_evidence",
+      "total": "34"
+    },
+    {
+      "table_name": "analysis_tool_audits",
+      "total": "147"
+    },
+    {
+      "table_name": "analysis_run_events",
+      "total": "431"
+    },
+    {
+      "table_name": "model_configuration_versions",
+      "total": "1"
+    }
+  ]
+}

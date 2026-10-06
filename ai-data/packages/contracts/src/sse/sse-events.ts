@@ -46,6 +46,15 @@ const sseEventSchema = z
       type: z.literal("run_started"),
     }),
 
+    /** 面向用户的助手段落；delta 追加、completed 用完整正文校准，运行终态独立确认。 */
+    eventBaseSchema.extend({
+      type: z.literal("assistant_message"),
+      message_id: z.string().min(1).max(256),
+      phase: z.enum(["commentary", "final_answer"]).optional(),
+      status: z.enum(["started", "delta", "completed"]),
+      content: z.string().max(64000),
+    }),
+
     /** Agent 或工具执行过程中的进度信息。 */
     eventBaseSchema.extend({
       type: z.literal("progress"),
@@ -109,6 +118,8 @@ const sseEventSchema = z
     /** 最终自然语言结论。 */
     eventBaseSchema.extend({
       type: z.literal("final_answer"),
+      /** 新运行关联已输出段落；省略时兼容旧历史的完整答案。 */
+      message_id: z.string().min(1).max(256).optional(),
       /** 最终自然语言结论正文。 */
       content: z.string(),
     }),

@@ -30,7 +30,7 @@ const finish = (threadId, turnId, status = "completed") => {
 const complete = (threadId, turnId, text) => {
   send({
     method: "item/completed",
-    params: { threadId, turnId, item: { type: "agentMessage", text } },
+    params: { threadId, turnId, item: { id: `message-${turnId}`, type: "agentMessage", text } },
   });
   if (mode === "partial") process.exit(0);
   finish(threadId, turnId);

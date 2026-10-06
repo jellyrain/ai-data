@@ -1,0 +1,2342 @@
+{
+  "kind": "fees",
+  "prompt": "请查询 clinical-demo 数据源，统计2026年1月1日至9月27日的住院有效费用，按费用发生时间和费用分类汇总金额。金额字段单位是分，请在回答中换算成元，保留冲销负数。给出各分类费用和合计，并说明费用与支付流水的区别。",
+  "receipts": [
+    {
+      "message": {
+        "id": "61f8b71f-0818-453f-ab5f-39a1fd61d5af",
+        "conversationId": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+        "role": "user",
+        "content": "请查询 clinical-demo 数据源，统计2026年1月1日至9月27日的住院有效费用，按费用发生时间和费用分类汇总金额。金额字段单位是分，请在回答中换算成元，保留冲销负数。给出各分类费用和合计，并说明费用与支付流水的区别。",
+        "sequence": 0,
+        "createdAt": "2026-09-27T11:17:58.534Z"
+      },
+      "analysisRun": {
+        "id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+        "conversationId": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+        "organizationId": "organization-001",
+        "userId": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+        "status": "created",
+        "errorCode": null,
+        "errorMessage": null,
+        "startedAt": null,
+        "completedAt": null,
+        "createdAt": "2026-09-27T11:17:58.534Z"
+      }
+    }
+  ],
+  "runs": [
+    {
+      "id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+      "state": {
+        "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+        "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+        "organization_id": "organization-001",
+        "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+        "agent_id": "default",
+        "agent_version": 1,
+        "status": "failed",
+        "created_at": "2026-09-27 19:17:58",
+        "updated_at": "2026-09-27 19:24:11",
+        "lease_epoch": 1,
+        "lease": null,
+        "sequence": 46,
+        "clarification": null,
+        "evidence_ids": [
+          "7e81fa8c-0d5c-407b-a631-aa133ed397ba",
+          "344d3863-9f7f-4f65-b721-96215b4364fc",
+          "e1e71ed1-0eed-4dbe-be7c-5f88851f1633",
+          "68ea1694-0a0b-48e8-91a8-3a5a9d2bf244",
+          "118b314c-50dd-4e5a-a25c-7c9d260b3deb",
+          "4684f8b7-1378-4815-ae18-f3c0caea2ddb"
+        ],
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "分析执行失败"
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "118b314c-50dd-4e5a-a25c-7c9d260b3deb",
+          "tool_call_id": "2703718507b91b6b8ba0d1ae9ecb3f7dedb4990a96f9b20b18233ec2ca677231",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "organization_id": "organization-001",
+          "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+          "created_at": "2026-09-27 19:23:09",
+          "requested_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_items",
+                "alias": "i",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_categories",
+                "alias": "c",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "c.name",
+                "as": "category"
+              },
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              },
+              {
+                "field": "t.charge_id",
+                "aggregation": "count",
+                "as": "charge_count"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [
+              "c.name"
+            ],
+            "order_by": [
+              {
+                "field": "amount_cents",
+                "direction": "desc"
+              }
+            ],
+            "limit": 5000
+          },
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_items",
+                "alias": "i",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_categories",
+                "alias": "c",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "c.name",
+                "as": "category"
+              },
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              },
+              {
+                "field": "t.charge_id",
+                "aggregation": "count",
+                "as": "charge_count"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [
+              "c.name"
+            ],
+            "order_by": [
+              {
+                "field": "amount_cents",
+                "direction": "desc"
+              }
+            ],
+            "limit": 5000
+          },
+          "output_masks": [],
+          "result": {
+            "columns": [
+              {
+                "name": "category",
+                "data_type": "string"
+              },
+              {
+                "name": "amount_cents",
+                "data_type": "integer"
+              },
+              {
+                "name": "charge_count",
+                "data_type": "integer"
+              }
+            ],
+            "rows": [
+              {
+                "category": "材料",
+                "amount_cents": 61062680,
+                "charge_count": 18000
+              },
+              {
+                "category": "检查",
+                "amount_cents": 61061840,
+                "charge_count": 18000
+              },
+              {
+                "category": "检验",
+                "amount_cents": 60986380,
+                "charge_count": 18000
+              },
+              {
+                "category": "其他",
+                "amount_cents": 60927760,
+                "charge_count": 18000
+              },
+              {
+                "category": "护理",
+                "amount_cents": 60922600,
+                "charge_count": 18000
+              },
+              {
+                "category": "手术",
+                "amount_cents": 60859460,
+                "charge_count": 18000
+              },
+              {
+                "category": "诊察",
+                "amount_cents": 60858220,
+                "charge_count": 18000
+              },
+              {
+                "category": "治疗",
+                "amount_cents": 60786920,
+                "charge_count": 18000
+              },
+              {
+                "category": "药品",
+                "amount_cents": 60728300,
+                "charge_count": 18000
+              },
+              {
+                "category": "床位",
+                "amount_cents": 60722140,
+                "charge_count": 18000
+              }
+            ],
+            "row_count": 10,
+            "truncated": false,
+            "delivery": {
+              "status": "complete",
+              "total_row_count": 10
+            }
+          }
+        },
+        {
+          "evidence_id": "344d3863-9f7f-4f65-b721-96215b4364fc",
+          "tool_call_id": "3150a7c3999579a8b7add6758203d7adc2cba3b910c7ef16f66876db5a0f7dd7-groups",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "organization_id": "organization-001",
+          "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+          "created_at": "2026-09-27 19:21:35",
+          "requested_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.departments",
+                "alias": "d",
+                "on": [
+                  {
+                    "left": "t.department_id",
+                    "op": "eq",
+                    "right": "d.department_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": [
+                {
+                  "logic": "and",
+                  "items": []
+                },
+                {
+                  "field": "t.charged_at",
+                  "op": "between",
+                  "data_type": "datetime",
+                  "value": [
+                    "2026-01-01 00:00:00",
+                    "2026-09-27 23:59:59"
+                  ]
+                }
+              ]
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 5000
+          },
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.departments",
+                "alias": "d",
+                "on": [
+                  {
+                    "left": "t.department_id",
+                    "op": "eq",
+                    "right": "d.department_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": [
+                {
+                  "logic": "and",
+                  "items": []
+                },
+                {
+                  "field": "t.charged_at",
+                  "op": "between",
+                  "data_type": "datetime",
+                  "value": [
+                    "2026-01-01 00:00:00",
+                    "2026-09-27 23:59:59"
+                  ]
+                }
+              ]
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 5000
+          },
+          "output_masks": [],
+          "metric": {
+            "metric_id": "demo-inpatient-fees",
+            "version": 1
+          },
+          "result": {
+            "columns": [
+              {
+                "name": "amount_cents",
+                "data_type": "integer"
+              }
+            ],
+            "rows": [
+              {
+                "amount_cents": 226315800
+              }
+            ],
+            "row_count": 1,
+            "truncated": false,
+            "delivery": {
+              "status": "complete",
+              "total_row_count": 1
+            }
+          }
+        },
+        {
+          "evidence_id": "4684f8b7-1378-4815-ae18-f3c0caea2ddb",
+          "tool_call_id": "b22627d4630688646a86a723acf0276250a9ddad11129b817f1a9940593c60b8",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "organization_id": "organization-001",
+          "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+          "created_at": "2026-09-27 19:23:11",
+          "requested_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [],
+            "select": [
+              {
+                "field": "t.charge_id",
+                "aggregation": "count",
+                "as": "charge_count"
+              },
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [
+              "t.charged_at"
+            ],
+            "order_by": [
+              {
+                "field": "t.charged_at",
+                "direction": "asc"
+              }
+            ],
+            "limit": 5000
+          },
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [],
+            "select": [
+              {
+                "field": "t.charge_id",
+                "aggregation": "count",
+                "as": "charge_count"
+              },
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [
+              "t.charged_at"
+            ],
+            "order_by": [
+              {
+                "field": "t.charged_at",
+                "direction": "asc"
+              }
+            ],
+            "limit": 5000
+          },
+          "output_masks": [],
+          "result": {
+            "columns": [
+              {
+                "name": "charge_count",
+                "data_type": "integer"
+              },
+              {
+                "name": "amount_cents",
+                "data_type": "integer"
+              }
+            ],
+            "rows": [
+              {
+                "charge_count": 2520,
+                "amount_cents": 7760580
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8539800
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9357420
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8200740
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8732280
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9239220
+              },
+              {
+                "charge_count": 1080,
+                "amount_cents": 1796940
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 7929180
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8436600
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8922420
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 7718340
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8491080
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9305220
+              },
+              {
+                "charge_count": 1080,
+                "amount_cents": 2497680
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8178780
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8789400
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9300420
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 7961940
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8471880
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8960220
+              },
+              {
+                "charge_count": 1080,
+                "amount_cents": 3549960
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 7690380
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8380200
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9186420
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8136540
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8824680
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9338220
+              },
+              {
+                "charge_count": 1080,
+                "amount_cents": 3701160
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8014980
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8529000
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9021420
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 7720140
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8331480
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9134220
+              },
+              {
+                "charge_count": 1080,
+                "amount_cents": 3714360
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8072580
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8842800
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9399420
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8047740
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8564280
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9059220
+              },
+              {
+                "charge_count": 1080,
+                "amount_cents": 3589560
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 7773180
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8301600
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9060420
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8027340
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 8821080
+              },
+              {
+                "charge_count": 2520,
+                "amount_cents": 9437220
+              },
+              {
+                "charge_count": 1080,
+                "amount_cents": 3740760
+              },
+              {
+                "charge_count": 2672,
+                "amount_cents": 8621470
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 8535396
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 9007942
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 7691326
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 8222604
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 8926522
+              },
+              {
+                "charge_count": 1068,
+                "amount_cents": 3625340
+              },
+              {
+                "charge_count": 2672,
+                "amount_cents": 8463758
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 8616980
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 9317782
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 7991654
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 8544188
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 9017362
+              },
+              {
+                "charge_count": 1068,
+                "amount_cents": 3566876
+              },
+              {
+                "charge_count": 2672,
+                "amount_cents": 8366046
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 8206564
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 8772622
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 7814982
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 8583772
+              },
+              {
+                "charge_count": 2492,
+                "amount_cents": 9342202
+              },
+              {
+                "charge_count": 1068,
+                "amount_cents": 3712412
+              },
+              {
+                "charge_count": 2634,
+                "amount_cents": 8527581
+              },
+              {
+                "charge_count": 2499,
+                "amount_cents": 8568300
+              },
+              {
+                "charge_count": 2499,
+                "amount_cents": 9120279
+              },
+              {
+                "charge_count": 2499,
+                "amount_cents": 7808568
+              },
+              {
+                "charge_count": 2499,
+                "amount_cents": 8293326
+              },
+              {
+                "charge_count": 2499,
+                "amount_cents": 8795664
+              },
+              {
+                "charge_count": 1071,
+                "amount_cents": 3558882
+              },
+              {
+                "charge_count": 318,
+                "amount_cents": 921373
+              },
+              {
+                "charge_count": 273,
+                "amount_cents": 956048
+              },
+              {
+                "charge_count": 273,
+                "amount_cents": 1222563
+              },
+              {
+                "charge_count": 273,
+                "amount_cents": 1106602
+              },
+              {
+                "charge_count": 273,
+                "amount_cents": 1080950
+              },
+              {
+                "charge_count": 273,
+                "amount_cents": 1031958
+              },
+              {
+                "charge_count": 117,
+                "amount_cents": 375906
+              }
+            ],
+            "row_count": 84,
+            "truncated": false,
+            "delivery": {
+              "status": "complete",
+              "total_row_count": 84
+            }
+          }
+        },
+        {
+          "evidence_id": "68ea1694-0a0b-48e8-91a8-3a5a9d2bf244",
+          "tool_call_id": "18dd075545a304c6f1fec6fd4a7e754b31287756e8ffcb9dcc32dd76b5047cf5",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "organization_id": "organization-001",
+          "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+          "created_at": "2026-09-27 19:22:11",
+          "requested_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_items",
+                "alias": "i",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_categories",
+                "alias": "c",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              },
+              {
+                "field": "t.charge_id",
+                "aggregation": "count",
+                "as": "charge_count"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [
+              "c.name"
+            ],
+            "order_by": [
+              {
+                "field": "amount_cents",
+                "direction": "desc"
+              }
+            ],
+            "limit": 5000
+          },
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_items",
+                "alias": "i",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_categories",
+                "alias": "c",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              },
+              {
+                "field": "t.charge_id",
+                "aggregation": "count",
+                "as": "charge_count"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [
+              "c.name"
+            ],
+            "order_by": [
+              {
+                "field": "amount_cents",
+                "direction": "desc"
+              }
+            ],
+            "limit": 5000
+          },
+          "output_masks": [],
+          "result": {
+            "columns": [
+              {
+                "name": "amount_cents",
+                "data_type": "integer"
+              },
+              {
+                "name": "charge_count",
+                "data_type": "integer"
+              }
+            ],
+            "rows": [
+              {
+                "amount_cents": 61062680,
+                "charge_count": 18000
+              },
+              {
+                "amount_cents": 61061840,
+                "charge_count": 18000
+              },
+              {
+                "amount_cents": 60986380,
+                "charge_count": 18000
+              },
+              {
+                "amount_cents": 60927760,
+                "charge_count": 18000
+              },
+              {
+                "amount_cents": 60922600,
+                "charge_count": 18000
+              },
+              {
+                "amount_cents": 60859460,
+                "charge_count": 18000
+              },
+              {
+                "amount_cents": 60858220,
+                "charge_count": 18000
+              },
+              {
+                "amount_cents": 60786920,
+                "charge_count": 18000
+              },
+              {
+                "amount_cents": 60728300,
+                "charge_count": 18000
+              },
+              {
+                "amount_cents": 60722140,
+                "charge_count": 18000
+              }
+            ],
+            "row_count": 10,
+            "truncated": false,
+            "delivery": {
+              "status": "complete",
+              "total_row_count": 10
+            }
+          }
+        },
+        {
+          "evidence_id": "7e81fa8c-0d5c-407b-a631-aa133ed397ba",
+          "tool_call_id": "9a2c1dee0eb8689311b6074710161717e8a252ef09981a7d89022b3b61a6ffe0",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "organization_id": "organization-001",
+          "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+          "created_at": "2026-09-27 19:21:10",
+          "requested_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_items",
+                "alias": "i",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_categories",
+                "alias": "c",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [
+              "c.name"
+            ],
+            "order_by": [
+              {
+                "field": "amount_cents",
+                "direction": "desc"
+              }
+            ],
+            "limit": 5000
+          },
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_items",
+                "alias": "i",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ]
+              },
+              {
+                "type": "inner",
+                "object_id": "table.dbo.charge_categories",
+                "alias": "c",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [
+              "c.name"
+            ],
+            "order_by": [
+              {
+                "field": "amount_cents",
+                "direction": "desc"
+              }
+            ],
+            "limit": 5000
+          },
+          "output_masks": [],
+          "result": {
+            "columns": [
+              {
+                "name": "amount_cents",
+                "data_type": "integer"
+              }
+            ],
+            "rows": [
+              {
+                "amount_cents": 61062680
+              },
+              {
+                "amount_cents": 61061840
+              },
+              {
+                "amount_cents": 60986380
+              },
+              {
+                "amount_cents": 60927760
+              },
+              {
+                "amount_cents": 60922600
+              },
+              {
+                "amount_cents": 60859460
+              },
+              {
+                "amount_cents": 60858220
+              },
+              {
+                "amount_cents": 60786920
+              },
+              {
+                "amount_cents": 60728300
+              },
+              {
+                "amount_cents": 60722140
+              }
+            ],
+            "row_count": 10,
+            "truncated": false,
+            "delivery": {
+              "status": "complete",
+              "total_row_count": 10
+            }
+          }
+        },
+        {
+          "evidence_id": "e1e71ed1-0eed-4dbe-be7c-5f88851f1633",
+          "tool_call_id": "3150a7c3999579a8b7add6758203d7adc2cba3b910c7ef16f66876db5a0f7dd7-total",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "organization_id": "organization-001",
+          "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+          "created_at": "2026-09-27 19:21:35",
+          "requested_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.departments",
+                "alias": "d",
+                "on": [
+                  {
+                    "left": "t.department_id",
+                    "op": "eq",
+                    "right": "d.department_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": [
+                {
+                  "logic": "and",
+                  "items": []
+                },
+                {
+                  "field": "t.charged_at",
+                  "op": "between",
+                  "data_type": "datetime",
+                  "value": [
+                    "2026-01-01 00:00:00",
+                    "2026-09-27 23:59:59"
+                  ]
+                }
+              ]
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 1
+          },
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "t"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.departments",
+                "alias": "d",
+                "on": [
+                  {
+                    "left": "t.department_id",
+                    "op": "eq",
+                    "right": "d.department_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": [
+                {
+                  "logic": "and",
+                  "items": []
+                },
+                {
+                  "field": "t.charged_at",
+                  "op": "between",
+                  "data_type": "datetime",
+                  "value": [
+                    "2026-01-01 00:00:00",
+                    "2026-09-27 23:59:59"
+                  ]
+                }
+              ]
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 1
+          },
+          "output_masks": [],
+          "metric": {
+            "metric_id": "demo-inpatient-fees",
+            "version": 1
+          },
+          "result": {
+            "columns": [
+              {
+                "name": "amount_cents",
+                "data_type": "integer"
+              }
+            ],
+            "rows": [
+              {
+                "amount_cents": 226315800
+              }
+            ],
+            "row_count": 1,
+            "truncated": false,
+            "delivery": {
+              "status": "complete",
+              "total_row_count": 1
+            }
+          }
+        }
+      ],
+      "events": [
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 1,
+          "lease_epoch": 1,
+          "type": "run_started"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 2,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "1cf2d138fb9b045893035992ded86c1a8051042c6b67e03dc0ba93203ddbda55",
+          "tool_name": "describe_metric",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 3,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "1cf2d138fb9b045893035992ded86c1a8051042c6b67e03dc0ba93203ddbda55",
+          "tool_name": "describe_metric",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 4,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "1faac5870b63041d6dda145ddac51c8ef4d5de77d75474c9a125b5113d824f84",
+          "tool_name": "describe_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 5,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "1faac5870b63041d6dda145ddac51c8ef4d5de77d75474c9a125b5113d824f84",
+          "tool_name": "describe_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 6,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "0a6e47adf2cd2b277cfabdcaf1e5fd24ceed3ff19559275c0bd8382b80b12577",
+          "tool_name": "list_datasets",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 7,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "0a6e47adf2cd2b277cfabdcaf1e5fd24ceed3ff19559275c0bd8382b80b12577",
+          "tool_name": "list_datasets",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 8,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "ab686fa366a13f06489a5235eb78e3cbee5f98412012eb97cbc72391c6ada1b1",
+          "tool_name": "read_skill_reference",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 9,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "ab686fa366a13f06489a5235eb78e3cbee5f98412012eb97cbc72391c6ada1b1",
+          "tool_name": "read_skill_reference",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 10,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "c8c700f1eeab08009fa2ec69389dda18cf88d3d5ed68cb9d8d8805d3b44baeb9",
+          "tool_name": "list_datasets",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 11,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "c8c700f1eeab08009fa2ec69389dda18cf88d3d5ed68cb9d8d8805d3b44baeb9",
+          "tool_name": "list_datasets",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 12,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "2c5931dcfee557e41e57a3b193dfcebfc839ed7acef7170925c2abcbb7fe7e14",
+          "tool_name": "search_catalog",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 13,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "2c5931dcfee557e41e57a3b193dfcebfc839ed7acef7170925c2abcbb7fe7e14",
+          "tool_name": "search_catalog",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 14,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "d88c8fa1b5f2ff30956d9b104bcdbf27a7c0d9c22688d5cd3c78f8c45620e251",
+          "tool_name": "describe_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 15,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "d88c8fa1b5f2ff30956d9b104bcdbf27a7c0d9c22688d5cd3c78f8c45620e251",
+          "tool_name": "describe_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 16,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "704db27717151fcbac0da755426d8b32da2ee1fbfe2c0bd6d3f224d264018ddc",
+          "tool_name": "search_catalog",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 17,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "704db27717151fcbac0da755426d8b32da2ee1fbfe2c0bd6d3f224d264018ddc",
+          "tool_name": "search_catalog",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 18,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "a0ffd7233d5ef1a38d9bf0b3a9c3d7d54cb1bd7248f7bf712ec59ab769ca2553",
+          "tool_name": "query_metric",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 19,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "a0ffd7233d5ef1a38d9bf0b3a9c3d7d54cb1bd7248f7bf712ec59ab769ca2553",
+          "tool_name": "query_metric",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 20,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "664c067c5170008c7190abcb9434c8f8e4e6a5243c6d6a99618b384091efe5a3",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 21,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "9a2c1dee0eb8689311b6074710161717e8a252ef09981a7d89022b3b61a6ffe0",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "返回 10 行"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 22,
+          "lease_epoch": 1,
+          "type": "table",
+          "evidence_id": "7e81fa8c-0d5c-407b-a631-aa133ed397ba",
+          "columns": [
+            {
+              "name": "amount_cents",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "amount_cents": 61062680
+            },
+            {
+              "amount_cents": 61061840
+            },
+            {
+              "amount_cents": 60986380
+            },
+            {
+              "amount_cents": 60927760
+            },
+            {
+              "amount_cents": 60922600
+            },
+            {
+              "amount_cents": 60859460
+            },
+            {
+              "amount_cents": 60858220
+            },
+            {
+              "amount_cents": 60786920
+            },
+            {
+              "amount_cents": 60728300
+            },
+            {
+              "amount_cents": 60722140
+            }
+          ],
+          "result_row_count": 10,
+          "result_truncated": false,
+          "sampled": false
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 23,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "664c067c5170008c7190abcb9434c8f8e4e6a5243c6d6a99618b384091efe5a3",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 24,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "343e571cfced4bc04bc19c6730bd772ae22ac96e4dd81d8e21da896b74cf3994",
+          "tool_name": "query_metric",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 25,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "3150a7c3999579a8b7add6758203d7adc2cba3b910c7ef16f66876db5a0f7dd7-groups",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "返回 1 行"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 26,
+          "lease_epoch": 1,
+          "type": "table",
+          "evidence_id": "344d3863-9f7f-4f65-b721-96215b4364fc",
+          "columns": [
+            {
+              "name": "amount_cents",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "amount_cents": 226315800
+            }
+          ],
+          "result_row_count": 1,
+          "result_truncated": false,
+          "sampled": false
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 27,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "3150a7c3999579a8b7add6758203d7adc2cba3b910c7ef16f66876db5a0f7dd7-total",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "返回 1 行"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 28,
+          "lease_epoch": 1,
+          "type": "table",
+          "evidence_id": "e1e71ed1-0eed-4dbe-be7c-5f88851f1633",
+          "columns": [
+            {
+              "name": "amount_cents",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "amount_cents": 226315800
+            }
+          ],
+          "result_row_count": 1,
+          "result_truncated": false,
+          "sampled": false
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 29,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "343e571cfced4bc04bc19c6730bd772ae22ac96e4dd81d8e21da896b74cf3994",
+          "tool_name": "query_metric",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 30,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "2b479364354def9475c65f5f084933bc071534be45915a860e8d263df09bf17a",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 31,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "2b479364354def9475c65f5f084933bc071534be45915a860e8d263df09bf17a",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 32,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "a3fb8aec493b9c5946cb997fd6d1786a5bfae96e62ce7b64c267d937c6edf138",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 33,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "18dd075545a304c6f1fec6fd4a7e754b31287756e8ffcb9dcc32dd76b5047cf5",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "返回 10 行"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 34,
+          "lease_epoch": 1,
+          "type": "table",
+          "evidence_id": "68ea1694-0a0b-48e8-91a8-3a5a9d2bf244",
+          "columns": [
+            {
+              "name": "amount_cents",
+              "data_type": "integer"
+            },
+            {
+              "name": "charge_count",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "amount_cents": 61062680,
+              "charge_count": 18000
+            },
+            {
+              "amount_cents": 61061840,
+              "charge_count": 18000
+            },
+            {
+              "amount_cents": 60986380,
+              "charge_count": 18000
+            },
+            {
+              "amount_cents": 60927760,
+              "charge_count": 18000
+            },
+            {
+              "amount_cents": 60922600,
+              "charge_count": 18000
+            },
+            {
+              "amount_cents": 60859460,
+              "charge_count": 18000
+            },
+            {
+              "amount_cents": 60858220,
+              "charge_count": 18000
+            },
+            {
+              "amount_cents": 60786920,
+              "charge_count": 18000
+            },
+            {
+              "amount_cents": 60728300,
+              "charge_count": 18000
+            },
+            {
+              "amount_cents": 60722140,
+              "charge_count": 18000
+            }
+          ],
+          "result_row_count": 10,
+          "result_truncated": false,
+          "sampled": false
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 35,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "a3fb8aec493b9c5946cb997fd6d1786a5bfae96e62ce7b64c267d937c6edf138",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 36,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "f9d1f4a345851ed787890f4bf146c7e53af0d4db924a0bff7edc84e215997a0d",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 37,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "f9d1f4a345851ed787890f4bf146c7e53af0d4db924a0bff7edc84e215997a0d",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 38,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "41af0b5b236410756e8af70dff220bc2dd55f3c4cf075a6a4584b98156cd5665",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 39,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "2703718507b91b6b8ba0d1ae9ecb3f7dedb4990a96f9b20b18233ec2ca677231",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "返回 10 行"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 40,
+          "lease_epoch": 1,
+          "type": "table",
+          "evidence_id": "118b314c-50dd-4e5a-a25c-7c9d260b3deb",
+          "columns": [
+            {
+              "name": "category",
+              "data_type": "string"
+            },
+            {
+              "name": "amount_cents",
+              "data_type": "integer"
+            },
+            {
+              "name": "charge_count",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "category": "材料",
+              "amount_cents": 61062680,
+              "charge_count": 18000
+            },
+            {
+              "category": "检查",
+              "amount_cents": 61061840,
+              "charge_count": 18000
+            },
+            {
+              "category": "检验",
+              "amount_cents": 60986380,
+              "charge_count": 18000
+            },
+            {
+              "category": "其他",
+              "amount_cents": 60927760,
+              "charge_count": 18000
+            },
+            {
+              "category": "护理",
+              "amount_cents": 60922600,
+              "charge_count": 18000
+            },
+            {
+              "category": "手术",
+              "amount_cents": 60859460,
+              "charge_count": 18000
+            },
+            {
+              "category": "诊察",
+              "amount_cents": 60858220,
+              "charge_count": 18000
+            },
+            {
+              "category": "治疗",
+              "amount_cents": 60786920,
+              "charge_count": 18000
+            },
+            {
+              "category": "药品",
+              "amount_cents": 60728300,
+              "charge_count": 18000
+            },
+            {
+              "category": "床位",
+              "amount_cents": 60722140,
+              "charge_count": 18000
+            }
+          ],
+          "result_row_count": 10,
+          "result_truncated": false,
+          "sampled": false
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 41,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "41af0b5b236410756e8af70dff220bc2dd55f3c4cf075a6a4584b98156cd5665",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 42,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "fb251cd68938fea320528e62d93a0c066ec460f27e43a61b65a59e08d98a13c2",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 43,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "b22627d4630688646a86a723acf0276250a9ddad11129b817f1a9940593c60b8",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "返回 84 行"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 44,
+          "lease_epoch": 1,
+          "type": "table",
+          "evidence_id": "4684f8b7-1378-4815-ae18-f3c0caea2ddb",
+          "columns": [
+            {
+              "name": "charge_count",
+              "data_type": "integer"
+            },
+            {
+              "name": "amount_cents",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "charge_count": 2520,
+              "amount_cents": 7760580
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8539800
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9357420
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8200740
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8732280
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9239220
+            },
+            {
+              "charge_count": 1080,
+              "amount_cents": 1796940
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 7929180
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8436600
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8922420
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 7718340
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8491080
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9305220
+            },
+            {
+              "charge_count": 1080,
+              "amount_cents": 2497680
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8178780
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8789400
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9300420
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 7961940
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8471880
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8960220
+            },
+            {
+              "charge_count": 1080,
+              "amount_cents": 3549960
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 7690380
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8380200
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9186420
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8136540
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8824680
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9338220
+            },
+            {
+              "charge_count": 1080,
+              "amount_cents": 3701160
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8014980
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8529000
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9021420
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 7720140
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8331480
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9134220
+            },
+            {
+              "charge_count": 1080,
+              "amount_cents": 3714360
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8072580
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8842800
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9399420
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8047740
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8564280
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9059220
+            },
+            {
+              "charge_count": 1080,
+              "amount_cents": 3589560
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 7773180
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8301600
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9060420
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8027340
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 8821080
+            },
+            {
+              "charge_count": 2520,
+              "amount_cents": 9437220
+            },
+            {
+              "charge_count": 1080,
+              "amount_cents": 3740760
+            },
+            {
+              "charge_count": 2672,
+              "amount_cents": 8621470
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 8535396
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 9007942
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 7691326
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 8222604
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 8926522
+            },
+            {
+              "charge_count": 1068,
+              "amount_cents": 3625340
+            },
+            {
+              "charge_count": 2672,
+              "amount_cents": 8463758
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 8616980
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 9317782
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 7991654
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 8544188
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 9017362
+            },
+            {
+              "charge_count": 1068,
+              "amount_cents": 3566876
+            },
+            {
+              "charge_count": 2672,
+              "amount_cents": 8366046
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 8206564
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 8772622
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 7814982
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 8583772
+            },
+            {
+              "charge_count": 2492,
+              "amount_cents": 9342202
+            },
+            {
+              "charge_count": 1068,
+              "amount_cents": 3712412
+            },
+            {
+              "charge_count": 2634,
+              "amount_cents": 8527581
+            },
+            {
+              "charge_count": 2499,
+              "amount_cents": 8568300
+            },
+            {
+              "charge_count": 2499,
+              "amount_cents": 9120279
+            },
+            {
+              "charge_count": 2499,
+              "amount_cents": 7808568
+            },
+            {
+              "charge_count": 2499,
+              "amount_cents": 8293326
+            },
+            {
+              "charge_count": 2499,
+              "amount_cents": 8795664
+            },
+            {
+              "charge_count": 1071,
+              "amount_cents": 3558882
+            },
+            {
+              "charge_count": 318,
+              "amount_cents": 921373
+            },
+            {
+              "charge_count": 273,
+              "amount_cents": 956048
+            },
+            {
+              "charge_count": 273,
+              "amount_cents": 1222563
+            },
+            {
+              "charge_count": 273,
+              "amount_cents": 1106602
+            },
+            {
+              "charge_count": 273,
+              "amount_cents": 1080950
+            },
+            {
+              "charge_count": 273,
+              "amount_cents": 1031958
+            },
+            {
+              "charge_count": 117,
+              "amount_cents": 375906
+            }
+          ],
+          "result_row_count": 84,
+          "result_truncated": false,
+          "sampled": false
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 45,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "fb251cd68938fea320528e62d93a0c066ec460f27e43a61b65a59e08d98a13c2",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "b30ca22f-7cc6-4082-8da0-22ea5b74f393",
+          "analysis_run_id": "332c55b1-5ffc-4a5a-8ccf-e6175e4d0d14",
+          "sequence": 46,
+          "lease_epoch": 1,
+          "type": "run_failed",
+          "code": "INTERNAL_ERROR",
+          "message": "分析执行失败"
+        }
+      ]
+    }
+  ],
+  "page_errors": [],
+  "sse": [
+    200
+  ]
+}

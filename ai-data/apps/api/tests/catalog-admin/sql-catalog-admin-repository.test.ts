@@ -94,6 +94,13 @@ function setup() {
 
 // 前提：源当前版本为 4，目标角色版本为 3。操作：写入一项策略。预期：发布源版本 5 并保存完整角色快照，冲突或失败时原子回滚。
 describe("目录策略事务仓储", () => {
+  it("当前策略从实际权限表读回，而不把上次版本快照当作当前规则", async () => {
+    const { repository, transactionStarted } = setup();
+    const state = await repository.currentState(context.organizationId, "clinical", "role-a");
+    expect(state.version).toBe(3);
+    expect(state.snapshot.column_permissions).toEqual([{ ...permission, column: "department" }]);
+    expect(transactionStarted).toHaveBeenCalledOnce();
+  });
   it("策略写入和完整快照及审计摘要在同一事务中提交", async () => {
     const { repository, transactionStarted, committed } = setup();
     const result = await repository.saveChange(

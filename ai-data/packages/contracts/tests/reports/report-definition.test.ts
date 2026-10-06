@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { reportDefinitionSchema, reportExecutionInputSchema } from "../../src/index";
+import {
+  reportDefinitionSchema,
+  reportExecutionInputSchema,
+  reportRevisionBindingSchema,
+} from "../../src/index";
+
+it("修订恢复绑定只接受明确报表、运行和正整数基准版本", () => {
+  const binding = { report_id: "report", analysis_run_id: "run", expected_version: 2 };
+  expect(reportRevisionBindingSchema.parse(binding)).toEqual(binding);
+  for (const input of [
+    { ...binding, expected_version: 0 },
+    { ...binding, expected_version: 1.5 },
+    { ...binding, report_id: "" },
+    { ...binding, definition: {} },
+  ])
+    expect(reportRevisionBindingSchema.safeParse(input).success).toBe(false);
+});
 
 /** 同一结构供表单、对话和画布保存；引用校验在进入服务前完成。 */
 const definition = {

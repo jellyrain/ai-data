@@ -1,6 +1,8 @@
-import type { MetadataQueryExecutor } from "@ai-data/metadata";
+import type { MetadataQueryExecutor, MetadataTransactionalExecutor } from "@ai-data/metadata";
 import { z } from "zod";
 import { departmentIdsSchema } from "./department-scope";
+import { ApplicationError } from "../errors/application-error";
+import { SqlUserAdminReader } from "./sql-user-admin-reader";
 
 import type {
   AuthContext,
@@ -219,37 +221,62 @@ class SqlAuthRepository implements UserAdminRepository {
     });
   }
 
-  /** 依次写入用户、角色和例外范围绑定；每次写入独立执行，失败向上传播。 */
+  /** 用户与初始绑定一起提交；HTTP 分配在事务范围锁内复核组织和特权。 */
   async createUser(input: CreateUserInput): Promise<AuthUser> {
-    await this.database.execute({
-      sql: "INSERT INTO dbo.users (id, organization_id, username, display_name, password_hash, status) VALUES (@id, @organization_id, @username, @display_name, @password_hash, 'active')",
-      parameters: [
-        { name: "id", type: "string", value: input.id },
-        { name: "organization_id", type: "string", value: input.organizationId },
-        { name: "username", type: "string", value: input.username },
-        { name: "display_name", type: "string", value: input.displayName },
-        { name: "password_hash", type: "string", value: input.passwordHash },
-      ],
+    if (!("transaction" in this.database) || typeof this.database.transaction !== "function")
+      throw new ApplicationError("INTERNAL_ERROR", "创建用户需要事务数据库");
+    return (this.database as MetadataTransactionalExecutor).transaction(async (executor) => {
+      if (input.assignmentAuthority) {
+        const reader = new SqlUserAdminReader(executor);
+        const roles = await reader.roles(
+          input.organizationId,
+          input.assignmentAuthority.canAssignPrivileged,
+        );
+        const scopes = await reader.scopes(input.organizationId);
+        if (
+          input.roleIds.some((id) => !roles.some((role) => role.id === id)) ||
+          input.exceptionDataScopeIds.some((id) => !scopes.some((scope) => scope.id === id))
+        )
+          throw new ApplicationError("INVALID_INPUT", "角色或例外范围不存在或不可分配");
+      }
+      const duplicate = await executor.execute({
+        sql: "SELECT id FROM dbo.users WITH (UPDLOCK,HOLDLOCK) WHERE organization_id=@organization_id AND username=@username",
+        parameters: [
+          { name: "organization_id", type: "string", value: input.organizationId },
+          { name: "username", type: "string", value: input.username },
+        ],
+      });
+      if (duplicate.rows.length) throw new ApplicationError("CONFLICT", "用户名已存在");
+      await executor.execute({
+        sql: "INSERT INTO dbo.users (id, organization_id, username, display_name, password_hash, status) VALUES (@id, @organization_id, @username, @display_name, @password_hash, 'active')",
+        parameters: [
+          { name: "id", type: "string", value: input.id },
+          { name: "organization_id", type: "string", value: input.organizationId },
+          { name: "username", type: "string", value: input.username },
+          { name: "display_name", type: "string", value: input.displayName },
+          { name: "password_hash", type: "string", value: input.passwordHash },
+        ],
+      });
+      for (const roleId of input.roleIds)
+        await executor.execute({
+          sql: "INSERT INTO dbo.user_roles (user_id, role_id) VALUES (@user_id, @role_id)",
+          parameters: [
+            { name: "user_id", type: "string", value: input.id },
+            { name: "role_id", type: "string", value: roleId },
+          ],
+        });
+      for (const scopeId of input.exceptionDataScopeIds)
+        await executor.execute({
+          sql: "INSERT INTO dbo.user_data_scopes (user_id, data_scope_id) VALUES (@user_id, @scope_id)",
+          parameters: [
+            { name: "user_id", type: "string", value: input.id },
+            { name: "scope_id", type: "string", value: scopeId },
+          ],
+        });
+      const user = await new SqlAuthRepository(executor).findUserById(input.id);
+      if (!user) throw new Error("用户创建失败");
+      return user;
     });
-    for (const roleId of input.roleIds)
-      await this.database.execute({
-        sql: "INSERT INTO dbo.user_roles (user_id, role_id) VALUES (@user_id, @role_id)",
-        parameters: [
-          { name: "user_id", type: "string", value: input.id },
-          { name: "role_id", type: "string", value: roleId },
-        ],
-      });
-    for (const scopeId of input.exceptionDataScopeIds)
-      await this.database.execute({
-        sql: "INSERT INTO dbo.user_data_scopes (user_id, data_scope_id) VALUES (@user_id, @scope_id)",
-        parameters: [
-          { name: "user_id", type: "string", value: input.id },
-          { name: "scope_id", type: "string", value: scopeId },
-        ],
-      });
-    const user = await this.findUserById(input.id);
-    if (!user) throw new Error("用户创建失败");
-    return user;
   }
 
   /** 查询组织内全部用户。 */
@@ -283,23 +310,28 @@ class SqlAuthRepository implements UserAdminRepository {
     userId: string,
     organizationId: string,
     departmentIds: string[],
+    expectedAuthorizationVersion?: number,
   ): Promise<boolean> {
     const ids = departmentIdsSchema.parse(departmentIds);
     const result = await this.database.execute({
       sql: `SET XACT_ABORT ON;
         BEGIN TRY
           BEGIN TRANSACTION;
-          DECLARE @updated BIT = 0;
+          DECLARE @updated BIT = 0, @conflict BIT = 0;
           IF EXISTS (SELECT 1 FROM dbo.users WITH (UPDLOCK, HOLDLOCK) WHERE id = @user_id AND organization_id = @organization_id)
           BEGIN
+            IF @expected_version IS NOT NULL AND NOT EXISTS (SELECT 1 FROM dbo.users WHERE id=@user_id AND authorization_version=@expected_version)
+              SET @conflict=1;
+            ELSE BEGIN
             DELETE FROM dbo.user_department_scopes WHERE user_id = @user_id;
             INSERT INTO dbo.user_department_scopes (user_id, department_id)
               SELECT @user_id, value FROM OPENJSON(@department_ids);
             UPDATE dbo.users SET authorization_version = authorization_version + 1, updated_at = SYSUTCDATETIME() WHERE id = @user_id;
             SET @updated = 1;
+            END;
           END;
           COMMIT TRANSACTION;
-          SELECT @updated AS updated;
+          SELECT @updated AS updated, @conflict AS conflict;
         END TRY
         BEGIN CATCH
           IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
@@ -309,8 +341,11 @@ class SqlAuthRepository implements UserAdminRepository {
         { name: "user_id", type: "string", value: userId },
         { name: "organization_id", type: "string", value: organizationId },
         { name: "department_ids", type: "string", value: JSON.stringify(ids) },
+        { name: "expected_version", type: "integer", value: expectedAuthorizationVersion ?? null },
       ],
     });
+    if (result.rows[0]?.conflict === true)
+      throw new ApplicationError("CONFLICT", "用户授权已更新，请重新读取后保存");
     return result.rows[0]?.updated === true;
   }
 

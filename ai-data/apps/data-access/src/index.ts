@@ -13,6 +13,7 @@ import {
 import type { DasConfig } from "./config/das-config";
 import { DataSourceManager } from "./data-sources/data-source-manager";
 import { DataSourceManagementService } from "./data-sources/data-source-management-service";
+import { SqlDataSourceAdministration } from "./metadata/sql-data-source-administration";
 import { DatabaseServerTargetDiscovery } from "./data-sources/database-target-discovery";
 import { DefaultConnectorFactory } from "./connectors/default-connector-factory";
 import { ApiDatasetRepository } from "./metadata/api-dataset-repository";
@@ -114,6 +115,8 @@ async function start(): Promise<void> {
       new Aes256GcmSecretCipher(),
       new DatabaseServerTargetDiscovery(),
       dataSourceManager,
+      new SqlDataSourceAdministration(metadataDatabase),
+      config.sqlserver_transports,
     );
     const queryVerifier = await InternalQueryVerifier.create(apiPublicKey);
     const serviceVerifier = await InternalServiceVerifier.create(

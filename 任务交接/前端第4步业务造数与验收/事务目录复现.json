@@ -1,0 +1,25 @@
+{
+  "services": {
+    "items": [
+      {
+        "service_id": "data-access-service",
+        "service_url": "http://127.0.0.1:3102",
+        "service_version": "1.0.0",
+        "status": "healthy",
+        "last_heartbeat_at": "2026-09-27 18:40:52",
+        "sources": [
+          {
+            "source_id": "clinical-demo",
+            "status": "healthy",
+            "checked_at": "2026-09-27 18:40:52"
+          }
+        ]
+      }
+    ]
+  },
+  "catalog_objects": 24,
+  "metric": {
+    "succeeded": false,
+    "error": "/admin/metrics: 503 DATA_SOURCE_UNAVAILABLE 没有可用的 DAS 数据源"
+  }
+}

@@ -3,8 +3,28 @@ import { describe, expect, it, vi } from "vitest";
 import { registerModelResourceRoutes } from "../../src/routes/model-resource-routes";
 import { registerContractErrorHandler } from "../../src/routes/contract-error";
 import { context } from "../support/api-fixtures";
+import { ApplicationError } from "../../src/errors/application-error";
 
 describe("模型和 Agent 资源接口", () => {
+  it("会话撤销后拒绝读取缓存身份原本可访问的资源", async () => {
+    const app = Fastify();
+    registerContractErrorHandler(app);
+    const list = vi.fn(async () => []);
+    const refreshContext = vi.fn(async () => {
+      throw new ApplicationError("AUTHENTICATION_FAILED", "会话已失效");
+    });
+    registerModelResourceRoutes(app, { loadContext: async () => context, refreshContext }, {
+      models: { list },
+      skills: { list },
+    } as unknown as Parameters<typeof registerModelResourceRoutes>[2]);
+    for (const url of ["/models", "/skills", "/agent-tools"]) {
+      const response = await app.inject({ url, headers: { authorization: "Bearer cached" } });
+      expect(response.statusCode).toBe(401);
+    }
+    expect(refreshContext).toHaveBeenCalledTimes(3);
+    expect(list).not.toHaveBeenCalled();
+    await app.close();
+  });
   it("提供已认证的模型版本与只读 Skill/工具目录，拒绝伪造组织参数", async () => {
     const app = Fastify();
     registerContractErrorHandler(app);
@@ -18,10 +38,14 @@ describe("模型和 Agent 资源接口", () => {
       list: vi.fn(() => [{ name: "query-dsl" }]),
       read: vi.fn(() => ({ content: "说明" })),
     };
-    registerModelResourceRoutes(app, { loadContext: async () => context }, {
-      models,
-      skills,
-    } as unknown as Parameters<typeof registerModelResourceRoutes>[2]);
+    registerModelResourceRoutes(
+      app,
+      { loadContext: async () => context, refreshContext: async (value) => value },
+      {
+        models,
+        skills,
+      } as unknown as Parameters<typeof registerModelResourceRoutes>[2],
+    );
     const headers = { authorization: "Bearer demo" };
     expect((await app.inject({ url: "/models" })).statusCode).toBe(401);
     expect(

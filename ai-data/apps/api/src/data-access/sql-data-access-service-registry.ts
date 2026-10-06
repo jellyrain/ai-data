@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { z } from "zod";
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
 import {
   sourceHealthSchema,
@@ -34,6 +35,48 @@ class SqlDataAccessServiceRegistry implements DataAccessServiceRegistry {
     private readonly database: MetadataQueryExecutor,
     private readonly heartbeatTtlMilliseconds = 90_000,
   ) {}
+
+  /** 管理查询保留所有历史注册行，按与执行发现相同的失联窗口计算。 */
+  async listRegisteredServices() {
+    const result = await this.database.execute({
+      sql: `SELECT service_id,service_url,service_version,status,last_heartbeat_at,message,sources_json,
+       CAST(CASE WHEN last_heartbeat_at > DATEADD(millisecond,@negative_ttl,SYSUTCDATETIME()) THEN 0 ELSE 1 END AS BIT) AS is_expired
+       FROM dbo.data_access_services ORDER BY service_id`,
+      parameters: [
+        { name: "negative_ttl", type: "integer", value: -this.heartbeatTtlMilliseconds },
+      ],
+    });
+    const rows = parseStoredRecord(() =>
+      z
+        .array(
+          z
+            .object({
+              service_id: z.string().min(1),
+              service_url: z.string().url(),
+              service_version: z.string().nullable(),
+              status: z.enum(["healthy", "unhealthy"]),
+              last_heartbeat_at: z.date(),
+              message: z.string().nullable(),
+              sources_json: z.string(),
+              is_expired: z.boolean(),
+            })
+            .strict(),
+        )
+        .parse(result.rows),
+    );
+    return rows.map((row) => ({
+      serviceId: row.service_id,
+      serviceUrl: row.service_url,
+      serviceVersion: row.service_version,
+      status: row.status,
+      lastHeartbeatAt: row.last_heartbeat_at,
+      message: row.message,
+      sources: parseStoredRecord(() =>
+        sourceHealthSchema.array().parse(JSON.parse(row.sources_json)),
+      ),
+      isExpired: row.is_expired,
+    }));
+  }
 
   /** 使用服务主键幂等更新 API 推导的调用地址和最新数据源健康快照。 */
   async registerHeartbeat(

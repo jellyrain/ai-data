@@ -1,0 +1,62 @@
+[
+  {
+    "report_id": "6590692f-afe6-44aa-abe9-b3c6519708c1",
+    "execution_id": "4d4457b5-7390-4467-8457-d47c3eae82de",
+    "definition_version": 1,
+    "query_id": "query_1",
+    "sql": "SELECT d.name AS department_name,COUNT(DISTINCT v.visit_id) AS visit_count FROM dbo.visits v LEFT JOIN dbo.departments d ON v.department_id=d.department_id GROUP BY d.name",
+    "rows": 17,
+    "total": 24000,
+    "passed": true
+  },
+  {
+    "report_id": "6590692f-afe6-44aa-abe9-b3c6519708c1",
+    "execution_id": "2cd5d4a0-af78-4cfa-9858-c896734523fb",
+    "definition_version": 2,
+    "query_id": "query_1",
+    "sql": "SELECT d.name AS department_name,COUNT(DISTINCT v.visit_id) AS visit_count FROM dbo.visits v LEFT JOIN dbo.departments d ON v.department_id=d.department_id GROUP BY d.name",
+    "rows": 17,
+    "total": 24000,
+    "passed": true
+  },
+  {
+    "report_id": "4be90771-90a6-4598-9454-077cffed9762",
+    "execution_id": "a4bd7c97-f621-48aa-a7d0-e7375982f292",
+    "definition_version": 1,
+    "query_id": "query_1",
+    "sql": "SELECT d.name AS dimension_0,COUNT(DISTINCT a.admission_id) AS count FROM dbo.admissions a JOIN dbo.departments d ON a.department_id=d.department_id WHERE a.admitted_at BETWEEN @start AND @end GROUP BY d.name",
+    "rows": 12,
+    "total": 1480,
+    "passed": true
+  },
+  {
+    "report_id": "4be90771-90a6-4598-9454-077cffed9762",
+    "execution_id": "a4bd7c97-f621-48aa-a7d0-e7375982f292",
+    "definition_version": 1,
+    "query_id": "query_2",
+    "sql": "SELECT d.name AS dimension_0,COUNT(DISTINCT a.admission_id) AS count FROM dbo.admissions a JOIN dbo.departments d ON a.department_id=d.department_id WHERE a.discharged_at BETWEEN @start AND @end GROUP BY d.name",
+    "rows": 12,
+    "total": 1280,
+    "passed": true
+  },
+  {
+    "report_id": "47dfa9e0-8e34-4999-b9be-475732e75dc2",
+    "execution_id": "a502321b-f847-4d17-a080-8fde6af3b256",
+    "definition_version": 1,
+    "query_id": "query_1",
+    "sql": "SELECT d.name AS dimension_0,SUM(f.amount_cents) AS amount_cents FROM dbo.outpatient_charge_details f JOIN dbo.departments d ON f.department_id=d.department_id WHERE f.charged_at BETWEEN @start AND @end GROUP BY d.name",
+    "rows": 17,
+    "total": 118115274,
+    "passed": true
+  },
+  {
+    "report_id": "47dfa9e0-8e34-4999-b9be-475732e75dc2",
+    "execution_id": "a502321b-f847-4d17-a080-8fde6af3b256",
+    "definition_version": 1,
+    "query_id": "query_2",
+    "sql": "SELECT d.name AS dimension_0,SUM(f.amount_cents) AS amount_cents FROM dbo.inpatient_charge_details f JOIN dbo.departments d ON f.department_id=d.department_id WHERE f.charged_at BETWEEN @start AND @end GROUP BY d.name",
+    "rows": 12,
+    "total": 226315800,
+    "passed": true
+  }
+]

@@ -1,0 +1,13 @@
+
+Running 6 tests using 1 worker
+
+(node:56036) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › tests\e2e\management.spec.ts:14:1 › 模型按版本发布认证与 Agent 固定版本管理 (5.7s)
+  ok 2 [chromium] › tests\e2e\management.spec.ts:41:1 › 用户创建和部门范围保存后回读 (2.9s)
+  ok 3 [chromium] › tests\e2e\management.spec.ts:61:1 › 数据源完整回读与白名单逻辑别名保持 (4.1s)
+  ok 4 [chromium] › tests\e2e\management.spec.ts:86:1 › 业务目录保持空能力，策略保存采用角色实际版本 (5.8s)
+  ok 5 [chromium] › tests\e2e\management.spec.ts:119:1 › 管理页面亮暗四配色与 1440、1024、390 宽度 (8.1s)
+  ok 6 [chromium] › tests\e2e\management.spec.ts:139:1 › 发布回执失败保留草稿，离页确认和权限撤回清理秘密 (4.0s)
+
+  6 passed (35.8s)

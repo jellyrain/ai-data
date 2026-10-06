@@ -25,6 +25,8 @@ import { ReportService } from "./report-service";
 import { SqlReportRepository } from "./sql-report-repository";
 import { ReportManagementService } from "./report-management-service";
 import { SqlReportManagementRepository } from "./sql-report-management-repository";
+import { ReportSharingService } from "./report-sharing-service";
+import { SqlReportSharingRepository } from "./sql-report-sharing-repository";
 
 /** 统一装配定义、查询、执行及编辑，事务校验复用同一连接的目录与权限服务。 */
 function createReportServices(dependencies: {
@@ -170,6 +172,21 @@ function createReportServices(dependencies: {
         false,
       );
   };
-  return { builder, templates, definitions, executions, revisions, reports, management, complete };
+  const sharing = new ReportSharingService({
+    definitions,
+    reports,
+    repository: new SqlReportSharingRepository(dependencies.database),
+  });
+  return {
+    builder,
+    templates,
+    definitions,
+    executions,
+    revisions,
+    reports,
+    management,
+    sharing,
+    complete,
+  };
 }
 export { createReportServices };

@@ -15,7 +15,7 @@ const skillQuerySchema = z.object({ path: z.string().min(1).max(512).optional() 
 /** 模型管理只返回公开配置，认证数据交由服务端凭据存储处理。 */
 function registerModelResourceRoutes(
   app: FastifyInstance,
-  auth: Pick<ApiAuthService, "loadContext">,
+  auth: Pick<ApiAuthService, "loadContext" | "refreshContext">,
   services: Pick<ApiAgentServices, "models" | "skills">,
 ): void {
   const { models, skills } = services;
@@ -23,10 +23,15 @@ function registerModelResourceRoutes(
     reply
       .header("cache-control", "no-store")
       .code(201)
-      .send(await models.publish(await auth.loadContext(bearerToken(request)), request.body)),
+      .send(
+        await models.publish(
+          await auth.refreshContext(await auth.loadContext(bearerToken(request))),
+          request.body,
+        ),
+      ),
   );
   app.get("/models", async (request, reply) => {
-    const context = await auth.loadContext(bearerToken(request));
+    const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
     emptySchema.parse(request.query);
     return reply.header("cache-control", "no-store").send({ items: await models.list(context) });
   });
@@ -35,7 +40,7 @@ function registerModelResourceRoutes(
       .header("cache-control", "no-store")
       .send(
         await models.get(
-          await auth.loadContext(bearerToken(request)),
+          await auth.refreshContext(await auth.loadContext(bearerToken(request))),
           idSchema.parse(request.params).id,
           versionSchema.parse(request.query).version,
         ),
@@ -43,27 +48,28 @@ function registerModelResourceRoutes(
   );
   app.patch("/models/:id/status", async (request, reply) => {
     await models.setEnabled(
-      await auth.loadContext(bearerToken(request)),
+      await auth.refreshContext(await auth.loadContext(bearerToken(request))),
       idSchema.parse(request.params).id,
       statusSchema.parse(request.body).enabled,
     );
-    return reply.code(204).send();
+    return reply.header("cache-control", "no-store").code(204).send();
   });
   app.get("/skills", async (request, reply) => {
-    await auth.loadContext(bearerToken(request));
+    await auth.refreshContext(await auth.loadContext(bearerToken(request)));
     emptySchema.parse(request.query);
     return reply.header("cache-control", "no-store").send({ items: skills.list() });
   });
   app.get("/skills/:id", async (request, reply) => {
-    await auth.loadContext(bearerToken(request));
+    await auth.refreshContext(await auth.loadContext(bearerToken(request)));
     return reply
       .header("cache-control", "no-store")
       .send(
         skills.read(idSchema.parse(request.params).id, skillQuerySchema.parse(request.query).path),
       );
   });
-  app.get("/agent-tools", async (request) => {
-    await auth.loadContext(bearerToken(request));
+  app.get("/agent-tools", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    await auth.refreshContext(await auth.loadContext(bearerToken(request)));
     emptySchema.parse(request.query);
     return {
       items: Object.entries(toolDescriptions).map(([name, description]) => ({ name, description })),

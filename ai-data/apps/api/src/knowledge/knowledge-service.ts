@@ -2,6 +2,9 @@ import { createHash, randomUUID } from "node:crypto";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import {
+  knowledgeOwnerOptionsInputSchema,
+  type KnowledgeManagementRecord,
+  type ReportDefinitionVersion,
   knowledgeCandidateInputSchema,
   knowledgeCandidateSchema,
   knowledgePublishInputSchema,
@@ -548,6 +551,53 @@ class KnowledgeService {
     await this.validateContent(context, record.content, record.scope, executor);
     if (record.content.type === "business_rule")
       await this.authorizeSources(context, record.source_candidate_id, executor);
+  }
+  /** 管理身份只扩展读取范围，内容和来源授权始终逐条执行。 */
+  async listManagement(context: AuthContext): Promise<KnowledgeManagementRecord[]> {
+    const records = await this.dependencies.repository.listManagement(
+      context.organizationId,
+      this.time(),
+      this.manager(context) ? undefined : context.userId,
+    );
+    const result: KnowledgeManagementRecord[] = [];
+    for (const record of records) {
+      try {
+        await this.authorizePublished(context, record.latest);
+        if (record.current) await this.authorizePublished(context, record.current);
+        result.push(record);
+      } catch (error) {
+        if (!denied(error)) throw error;
+      }
+    }
+    return result;
+  }
+  async getManagement(context: AuthContext, id: string): Promise<KnowledgeManagementRecord> {
+    const [record] = await this.dependencies.repository.listManagement(
+      context.organizationId,
+      this.time(),
+      this.manager(context) ? undefined : context.userId,
+      id,
+    );
+    if (!record) throw new ApplicationError("NOT_FOUND", "正式知识不存在或无管理读取权限");
+    await this.authorizePublished(context, record.latest);
+    if (record.current) await this.authorizePublished(context, record.current);
+    return record;
+  }
+  async ownerOptions(context: AuthContext, input: unknown) {
+    this.assertManager(context);
+    return this.dependencies.repository.ownerOptions(
+      context.organizationId,
+      knowledgeOwnerOptionsInputSchema.parse(input),
+    );
+  }
+  /** 候选可见性授予固定定义预览，原报表权限保持由报表服务管理。 */
+  async templateDefinition(context: AuthContext, id: string): Promise<ReportDefinitionVersion> {
+    const candidate = await this.getCandidate(context, id);
+    if (candidate.content.type !== "report_template")
+      throw new ApplicationError("INVALID_INPUT", "此候选不是报表模板");
+    if (!this.dependencies.templates)
+      throw new ApplicationError("UNSUPPORTED_QUERY", "报表模板发布未配置");
+    return this.dependencies.templates.preview(context, candidate.content);
   }
   async getPublished(
     context: AuthContext,

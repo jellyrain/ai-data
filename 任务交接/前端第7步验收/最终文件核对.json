@@ -1,0 +1,22 @@
+{
+  "local_links": 169,
+  "missing": [],
+  "font_hashes": [
+    {
+      "name": "NotoSansSC-Regular.otf",
+      "sha256": "faa6c9df652116dde789d351359f3d7e5d2285a2b2a1f04a2d7244df706d5ea9",
+      "bytes": 8331336
+    },
+    {
+      "name": "NotoSansSC-Bold.otf",
+      "sha256": "c6cb5a93abaa9edc8ee7463b7ebb7f42d618d40e6ed2f7a5371c97b0b64767c0",
+      "bytes": 8543168
+    },
+    {
+      "name": "LICENSE",
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "bytes": 4301
+    }
+  ],
+  "append_only": true
+}

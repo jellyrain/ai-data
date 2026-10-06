@@ -235,11 +235,13 @@ class AuthService {
     userId: string,
     organizationId: string,
     departmentIds: string[],
+    expectedAuthorizationVersion?: number,
   ): Promise<boolean> {
     const updated = await this.dependencies.repository.updateUserDepartments(
       userId,
       organizationId,
       departmentIds,
+      expectedAuthorizationVersion,
     );
     if (updated) this.dependencies.contextCache?.deleteUser(userId);
     return updated;

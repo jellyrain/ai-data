@@ -5,6 +5,7 @@ import type { RowDataPacket } from "mysql2";
 import { Pool as PgPool } from "pg";
 
 import type { ResolvedDataSourceSecret } from "../secrets/secret-resolver";
+import { sqlServerDriverOptions } from "../connectors/sqlserver-transport";
 
 /** 可在服务器级别读取目标数据库的已解析凭据。 */
 type DatabaseServerSecret = Exclude<ResolvedDataSourceSecret, { connectorKind: "http_api" }>;
@@ -66,7 +67,7 @@ async function listSqlServerDatabases(
     user: secret.user,
     password: secret.password,
     pool: { max: 1, min: 0, idleTimeoutMillis: 1000 },
-    options: { encrypt: true, trustServerCertificate: false },
+    options: sqlServerDriverOptions(secret.sqlserver_transport),
   }).connect();
   try {
     const result = await pool.request().query<{ database_name: string }>(`

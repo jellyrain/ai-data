@@ -7,6 +7,8 @@ import {
   type RunLease,
   type QueryEvidence,
   type UserPreference,
+  type MemoryScope,
+  type PublishedKnowledge,
 } from "@ai-data/contracts";
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
 import type { AuthContext } from "../auth/auth-types";
@@ -19,6 +21,7 @@ import { resolvePreferenceTimeRange } from "../preferences/preference-time";
 import { isExplicitPreferenceRequest } from "./preference-instruction";
 import { captureQueryHabit } from "./query-habit";
 import { ApplicationError } from "../errors/application-error";
+import { discoveryPage, knowledgeSummary } from "../runtime/model-discovery-result";
 
 /** 个人默认和企业正式知识作为有版本的数据装配；查询工具仍负责实际授权执行。 */
 class MemoryRuntime {
@@ -30,11 +33,27 @@ class MemoryRuntime {
       >;
       knowledge: Pick<KnowledgeService, "listPublished" | "getPublished" | "submit">;
       access: Pick<MemoryAccess, "currentSource" | "scope">;
-      runs: Pick<AnalysisRunService, "withLease" | "remember" | "evidence">;
+      runs: Pick<
+        AnalysisRunService,
+        "withLease" | "remember" | "evidence" | "recordKnowledgeContext"
+      >;
       now?: () => number;
     },
   ) {}
   async snapshot(context: AuthContext) {
+    const defaults = await this.preferences(context);
+    const knowledge = (await this.dependencies.knowledge.listPublished(context)).filter(
+      (item) => item.content.type === "business_rule" && Object.keys(item.scope).length === 0,
+    );
+    if (knowledge.length > 30)
+      throw new ApplicationError(
+        "QUERY_LIMIT_EXCEEDED",
+        "通用正式规则超过单轮容量，请整理知识范围",
+      );
+    return { ...defaults, knowledge };
+  }
+  /** 仅账号默认与确认状态，避免读取偏好时再次注入企业知识。 */
+  async preferences(context: AuthContext) {
     const records = await this.dependencies.preferences.list(context);
     const defaults = records.filter(
       (item) => item.value.type !== "query_habit" || item.use_count === 0,
@@ -57,7 +76,6 @@ class MemoryRuntime {
       pending_confirmations: (
         await this.dependencies.preferences.listPendingConfirmations(context)
       ).slice(0, 5),
-      knowledge: (await this.dependencies.knowledge.listPublished(context)).slice(0, 30),
     };
   }
   private resolve(item: UserPreference) {
@@ -185,10 +203,57 @@ class MemoryRuntime {
       );
     else await this.dependencies.knowledge.submit(context, event.intent.candidate, executor);
   }
-  async knowledge(context: AuthContext, id?: string, version?: number) {
+  /** 当前可见正式知识的版本指纹用于线程复核，正文不进入模型初始输入。 */
+  async fingerprint(context: AuthContext) {
+    return (await this.dependencies.knowledge.listPublished(context))
+      .map((item) => ({ id: item.knowledge_id, version: item.version, scope: item.scope }))
+      .sort((a, b) => a.id.localeCompare(b.id) || a.version - b.version);
+  }
+  /** 对象或指标详情补齐适用规则，通用规则已在初始上下文提供。 */
+  async businessRules(context: AuthContext, scopes: MemoryScope[]) {
+    return (await this.dependencies.knowledge.listPublished(context)).filter(
+      (item) =>
+        item.content.type === "business_rule" &&
+        Object.keys(item.scope).length > 0 &&
+        scopes.some((scope) =>
+          Object.entries(item.scope).every(
+            ([key, value]) => scope[key as keyof MemoryScope] === value,
+          ),
+        ),
+    );
+  }
+  recordKnowledge(
+    context: AuthContext,
+    runId: string,
+    lease: RunLease,
+    knowledge: PublishedKnowledge[],
+  ) {
+    return this.dependencies.runs.recordKnowledgeContext(context, runId, lease, knowledge);
+  }
+  async knowledge(
+    context: AuthContext,
+    id?: string,
+    version?: number,
+    options: { query?: string; scope?: MemoryScope; cursor?: string; limit?: number } = {},
+  ) {
     return id
       ? this.dependencies.knowledge.getPublished(context, id, version)
-      : { items: await this.dependencies.knowledge.listPublished(context) };
+      : discoveryPage(
+          (await this.dependencies.knowledge.listPublished(context))
+            .filter(
+              (item) =>
+                !options.scope ||
+                Object.entries(options.scope).every(
+                  ([key, value]) =>
+                    item.scope[key as keyof MemoryScope] === undefined ||
+                    item.scope[key as keyof MemoryScope] === value,
+                ),
+            )
+            .map(knowledgeSummary),
+          { ...options, limit: options.limit ?? 20 },
+          (item) => `${item.knowledge_id}:${item.version}`,
+          (item) => `${item.name} ${item.type} ${JSON.stringify(item.scope)}`,
+        );
   }
 }
 

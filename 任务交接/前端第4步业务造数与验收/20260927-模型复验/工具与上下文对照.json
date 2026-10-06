@@ -1,0 +1,2012 @@
+[
+  {
+    "rollout_file": "rollout-2026-09-27T19-18-00-01a0e296-107c-7761-b9fc-21fc01ff6a3c.jsonl",
+    "tool_call_count": 16,
+    "calls": [
+      {
+        "name": "describe_metric",
+        "arguments": {
+          "metric_id": "demo-inpatient-fees"
+        },
+        "output_bytes": 1002,
+        "error": null
+      },
+      {
+        "name": "describe_dataset",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "object_id": "table.dbo.inpatient_charge_details"
+        },
+        "output_bytes": 4168,
+        "error": null
+      },
+      {
+        "name": "list_datasets",
+        "arguments": {
+          "source_id": "clinical-demo"
+        },
+        "output_bytes": 21204,
+        "error": null
+      },
+      {
+        "name": "read_skill_reference",
+        "arguments": {
+          "skill_name": "query-dsl",
+          "relative_path": "references/relational-query.md"
+        },
+        "output_bytes": 1890,
+        "error": null
+      },
+      {
+        "name": "list_datasets",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "cursor": "20"
+        },
+        "output_bytes": 3396,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "query": "住院 支付流水 结算",
+          "limit": 10
+        },
+        "output_bytes": 12,
+        "error": null
+      },
+      {
+        "name": "describe_dataset",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "object_id": "table.dbo.charge_items"
+        },
+        "output_bytes": 1834,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "query": "支付",
+          "limit": 10
+        },
+        "output_bytes": 14148,
+        "error": null
+      },
+      {
+        "name": "query_metric",
+        "arguments": {
+          "metric_id": "demo-inpatient-fees",
+          "start": "2026-01-01",
+          "end": "2026-09-27"
+        },
+        "output_bytes": 85,
+        "error": {
+          "code": "INVALID_INPUT",
+          "message": "指标时间类型或统计维度不符合定义"
+        }
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "source_id": "clinical-demo",
+            "type": "relational_query",
+            "group_by": [
+              "c.name"
+            ],
+            "joins": [
+              {
+                "alias": "i",
+                "object_id": "table.dbo.charge_items",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ],
+                "type": "inner"
+              },
+              {
+                "alias": "c",
+                "object_id": "table.dbo.charge_categories",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ],
+                "type": "inner"
+              }
+            ],
+            "order_by": [
+              {
+                "direction": "desc",
+                "field": "amount_cents"
+              }
+            ]
+          }
+        },
+        "output_bytes": 484,
+        "error": null
+      },
+      {
+        "name": "query_metric",
+        "arguments": {
+          "metric_id": "demo-inpatient-fees",
+          "start": "2026-01-01 00:00:00",
+          "end": "2026-09-27 23:59:59"
+        },
+        "output_bytes": 446,
+        "error": null
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "source_id": "clinical-demo",
+            "type": "relational_query",
+            "group_by": [
+              "c.name"
+            ],
+            "joins": [
+              {
+                "alias": "i",
+                "object_id": "table.dbo.charge_items",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ],
+                "type": "inner"
+              },
+              {
+                "alias": "c",
+                "object_id": "table.dbo.charge_categories",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ],
+                "type": "inner"
+              }
+            ],
+            "order_by": [
+              {
+                "direction": "desc",
+                "field": "amount_cents"
+              }
+            ]
+          }
+        },
+        "output_bytes": 484,
+        "error": null
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              },
+              {
+                "field": "t.charge_id",
+                "aggregation": "count",
+                "as": "charge_count"
+              }
+            ],
+            "source_id": "clinical-demo",
+            "type": "relational_query",
+            "group_by": [
+              "c.name"
+            ],
+            "joins": [
+              {
+                "alias": "i",
+                "object_id": "table.dbo.charge_items",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ],
+                "type": "inner"
+              },
+              {
+                "alias": "c",
+                "object_id": "table.dbo.charge_categories",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ],
+                "type": "inner"
+              }
+            ],
+            "order_by": [
+              {
+                "direction": "desc",
+                "field": "amount_cents"
+              }
+            ]
+          }
+        },
+        "output_bytes": 740,
+        "error": null
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "select": [
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              },
+              {
+                "field": "t.charge_id",
+                "aggregation": "count",
+                "as": "charge_count"
+              }
+            ],
+            "source_id": "clinical-demo",
+            "type": "relational_query",
+            "group_by": [
+              "c.name"
+            ],
+            "joins": [
+              {
+                "alias": "i",
+                "object_id": "table.dbo.charge_items",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ],
+                "type": "inner"
+              },
+              {
+                "alias": "c",
+                "object_id": "table.dbo.charge_categories",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ],
+                "type": "inner"
+              }
+            ],
+            "order_by": [
+              {
+                "direction": "desc",
+                "field": "amount_cents"
+              }
+            ]
+          }
+        },
+        "output_bytes": 740,
+        "error": null
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "select": [
+              {
+                "field": "c.name",
+                "as": "category"
+              },
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              },
+              {
+                "field": "t.charge_id",
+                "aggregation": "count",
+                "as": "charge_count"
+              }
+            ],
+            "source_id": "clinical-demo",
+            "type": "relational_query",
+            "group_by": [
+              "c.name"
+            ],
+            "joins": [
+              {
+                "alias": "i",
+                "object_id": "table.dbo.charge_items",
+                "on": [
+                  {
+                    "left": "t.item_id",
+                    "op": "eq",
+                    "right": "i.item_id"
+                  }
+                ],
+                "type": "inner"
+              },
+              {
+                "alias": "c",
+                "object_id": "table.dbo.charge_categories",
+                "on": [
+                  {
+                    "left": "i.category_id",
+                    "op": "eq",
+                    "right": "c.category_id"
+                  }
+                ],
+                "type": "inner"
+              }
+            ],
+            "order_by": [
+              {
+                "direction": "desc",
+                "field": "amount_cents"
+              }
+            ]
+          }
+        },
+        "output_bytes": 981,
+        "error": null
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "select": [
+              {
+                "field": "t.charge_id",
+                "aggregation": "count",
+                "as": "charge_count"
+              },
+              {
+                "field": "t.amount_cents",
+                "aggregation": "sum",
+                "as": "amount_cents"
+              }
+            ],
+            "source_id": "clinical-demo",
+            "type": "relational_query",
+            "group_by": [
+              "t.charged_at"
+            ],
+            "order_by": [
+              {
+                "direction": "asc",
+                "field": "t.charged_at"
+              }
+            ]
+          }
+        },
+        "output_bytes": 4040,
+        "error": null
+      }
+    ],
+    "token_usage": [
+      {
+        "timestamp": "2026-09-27T11:18:52.768Z",
+        "total_token_usage": {
+          "input_tokens": 11187,
+          "cached_input_tokens": 7141,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1292,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 12479
+        },
+        "last_token_usage": {
+          "input_tokens": 11187,
+          "cached_input_tokens": 7141,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1292,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 12479
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:19:40.925Z",
+        "total_token_usage": {
+          "input_tokens": 27515,
+          "cached_input_tokens": 19619,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2490,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 30005
+        },
+        "last_token_usage": {
+          "input_tokens": 16328,
+          "cached_input_tokens": 12478,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1198,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 17526
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:19:53.320Z",
+        "total_token_usage": {
+          "input_tokens": 46380,
+          "cached_input_tokens": 37145,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2792,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 49172
+        },
+        "last_token_usage": {
+          "input_tokens": 18865,
+          "cached_input_tokens": 17526,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 302,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 19167
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:19:59.750Z",
+        "total_token_usage": {
+          "input_tokens": 65973,
+          "cached_input_tokens": 56312,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2953,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 68926
+        },
+        "last_token_usage": {
+          "input_tokens": 19593,
+          "cached_input_tokens": 19167,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 161,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 19754
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:21:10.903Z",
+        "total_token_usage": {
+          "input_tokens": 88375,
+          "cached_input_tokens": 76067,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 4816,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 93191
+        },
+        "last_token_usage": {
+          "input_tokens": 22402,
+          "cached_input_tokens": 19755,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1863,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 24265
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:21:36.976Z",
+        "total_token_usage": {
+          "input_tokens": 112890,
+          "cached_input_tokens": 100332,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 5523,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 118413
+        },
+        "last_token_usage": {
+          "input_tokens": 24515,
+          "cached_input_tokens": 24265,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 707,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 25222
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:22:12.030Z",
+        "total_token_usage": {
+          "input_tokens": 138557,
+          "cached_input_tokens": 125554,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 6620,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 145177
+        },
+        "last_token_usage": {
+          "input_tokens": 25667,
+          "cached_input_tokens": 25222,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1097,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 26764
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:23:11.547Z",
+        "total_token_usage": {
+          "input_tokens": 165973,
+          "cached_input_tokens": 152318,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 8284,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 174257
+        },
+        "last_token_usage": {
+          "input_tokens": 27416,
+          "cached_input_tokens": 26764,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1664,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 29080
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:24:11.583Z",
+        "total_token_usage": {
+          "input_tokens": 197199,
+          "cached_input_tokens": 181397,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 9825,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 207024
+        },
+        "last_token_usage": {
+          "input_tokens": 31226,
+          "cached_input_tokens": 29079,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1541,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 32767
+        },
+        "model_context_window": 258400
+      }
+    ],
+    "terminal": {
+      "duration_ms": 370779,
+      "has_final_answer": false,
+      "error": null
+    }
+  },
+  {
+    "rollout_file": "rollout-2026-09-27T19-25-57-01a0e29d-57be-7b33-b6f0-ec307d24d00d.jsonl",
+    "tool_call_count": 28,
+    "calls": [
+      {
+        "name": "list_metrics",
+        "arguments": {},
+        "output_bytes": 5846,
+        "error": null
+      },
+      {
+        "name": "describe_metric",
+        "arguments": {
+          "metric_id": "demo-inpatient-fees",
+          "version": 1
+        },
+        "output_bytes": 1002,
+        "error": null
+      },
+      {
+        "name": "describe_dataset",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "object_id": "table.dbo.inpatient_charge_details"
+        },
+        "output_bytes": 4168,
+        "error": null
+      },
+      {
+        "name": "read_skill_reference",
+        "arguments": {
+          "skill_name": "query-dsl",
+          "relative_path": "references/relational-query.md"
+        },
+        "output_bytes": 1890,
+        "error": null
+      },
+      {
+        "name": "read_skill_reference",
+        "arguments": {
+          "skill_name": "query-dsl",
+          "relative_path": "references/values-and-filters.md"
+        },
+        "output_bytes": 919,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "query": "支付 流水"
+        },
+        "output_bytes": 12,
+        "error": null
+      },
+      {
+        "name": "describe_dataset",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "object_id": "table.dbo.charge_items"
+        },
+        "output_bytes": 1834,
+        "error": null
+      },
+      {
+        "name": "list_datasets",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "limit": 100
+        },
+        "output_bytes": 24570,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "query": "费用 每日 汇总",
+          "source_id": "clinical-demo"
+        },
+        "output_bytes": 12,
+        "error": null
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "query": "inpatient payment",
+          "source_id": "clinical-demo"
+        },
+        "output_bytes": 12,
+        "error": null
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "query_dataset",
+        "arguments": {
+          "query": {
+            "from": {
+              "alias": "t",
+              "object_id": "table.dbo.inpatient_charge_details"
+            },
+            "source_id": "clinical-demo",
+            "type": "parameterized_query",
+            "parameters": [
+              {
+                "data_type": "datetime",
+                "name": "start",
+                "value": "2026-01-01 00:00:00"
+              },
+              {
+                "data_type": "datetime",
+                "name": "end",
+                "value": "2026-09-27 23:59:59"
+              }
+            ]
+          }
+        },
+        "output_bytes": 71,
+        "error": {
+          "code": "UNSUPPORTED_QUERY",
+          "message": "对象不支持参数化查询"
+        }
+      },
+      {
+        "name": "query_metric",
+        "arguments": {
+          "metric_id": "demo-inpatient-fees",
+          "start": "2026-01-01",
+          "end": "2026-09-27"
+        },
+        "output_bytes": 85,
+        "error": {
+          "code": "INVALID_INPUT",
+          "message": "指标时间类型或统计维度不符合定义"
+        }
+      },
+      {
+        "name": "query_metric",
+        "arguments": {
+          "end": "2026-09-27 23:59:59",
+          "metric_id": "demo-inpatient-fees",
+          "start": "2026-01-01 00:00:00"
+        },
+        "output_bytes": 446,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "query": "结算",
+          "source_id": "clinical-demo"
+        },
+        "output_bytes": 13362,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "query": "退款",
+          "source_id": "clinical-demo"
+        },
+        "output_bytes": 3654,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "query": "payment",
+          "source_id": "clinical-demo"
+        },
+        "output_bytes": 4991,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "query": "流水",
+          "source_id": "clinical-demo"
+        },
+        "output_bytes": 4991,
+        "error": null
+      }
+    ],
+    "token_usage": [
+      {
+        "timestamp": "2026-09-27T11:26:58.529Z",
+        "total_token_usage": {
+          "input_tokens": 11187,
+          "cached_input_tokens": 7141,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1550,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 12737
+        },
+        "last_token_usage": {
+          "input_tokens": 11187,
+          "cached_input_tokens": 7141,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1550,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 12737
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:27:27.299Z",
+        "total_token_usage": {
+          "input_tokens": 27353,
+          "cached_input_tokens": 19879,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2210,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 29563
+        },
+        "last_token_usage": {
+          "input_tokens": 16166,
+          "cached_input_tokens": 12738,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 660,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 16826
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:28:39.747Z",
+        "total_token_usage": {
+          "input_tokens": 47318,
+          "cached_input_tokens": 36704,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 4092,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 51410
+        },
+        "last_token_usage": {
+          "input_tokens": 19965,
+          "cached_input_tokens": 16825,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1882,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 21847
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:28:46.116Z",
+        "total_token_usage": {
+          "input_tokens": 69195,
+          "cached_input_tokens": 58550,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 4272,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 73467
+        },
+        "last_token_usage": {
+          "input_tokens": 21877,
+          "cached_input_tokens": 21846,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 180,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 22057
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:28:59.692Z",
+        "total_token_usage": {
+          "input_tokens": 91282,
+          "cached_input_tokens": 80607,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 4711,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 95993
+        },
+        "last_token_usage": {
+          "input_tokens": 22087,
+          "cached_input_tokens": 22057,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 439,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 22526
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:29:05.378Z",
+        "total_token_usage": {
+          "input_tokens": 113838,
+          "cached_input_tokens": 103134,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 4874,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 118712
+        },
+        "last_token_usage": {
+          "input_tokens": 22556,
+          "cached_input_tokens": 22527,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 163,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 22719
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:29:19.078Z",
+        "total_token_usage": {
+          "input_tokens": 136587,
+          "cached_input_tokens": 125854,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 5318,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 141905
+        },
+        "last_token_usage": {
+          "input_tokens": 22749,
+          "cached_input_tokens": 22720,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 444,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 23193
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:29:33.339Z",
+        "total_token_usage": {
+          "input_tokens": 159819,
+          "cached_input_tokens": 149046,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 5737,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 165556
+        },
+        "last_token_usage": {
+          "input_tokens": 23232,
+          "cached_input_tokens": 23192,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 419,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 23651
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:29:44.493Z",
+        "total_token_usage": {
+          "input_tokens": 183500,
+          "cached_input_tokens": 172696,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 6074,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 189574
+        },
+        "last_token_usage": {
+          "input_tokens": 23681,
+          "cached_input_tokens": 23650,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 337,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 24018
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:30:02.647Z",
+        "total_token_usage": {
+          "input_tokens": 207548,
+          "cached_input_tokens": 196713,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 6649,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 214197
+        },
+        "last_token_usage": {
+          "input_tokens": 24048,
+          "cached_input_tokens": 24017,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 575,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 24623
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:30:16.765Z",
+        "total_token_usage": {
+          "input_tokens": 232201,
+          "cached_input_tokens": 221337,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 7086,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 239287
+        },
+        "last_token_usage": {
+          "input_tokens": 24653,
+          "cached_input_tokens": 24624,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 437,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 25090
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:30:31.688Z",
+        "total_token_usage": {
+          "input_tokens": 257321,
+          "cached_input_tokens": 246427,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 7509,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 264830
+        },
+        "last_token_usage": {
+          "input_tokens": 25120,
+          "cached_input_tokens": 25090,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 423,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 25543
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:30:41.328Z",
+        "total_token_usage": {
+          "input_tokens": 282894,
+          "cached_input_tokens": 271971,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 7782,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 290676
+        },
+        "last_token_usage": {
+          "input_tokens": 25573,
+          "cached_input_tokens": 25544,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 273,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 25846
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:30:58.400Z",
+        "total_token_usage": {
+          "input_tokens": 308770,
+          "cached_input_tokens": 297818,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 8307,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 317077
+        },
+        "last_token_usage": {
+          "input_tokens": 25876,
+          "cached_input_tokens": 25847,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 525,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 26401
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:31:09.624Z",
+        "total_token_usage": {
+          "input_tokens": 335201,
+          "cached_input_tokens": 324220,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 8590,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 343791
+        },
+        "last_token_usage": {
+          "input_tokens": 26431,
+          "cached_input_tokens": 26402,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 283,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 26714
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:31:18.191Z",
+        "total_token_usage": {
+          "input_tokens": 361947,
+          "cached_input_tokens": 350934,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 8799,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 370746
+        },
+        "last_token_usage": {
+          "input_tokens": 26746,
+          "cached_input_tokens": 26714,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 209,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 26955
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:32:27.280Z",
+        "total_token_usage": {
+          "input_tokens": 389126,
+          "cached_input_tokens": 377888,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 10571,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 399697
+        },
+        "last_token_usage": {
+          "input_tokens": 27179,
+          "cached_input_tokens": 26954,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1772,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 28951
+        },
+        "model_context_window": 258400
+      }
+    ],
+    "terminal": {
+      "duration_ms": 389601,
+      "has_final_answer": false,
+      "error": {
+        "message": "{\"error\":{\"code\":400,\"message\":\"request (34612 tokens) exceeds the available context size (32768 tokens), try increasing it\",\"type\":\"exceed_context_size_error\",\"n_prompt_tokens\":34612,\"n_ctx\":32768}}",
+        "codex_error_info": "other"
+      }
+    }
+  },
+  {
+    "rollout_file": "rollout-2026-09-27T19-35-19-01a0e2a5-e868-79e1-a063-1bc9975e2ef8.jsonl",
+    "tool_call_count": 9,
+    "calls": [
+      {
+        "name": "describe_metric",
+        "arguments": {
+          "metric_id": "demo-inpatient-fees"
+        },
+        "output_bytes": 1294,
+        "error": null
+      },
+      {
+        "name": "read_skill_reference",
+        "arguments": {
+          "skill_name": "query-dsl",
+          "relative_path": "references/values-and-filters.md"
+        },
+        "output_bytes": 919,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "query": "支付 流水 收款"
+        },
+        "output_bytes": 12,
+        "error": null
+      },
+      {
+        "name": "query_metric",
+        "arguments": {
+          "metric_id": "demo-inpatient-fees",
+          "start": "2026-01-01",
+          "end": "2026-09-27",
+          "dimensions": [
+            "c.name"
+          ]
+        },
+        "output_bytes": 85,
+        "error": {
+          "code": "INVALID_INPUT",
+          "message": "指标时间类型或统计维度不符合定义"
+        }
+      },
+      {
+        "name": "list_datasets",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "limit": 50
+        },
+        "output_bytes": 24570,
+        "error": null
+      },
+      {
+        "name": "query_metric",
+        "arguments": {
+          "metric_id": "demo-inpatient-fees",
+          "start": "2026-01-01 00:00:00",
+          "end": "2026-09-27 23:59:59",
+          "dimensions": [
+            "c.name"
+          ]
+        },
+        "output_bytes": 1035,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "query": "payment 预交金 退款 结算",
+          "source_id": "clinical-demo"
+        },
+        "output_bytes": 12,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "query": "流水",
+          "source_id": "clinical-demo"
+        },
+        "output_bytes": 4991,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "query": "住院结算",
+          "source_id": "clinical-demo"
+        },
+        "output_bytes": 1750,
+        "error": null
+      }
+    ],
+    "token_usage": [
+      {
+        "timestamp": "2026-09-27T11:36:59.283Z",
+        "total_token_usage": {
+          "input_tokens": 11365,
+          "cached_input_tokens": 7141,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2649,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 14014
+        },
+        "last_token_usage": {
+          "input_tokens": 11365,
+          "cached_input_tokens": 7141,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2649,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 14014
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:37:19.168Z",
+        "total_token_usage": {
+          "input_tokens": 25999,
+          "cached_input_tokens": 21154,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3174,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 29173
+        },
+        "last_token_usage": {
+          "input_tokens": 14634,
+          "cached_input_tokens": 14013,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 525,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 15159
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:37:47.796Z",
+        "total_token_usage": {
+          "input_tokens": 43902,
+          "cached_input_tokens": 35784,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3813,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 47715
+        },
+        "last_token_usage": {
+          "input_tokens": 17903,
+          "cached_input_tokens": 14630,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 639,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 18542
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:38:56.693Z",
+        "total_token_usage": {
+          "input_tokens": 62953,
+          "cached_input_tokens": 54327,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 5709,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 68662
+        },
+        "last_token_usage": {
+          "input_tokens": 19051,
+          "cached_input_tokens": 18543,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1896,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 20947
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T11:39:33.813Z",
+        "total_token_usage": {
+          "input_tokens": 62953,
+          "cached_input_tokens": 54327,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 5709,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 68662
+        },
+        "last_token_usage": {
+          "input_tokens": 19051,
+          "cached_input_tokens": 18543,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1896,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 20947
+        },
+        "model_context_window": 258400
+      }
+    ],
+    "terminal": {
+      "duration_ms": 254664,
+      "has_final_answer": false,
+      "error": {
+        "message": "stream disconnected before completion: Transport error: network error: error decoding response body",
+        "codex_error_info": "other"
+      }
+    }
+  },
+  {
+    "rollout_file": "rollout-2026-09-27T20-44-17-01a0e2e5-0bc8-77d2-9f21-82f0498e52f0.jsonl",
+    "tool_call_count": 8,
+    "calls": [
+      {
+        "name": "list_metrics",
+        "arguments": {},
+        "output_bytes": 6430,
+        "error": null
+      },
+      {
+        "name": "describe_metric",
+        "arguments": {
+          "metric_id": "demo-inpatient-fees",
+          "version": 2
+        },
+        "output_bytes": 1294,
+        "error": null
+      },
+      {
+        "name": "query_metric",
+        "arguments": {
+          "metric_id": "demo-inpatient-fees",
+          "start": "2026-01-01",
+          "end": "2026-09-27",
+          "dimensions": [
+            "c.name"
+          ],
+          "version": 2
+        },
+        "output_bytes": 85,
+        "error": {
+          "code": "INVALID_INPUT",
+          "message": "指标时间类型或统计维度不符合定义"
+        }
+      },
+      {
+        "name": "query_metric",
+        "arguments": {
+          "metric_id": "demo-inpatient-fees",
+          "start": "2026-01-01 00:00:00",
+          "end": "2026-09-27 23:59:59",
+          "dimensions": [
+            "c.name"
+          ],
+          "version": 2
+        },
+        "output_bytes": 1035,
+        "error": null
+      },
+      {
+        "name": "search_catalog",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "query": "支付流水 支付 payment"
+        },
+        "output_bytes": 12,
+        "error": null
+      },
+      {
+        "name": "list_datasets",
+        "arguments": {
+          "source_id": "clinical-demo"
+        },
+        "output_bytes": 21204,
+        "error": null
+      },
+      {
+        "name": "list_datasets",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "cursor": "20"
+        },
+        "output_bytes": 3396,
+        "error": null
+      },
+      {
+        "name": "describe_dataset",
+        "arguments": {
+          "source_id": "clinical-demo",
+          "object_id": "table.dbo.inpatient_payments"
+        },
+        "output_bytes": 2728,
+        "error": null
+      }
+    ],
+    "token_usage": [
+      {
+        "timestamp": "2026-09-27T12:44:46.415Z",
+        "total_token_usage": {
+          "input_tokens": 11365,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 249,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 11614
+        },
+        "last_token_usage": {
+          "input_tokens": 11365,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 249,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 11614
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T12:45:16.863Z",
+        "total_token_usage": {
+          "input_tokens": 24934,
+          "cached_input_tokens": 11613,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1010,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 25944
+        },
+        "last_token_usage": {
+          "input_tokens": 13569,
+          "cached_input_tokens": 11613,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 761,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 14330
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T12:45:35.629Z",
+        "total_token_usage": {
+          "input_tokens": 39295,
+          "cached_input_tokens": 25178,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1337,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 40632
+        },
+        "last_token_usage": {
+          "input_tokens": 14361,
+          "cached_input_tokens": 13565,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 327,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 14688
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T12:46:02.127Z",
+        "total_token_usage": {
+          "input_tokens": 54479,
+          "cached_input_tokens": 39535,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2143,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 56622
+        },
+        "last_token_usage": {
+          "input_tokens": 15184,
+          "cached_input_tokens": 14357,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 806,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 15990
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T12:46:04.742Z",
+        "total_token_usage": {
+          "input_tokens": 70488,
+          "cached_input_tokens": 55525,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2194,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 72682
+        },
+        "last_token_usage": {
+          "input_tokens": 16009,
+          "cached_input_tokens": 15990,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 51,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 16060
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T12:46:19.055Z",
+        "total_token_usage": {
+          "input_tokens": 89252,
+          "cached_input_tokens": 71585,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2448,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 91700
+        },
+        "last_token_usage": {
+          "input_tokens": 18764,
+          "cached_input_tokens": 16060,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 254,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 19018
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T12:46:33.555Z",
+        "total_token_usage": {
+          "input_tokens": 109044,
+          "cached_input_tokens": 90604,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2806,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 111850
+        },
+        "last_token_usage": {
+          "input_tokens": 19792,
+          "cached_input_tokens": 19019,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 358,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 20150
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T12:48:19.979Z",
+        "total_token_usage": {
+          "input_tokens": 129800,
+          "cached_input_tokens": 110754,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 6004,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 135804
+        },
+        "last_token_usage": {
+          "input_tokens": 20756,
+          "cached_input_tokens": 20150,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 3198,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 23954
+        },
+        "model_context_window": 258400
+      }
+    ],
+    "terminal": {
+      "duration_ms": 242681,
+      "has_final_answer": true,
+      "error": null
+    }
+  },
+  {
+    "rollout_file": "rollout-2026-09-27T20-49-28-01a0e2e9-ca91-7a50-ac1e-4ea48f5276f3.jsonl",
+    "tool_call_count": 1,
+    "calls": [
+      {
+        "name": "list_sources",
+        "arguments": {},
+        "output_bytes": 41,
+        "error": null
+      }
+    ],
+    "token_usage": [
+      {
+        "timestamp": "2026-09-27T12:49:37.223Z",
+        "total_token_usage": {
+          "input_tokens": 11316,
+          "cached_input_tokens": 7141,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 55,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 11371
+        },
+        "last_token_usage": {
+          "input_tokens": 11316,
+          "cached_input_tokens": 7141,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 55,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 11371
+        },
+        "model_context_window": 258400
+      },
+      {
+        "timestamp": "2026-09-27T12:49:38.907Z",
+        "total_token_usage": {
+          "input_tokens": 22712,
+          "cached_input_tokens": 18511,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 92,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 22804
+        },
+        "last_token_usage": {
+          "input_tokens": 11396,
+          "cached_input_tokens": 11370,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 37,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 11433
+        },
+        "model_context_window": 258400
+      }
+    ],
+    "terminal": {
+      "duration_ms": 10708,
+      "has_final_answer": true,
+      "error": null
+    }
+  }
+]

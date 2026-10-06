@@ -103,6 +103,10 @@ it("两个 Agent 在共用进程中装配各自模型、认证和独立 Skill，
   );
   expect(resumed.settings.model).toBe("agent-a");
   expect(resumed.settings.cwd).toBe(a.configuration!.cwd);
+  for (const result of [ra, rb, resumed]) {
+    expect(result.settings.config.model_context_window).toBe(32768);
+    expect(result.settings.config.model_auto_compact_token_limit).toBe(24576);
+  }
   expect(resumed.skills).toEqual([]);
 });
 it("新增认证等待在途运行结束后重建，等待期间取消不会开始模型轮次", async () => {

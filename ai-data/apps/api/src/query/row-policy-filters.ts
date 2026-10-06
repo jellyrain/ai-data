@@ -19,6 +19,20 @@ function resolvePermissionValue(path: string, context: AuthContext): unknown {
   }
 }
 
+/** 部门资料使用字符串 ID；整数字段只接受规范十进制且安全整数可无损表示的完整集合。 */
+function integerDepartmentIds(value: unknown): number[] {
+  if (!Array.isArray(value) || value.length === 0)
+    throw new QueryAuthorizationError("整数部门字段需要有效的部门范围", "POLICY_REJECTED");
+  return value.map((id: unknown) => {
+    if (typeof id !== "string" || !/^(?:0|-?[1-9][0-9]*)$/.test(id))
+      throw new QueryAuthorizationError("部门 ID 无法无损转换为整数", "POLICY_REJECTED");
+    const parsed = Number(id);
+    if (!Number.isSafeInteger(parsed) || String(parsed) !== id)
+      throw new QueryAuthorizationError("部门 ID 超出安全整数范围", "POLICY_REJECTED");
+    return parsed;
+  });
+}
+
 /** 将一条配置条件完整求值为所属对象上的类型化过滤条件。 */
 function evaluateRowCondition(
   input: unknown,
@@ -31,10 +45,15 @@ function evaluateRowCondition(
   const condition = parsed.data;
   const column = authorized.dataset.columns.find((item) => item.name === condition.field);
   if (!column) throw new QueryAuthorizationError("行策略引用的字段不可用", "POLICY_REJECTED");
-  const value =
+  const resolved =
     condition.value_from === undefined
       ? condition.value
       : resolvePermissionValue(condition.value_from, context);
+  // 只适配可信部门上下文与整数目录字段；固定值、其他身份字段和字符串列保持原有校验。
+  const value =
+    condition.value_from === "permission_context.department_ids" && column.data_type === "integer"
+      ? integerDepartmentIds(resolved)
+      : resolved;
   const evaluated = filterConditionSchema.safeParse({
     field: `${alias}.${condition.field}`,
     op: condition.op,

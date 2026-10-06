@@ -1,0 +1,42 @@
+{
+  "capability": {
+    "status": "available",
+    "contextWindow": 32768,
+    "source": "models+props"
+  },
+  "budget": {
+    "contextWindow": 32768,
+    "autoCompactTokenLimit": 24576,
+    "contextWindowSource": "service"
+  },
+  "calls": [1, 2, 3, 4, 5, 6, 7, 8],
+  "compactions": [
+    {
+      "itemId": "01a0e36f-fde3-7b41-929f-8213a82d716f",
+      "status": "started"
+    },
+    {
+      "itemId": "01a0e36f-fde3-7b41-929f-8213a82d716f",
+      "status": "completed"
+    }
+  ],
+  "schema_reads_at_page": [0, 8, 8],
+  "thread_id": "01a0e36f-4760-7e00-adc8-4e70039d4988",
+  "first": {
+    "status": "completed",
+    "content": "核对完成。已按序读取第 1 至第 8 页（页码逐页递增、无重复），page-8 实际返回与模式一致（150 条，page_total 168,825），无异常。最终结果如下：\n\n| 项目 | 结果 |\n|---|---|\n| 完整条数 | 1,200 条（8 页 × 每页 150） |\n| 合计值 | 720,600 |\n| 日期 | 2026-09-27 |\n| 校验码 | RH-4826 |\n| 固定口径版本 | synthetic-count-v2 |\n| 用户条件 | department-A |\n| 证据范围 | page-1 至 page-8 |\n\n核对方式：使用工具给出的每页 count 与 page_total 求和（各页总计：11,325 / 33,825 / 56,325 / 78,825 / 101,325 / 123,825 / 146,325 / 168,825），未逐条加总。全部数据为合成验收数据。"
+  },
+  "followup": {
+    "status": "completed",
+    "content": "已重新读取 read_page 定义（参数：`page`，integer，范围 1–8，必填），未读取任何数据页。沿用此前核对结果，重述如下：\n\n| 项目 | 结果 |\n|---|---|\n| 完整条数 | 1,200 条 |\n| 合计值 | 720,600 |\n| 日期 | 2026-09-27 |\n| 校验码 | RH-4826 |\n| 固定口径版本 | synthetic-count-v2 |\n| 用户条件 | department-A |\n| 证据范围 | page-1 至 page-8 |"
+  },
+  "expected": {
+    "count": 1200,
+    "total": 720600,
+    "check": "RH-4826",
+    "metric": "synthetic-count-v2",
+    "condition": "department-A",
+    "evidence": ["page-1", "page-8"]
+  },
+  "status": "completed"
+}

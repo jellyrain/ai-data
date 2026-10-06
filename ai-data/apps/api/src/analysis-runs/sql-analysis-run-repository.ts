@@ -69,11 +69,21 @@ class SqlAnalysisRunRepository implements AnalysisRunRepository {
     operation: (state: AnalysisRunState) => RunChange,
     receipt?: RunReceipt,
   ): Promise<AnalysisRunState> {
+    // 会话归属在运行创建后不可变。先在短查询中定位，避免 JOIN 在等待会话锁时
+    // 持有运行行的共享锁，与另一事务最终 UPDATE analysis_runs 形成锁循环。
+    const owner = await this.database.execute({
+      sql: "SELECT conversation_id FROM dbo.analysis_runs WHERE id=@id AND user_id=@user AND organization_id=@org",
+      parameters: parameters(context, runId),
+    });
+    if (!owner.rows[0]) throw new ApplicationError("NOT_FOUND", "分析运行不存在");
     return this.database.transaction(async (executor) => {
       // 消息提交和运行变更使用相同锁顺序：先会话，再运行快照。
       await executor.execute({
-        sql: "SELECT c.id FROM dbo.conversations c WITH (UPDLOCK,HOLDLOCK) JOIN dbo.analysis_runs r ON r.conversation_id=c.id WHERE r.id=@id AND r.user_id=@user AND r.organization_id=@org",
-        parameters: parameters(context, runId),
+        sql: "SELECT id FROM dbo.conversations WITH (UPDLOCK,HOLDLOCK) WHERE id=@conversation AND user_id=@user AND organization_id=@org",
+        parameters: [
+          ...parameters(context, runId),
+          { name: "conversation", type: "string", value: String(owner.rows[0].conversation_id) },
+        ],
       });
       const state = await this.read(executor, context, runId, true);
       if (receipt) {

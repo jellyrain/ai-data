@@ -1,0 +1,141 @@
+{
+  "started_at": "2026-10-03 13:41:26",
+  "environment": "isolated",
+  "business_database": "ai_bi_demo",
+  "checks": [
+    {
+      "name": "数据库目标发现",
+      "passed": true
+    },
+    {
+      "name": "真实 DAS 注册、凭据引用与完整白名单",
+      "passed": true,
+      "objects": 3
+    },
+    {
+      "name": "正式规则审核发布、未来生效管理读取和负责人选项",
+      "passed": true
+    },
+    {
+      "name": "模板固定 v1 预览、原定义更新后保持内容、新建执行与 SQL 一致",
+      "passed": true
+    },
+    {
+      "name": "浏览器读取真实 API 持久化的个人偏好与待生效知识",
+      "passed": true
+    },
+    {
+      "name": "rj 首次会话采用本年偏好和正式规则，住院结果符合 SQL 基准",
+      "passed": true
+    },
+    {
+      "name": "rj 新会话采用本年偏好和正式规则，住院结果符合 SQL 基准",
+      "passed": true
+    },
+    {
+      "name": "停用后 rj 新会话不自动应用偏好与规则",
+      "passed": true
+    }
+  ],
+  "queries": [
+    {
+      "name": "本年住院基准",
+      "rows": [
+        {
+          "admissions": 124
+        }
+      ]
+    }
+  ],
+  "models": [
+    {
+      "title": "首次会话",
+      "run_id": "d06fba56-4f1c-449c-ba7e-4a4b4fee1a0d",
+      "status": "completed",
+      "error": null,
+      "preferences": [
+        {
+          "key": "default-time",
+          "resolved_time_range": {
+            "start": "2026-01-01",
+            "end": "2026-12-31"
+          }
+        }
+      ],
+      "knowledge": [
+        {
+          "id": "87ce0718-2c90-42fc-b166-70db0bfab53a",
+          "version": 1
+        }
+      ],
+      "queries": [
+        {
+          "rows": [
+            {
+              "inpatient_visits": 124
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "新会话",
+      "run_id": "fe2374b4-f20c-42d6-86d7-16617a1f9ffc",
+      "status": "completed",
+      "error": null,
+      "preferences": [
+        {
+          "key": "default-time",
+          "resolved_time_range": {
+            "start": "2026-01-01",
+            "end": "2026-12-31"
+          }
+        }
+      ],
+      "knowledge": [
+        {
+          "id": "87ce0718-2c90-42fc-b166-70db0bfab53a",
+          "version": 1
+        }
+      ],
+      "queries": [
+        {
+          "rows": [
+            {
+              "admission_count": 124
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "停用后",
+      "run_id": "d92be16a-af10-472f-8d50-8f300f295927",
+      "status": "completed",
+      "error": null,
+      "preferences": [],
+      "knowledge": [
+        {
+          "id": "39c231b9-abb6-4bc1-a3b1-f9db9947c548",
+          "version": 1
+        }
+      ],
+      "queries": []
+    }
+  ],
+  "policy_mode": "department_context",
+  "databases": [
+    "ai_data_management_live_81faf904685a49d4bc4ee4e8d877274b_api",
+    "ai_data_management_live_81faf904685a49d4bc4ee4e8d877274b_das"
+  ],
+  "root": "C:\\Users\\rain\\AppData\\Local\\Temp\\ai-data-management-live-bAcnNZ",
+  "processes": [
+    22812,
+    21496,
+    22832,
+    14964
+  ],
+  "status": "passed",
+  "cleaned_up": true,
+  "finished_at": "2026-10-03 13:45:12"
+}

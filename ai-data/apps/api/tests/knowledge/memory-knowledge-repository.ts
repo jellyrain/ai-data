@@ -1,5 +1,7 @@
 import {
   stableStringify,
+  type KnowledgeManagementRecord,
+  type KnowledgeOwnerOptionsInput,
   type KnowledgeCandidate,
   type MemorySource,
   type PublishedKnowledge,
@@ -30,6 +32,38 @@ class MemoryKnowledgeRepository implements KnowledgeRepository {
     const result = this.pending.then(() => work(this.executor));
     this.pending = result.catch(() => {});
     return result;
+  }
+  async listManagement(
+    org: string,
+    now: string,
+    ownerId?: string,
+    id?: string,
+  ): Promise<KnowledgeManagementRecord[]> {
+    const result: KnowledgeManagementRecord[] = [];
+    const ids = [
+      ...new Set(
+        [...this.versions.values()]
+          .filter((record) => record.organization_id === org)
+          .map((record) => record.knowledge_id),
+      ),
+    ].sort();
+    for (const key of ids) {
+      const latest = (await this.listVersions(org, key))[0]!;
+      if ((id && key !== id) || (ownerId && latest.owner_id !== ownerId)) continue;
+      result.push({
+        knowledge_id: key,
+        enabled: this.enabled.get(org + ":" + key) !== false,
+        latest,
+        current: await this.findPublished(org, key, undefined, now),
+      });
+    }
+    return result.slice(0, 200);
+  }
+  async ownerOptions(org: string, input: KnowledgeOwnerOptionsInput) {
+    return (org === "org" ? ["admin", "author", "owner"] : [])
+      .filter((id) => id.includes(input.keyword))
+      .slice(0, input.limit)
+      .map((id) => ({ user_id: id, username: id, display_name: id }));
   }
   async isActiveUser(org: string, userId: string) {
     return org === "org" && ["admin", "author", "owner"].includes(userId);

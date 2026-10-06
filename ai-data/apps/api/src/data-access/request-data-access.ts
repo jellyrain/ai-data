@@ -14,6 +14,8 @@ const messages: Record<ContractErrorCode, string> = {
   QUERY_LIMIT_EXCEEDED: "查询超出资源上限",
   QUERY_TIMEOUT: "数据查询超时",
   DATA_SOURCE_UNAVAILABLE: "数据源暂时不可用",
+  DATA_SOURCE_CERTIFICATE_INVALID:
+    "SQL Server 证书校验失败，请核对业务连接的证书信任选项或服务器证书配置",
   RATE_LIMITED: "数据访问请求过于频繁",
   NOT_FOUND: "数据资源不存在",
   CANCELLED: "数据查询已取消",
@@ -44,12 +46,12 @@ async function requestDataAccess<T>(
   body: unknown,
   parse: (data: unknown) => T,
   token?: string,
-  method: "POST" | "PUT" = "POST",
+  method: "POST" | "PUT" | "GET" = "POST",
   signal?: AbortSignal,
   responseBudget?: { maxBytes: number; timeoutMs: number },
 ): Promise<T> {
   if (signal?.aborted) throw new ApplicationError("CANCELLED", messages.CANCELLED);
-  const response = await (method === "PUT" ? axios.put : axios.post)<unknown>(url, body, {
+  const options = {
     ...(signal ? { signal } : {}),
     headers: {
       "content-type": "application/json",
@@ -60,7 +62,12 @@ async function requestDataAccess<T>(
     ...(responseBudget
       ? { maxContentLength: responseBudget.maxBytes, timeout: responseBudget.timeoutMs }
       : {}),
-  }).catch((cause: unknown) => {
+  };
+  const response = await (
+    method === "GET"
+      ? axios.get<unknown>(url, options)
+      : (method === "PUT" ? axios.put : axios.post)<unknown>(url, body, options)
+  ).catch((cause: unknown) => {
     if (!axios.isAxiosError(cause)) throw cause;
     // 管理请求可能携带连接凭据；保留错误码与堆栈，移除可被日志序列化的传输对象。
     delete cause.config;

@@ -1,0 +1,216 @@
+{
+  "started_at": "2026-09-30 21:43:15",
+  "environment": "isolated",
+  "business_database": "ai_bi_demo",
+  "checks": [
+    {
+      "name": "真实 DAS 注册、凭据引用与完整白名单",
+      "passed": true,
+      "objects": 3
+    },
+    {
+      "name": "浏览器创建两个部门账号并保存角色、部门范围",
+      "passed": true
+    },
+    {
+      "name": "浏览器模型和 Agent v1→v2，旧会话固定 v1、新会话选择 v2",
+      "passed": true
+    },
+    {
+      "name": "浏览器发布有方向的住院→科室关系",
+      "passed": true
+    },
+    {
+      "name": "两部门住院、有效费用 SQL 对账和隐藏字段拒绝，已发布关系真实查询通过",
+      "passed": true
+    },
+    {
+      "name": "rj v1 旧会话按部门查询住院人次，与 SQL 基准一致",
+      "passed": true
+    },
+    {
+      "name": "rj v2 新会话按部门查询费用，与 SQL 基准一致",
+      "passed": true
+    },
+    {
+      "name": "rj 升级后旧会话继续以 v1 追问",
+      "passed": true
+    }
+  ],
+  "queries": [
+    {
+      "department": 1,
+      "admissions": [
+        {
+          "admissions": 334
+        }
+      ],
+      "fees": [
+        {
+          "fee_cents": 50833965
+        }
+      ],
+      "hidden_patient_id_denied": true
+    },
+    {
+      "department": 2,
+      "admissions": [
+        {
+          "admissions": 334
+        }
+      ],
+      "fees": [
+        {
+          "fee_cents": 50837225
+        }
+      ],
+      "hidden_patient_id_denied": true
+    }
+  ],
+  "models": [
+    {
+      "version": 1,
+      "has_api_key": true
+    },
+    {
+      "version": 2,
+      "has_api_key": true
+    },
+    {
+      "run_id": "29b9e3bf-4c1b-4621-a556-0e5b05afc2fd",
+      "agent_version": 1,
+      "department": 1,
+      "status": "completed",
+      "error": null,
+      "queries": [
+        {
+          "rows": [
+            {
+              "admission_count": 334
+            }
+          ],
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "management-demo",
+            "from": {
+              "object_id": "table.dbo.admissions",
+              "alias": "a",
+              "filters": {
+                "logic": "or",
+                "items": [
+                  {
+                    "field": "a.department_id",
+                    "op": "eq",
+                    "data_type": "integer",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "joins": [],
+            "select": [
+              {
+                "field": "a.admission_id",
+                "aggregation": "count_distinct",
+                "as": "admission_count"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 5000
+          }
+        }
+      ],
+      "steps": []
+    },
+    {
+      "run_id": "80ccd582-df6c-47a9-861f-12899ee4b790",
+      "agent_version": 2,
+      "department": 2,
+      "status": "completed",
+      "error": null,
+      "queries": [
+        {
+          "rows": [
+            {
+              "total_cents": 50837225
+            }
+          ],
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "management-demo",
+            "from": {
+              "object_id": "table.dbo.inpatient_charge_details",
+              "alias": "d",
+              "filters": {
+                "logic": "and",
+                "items": [
+                  {
+                    "logic": "and",
+                    "items": [
+                      {
+                        "field": "d.status",
+                        "op": "eq",
+                        "data_type": "string",
+                        "value": "posted"
+                      }
+                    ]
+                  },
+                  {
+                    "logic": "or",
+                    "items": [
+                      {
+                        "field": "d.department_id",
+                        "op": "eq",
+                        "data_type": "integer",
+                        "value": 2
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "joins": [],
+            "select": [
+              {
+                "field": "d.amount_cents",
+                "aggregation": "sum",
+                "as": "total_cents"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 5000
+          }
+        }
+      ],
+      "steps": []
+    },
+    {
+      "run_id": "3dc5be50-7f90-41bd-b2c6-e0e472463d0d",
+      "agent_version": 1,
+      "department": 1,
+      "status": "completed",
+      "error": null,
+      "queries": [],
+      "steps": []
+    }
+  ],
+  "policy_mode": "fixed_integer_role",
+  "target_discovery": {
+    "status": "blocked",
+    "http_status": 400,
+    "note": "本机 SQL Server IP 连接与目标发现的证书校验不匹配；使用既有表单支持的显式库名继续接入。"
+  },
+  "status": "passed",
+  "cleaned_up": true,
+  "finished_at": "2026-09-30 21:45:50"
+}

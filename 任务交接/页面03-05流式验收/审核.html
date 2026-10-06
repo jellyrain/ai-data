@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>03—05 · 流式过程审核</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f1;color:#263023;font:15px/1.7 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1480px;margin:auto;padding:36px}h1{font-size:30px;line-height:1.3;margin:4px 0 12px}h2{font-size:20px;margin:34px 0 14px}p{margin:8px 0;color:#626956}small{letter-spacing:.08em;color:#707545}a{color:#687231}video{width:100%;aspect-ratio:16/9;background:#111;border-radius:12px;margin-top:20px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.card{background:#fff;border:1px solid #e0e4d8;border-radius:10px;overflow:hidden}.card img{width:100%;display:block}.caption{padding:12px 16px}.caption strong{display:block;font-size:16px}.caption p{font-size:14px;margin:4px 0}footer{padding:24px 0;color:#626956}a:focus-visible{outline:3px solid #687231;outline-offset:3px}@media(max-width:800px){main{padding:20px}.grid{grid-template-columns:1fr}h1{font-size:25px}}
+</style>
+<main>
+  <small>AI DATA · 页面审核 · 2026.10.03</small>
+  <h1>03—05：文字、工具与后续说明</h1>
+  <p>生产 Web 构建 · 隔离验收数据 · 1920×1080</p>
+  <p>文字随生成增长，工具在原位置更新状态，查询后的说明继续出现在时间线上。完成后自动收起过程，保留最终回答和结果；可点“查看分析过程”重新展开。</p>
+  <video controls preload="metadata" poster="04-工具执行中.png" aria-label="分析过程与文字流式输出演示"><source src="流式输出演示.webm" type="video/webm"></video>
+  <p>录屏包含流式输出、完成后收起与手动展开。此前真实 rj 验收记录到 2 段助手正文、72 个合并增量；时序另见页末记录。</p>
+  <h2>阶段截图</h2>
+  <div class="grid">
+    <article class="card"><a href="03-文字生成中.png" target="_blank"><img src="03-文字生成中.png" alt="助手首段文字正在生成"></a><div class="caption"><strong>03 · 文字生成中</strong><p>整轮尚未结束，首段文字已经可见。</p></div></article>
+    <article class="card"><a href="04-工具执行中.png" target="_blank"><img src="04-工具执行中.png" alt="前文之后显示执行中的工具卡片"></a><div class="caption"><strong>04 · 工具执行中</strong><p>工具保留在实际调用的位置。</p></div></article>
+    <article class="card"><a href="05-工具后的说明.png" target="_blank"><img src="05-工具后的说明.png" alt="工具已完成，下方继续输出助手说明"></a><div class="caption"><strong>05 · 工具后的说明</strong><p>卡片状态更新，后续说明持续输出。</p></div></article>
+    <article class="card"><a href="06-最终正文持续输出.png" target="_blank"><img src="06-最终正文持续输出.png" alt="查询后最终结论逐段增长"></a><div class="caption"><strong>最终正文持续输出</strong><p>正文已经出现，整体状态仍在进行中。</p></div></article>
+    <article class="card"><a href="07-最终完成.png" target="_blank"><img src="07-最终完成.png" alt="完成后过程收起，最终回答保持可见"></a><div class="caption"><strong>最终完成 · 过程收起</strong><p>最终回答和表格继续显示，工具与阶段说明集中在过程入口。</p></div></article>
+    <article class="card"><a href="08-展开分析过程.png" target="_blank"><img src="08-展开分析过程.png" alt="手动展开后的阶段说明和工具记录"></a><div class="caption"><strong>查看完整过程</strong><p>点击入口即可展开；刷新历史对话默认收起。</p></div></article>
+  </div>
+  <footer><a href="../页面03-05流式输出交付说明.md">交付、流程图和验收结果</a> · <a href="浏览器流式时序.json">浏览器时序</a> · <a href="真实模型流式时序.json">真实 rj 时序</a> · <a href="../页面审核-2026-10-03/页面审核.html">全模块审核目录</a></footer>
+</main>
+</html>

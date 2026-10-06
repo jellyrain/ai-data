@@ -22,6 +22,10 @@ class DataSourceManager {
   // 缓存初始化 Promise，让同一 source_id 的并发访问共享正在创建的实例。
   private readonly connectors = new Map<string, Promise<DataSourceConnector>>();
   private readonly connectorSecretRefs = new Map<string, string>();
+  private revision = 0;
+  private readonly secretRevisions = new Map<string, number>();
+  private readonly sourceRevisions = new Map<string, number>();
+  private closed = false;
 
   constructor(
     private readonly sourceLookup: DataSourceConfigLookup,
@@ -31,12 +35,13 @@ class DataSourceManager {
 
   /** 获取缓存连接器；同一数据源并发首次访问只创建一次连接器。 */
   async get(sourceId: string): Promise<DataSourceConnector> {
+    if (this.closed) throw new Error("数据源管理器已关闭");
     const cached = this.connectors.get(sourceId);
     if (cached !== undefined) {
       return cached;
     }
 
-    const created = this.createConnector(sourceId);
+    const created = this.createConnector(sourceId, this.revision);
     this.connectors.set(sourceId, created);
     try {
       return await created;
@@ -51,16 +56,20 @@ class DataSourceManager {
 
   /** 关闭并移除一条数据源的连接器，供配置更新和停用流程调用。 */
   async invalidate(sourceId: string): Promise<void> {
+    this.sourceRevisions.set(sourceId, ++this.revision);
     const connector = this.connectors.get(sourceId);
     this.connectors.delete(sourceId);
     this.connectorSecretRefs.delete(sourceId);
     if (connector !== undefined) {
-      await (await connector).close();
+      // 初始化失败或因版本变化自清理时，没有可关闭的已建立连接。
+      const resolved = await connector.catch(() => undefined);
+      await resolved?.close();
     }
   }
 
   /** 凭据更新后关闭全部使用该密钥引用的业务连接器。 */
   async invalidateBySecretRef(secretRef: string): Promise<void> {
+    this.secretRevisions.set(secretRef, ++this.revision);
     const sourceIds = [...this.connectorSecretRefs]
       .filter(([, configuredSecretRef]) => configuredSecretRef === secretRef)
       .map(([sourceId]) => sourceId);
@@ -69,6 +78,7 @@ class DataSourceManager {
 
   /** 在 DAS 退出时释放所有已经创建的业务数据源资源。 */
   async close(): Promise<void> {
+    this.closed = true;
     const connectors = [...this.connectors.values()];
     this.connectors.clear();
     this.connectorSecretRefs.clear();
@@ -85,19 +95,29 @@ class DataSourceManager {
   }
 
   /** 解析配置与凭据后创建实例，确认工厂返回的数据源身份一致再登记凭据依赖。 */
-  private async createConnector(sourceId: string): Promise<DataSourceConnector> {
+  private async createConnector(sourceId: string, startedAt: number): Promise<DataSourceConnector> {
     const config = await this.sourceLookup.findEnabledBySourceId(sourceId);
     if (config === undefined) {
       throw new Error(`数据源不存在或已停用: ${sourceId}`);
     }
 
+    const stale = () =>
+      this.closed ||
+      (this.sourceRevisions.get(sourceId) ?? 0) > startedAt ||
+      (this.secretRevisions.get(config.secretRef) ?? 0) > startedAt;
+    if (stale()) throw new Error("数据源配置已更新，请重新连接");
+    this.connectorSecretRefs.set(sourceId, config.secretRef);
     const secret = await this.secretResolver.resolve(config);
+    if (stale()) throw new Error("数据源配置已更新，请重新连接");
     const connector = await this.connectorFactory.create(config, secret);
+    if (stale()) {
+      await connector.close();
+      throw new Error("数据源配置已更新，请重新连接");
+    }
     if (connector.sourceId !== config.sourceId || connector.kind !== config.connectorKind) {
       await connector.close();
       throw new Error(`连接器工厂返回了不匹配的数据源实例: ${sourceId}`);
     }
-    this.connectorSecretRefs.set(config.sourceId, config.secretRef);
     return connector;
   }
 }

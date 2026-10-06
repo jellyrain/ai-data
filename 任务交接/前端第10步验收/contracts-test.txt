@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/packages/contracts
+
+
+ Test Files  27 passed (27)
+      Tests  188 passed (188)
+   Start at  13:34:16
+   Duration  3.65s (transform 10.22s, setup 0ms, import 29.27s, tests 734ms, environment 6ms)
+

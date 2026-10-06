@@ -10,6 +10,25 @@ const baseEvent = {
 
 // 所有变体复用相同的会话、运行和序号；这些用例检查载荷结构，事件写入负责运行内排序。
 describe("SSE 事件合同", () => {
+  it("助手段落支持增量与完整校准，拒绝未知阶段和超量片段，兼容旧答案", () => {
+    const event = {
+      ...baseEvent,
+      type: "assistant_message",
+      message_id: "message",
+      status: "delta",
+      content: "查询完成",
+    };
+    expect(sseEventSchema.safeParse(event).success).toBe(true);
+    expect(
+      sseEventSchema.safeParse({ ...event, status: "completed", phase: "final_answer" }).success,
+    ).toBe(true);
+    expect(sseEventSchema.safeParse({ ...event, phase: "reasoning" }).success).toBe(false);
+    expect(sseEventSchema.safeParse({ ...event, message_id: "" }).success).toBe(false);
+    expect(sseEventSchema.safeParse({ ...event, content: "x".repeat(64001) }).success).toBe(false);
+    expect(
+      sseEventSchema.safeParse({ ...baseEvent, type: "final_answer", content: "旧答案" }).success,
+    ).toBe(true);
+  });
   it("压缩事件关联条目并校验状态与真实业务时间", () => {
     const event = {
       ...baseEvent,

@@ -18,6 +18,7 @@ function setup(overrides: Record<string, unknown> = {}) {
     get: vi.fn(async () => ({})),
     evidence: vi.fn(async () => []),
     recordCompaction: vi.fn(async () => {}),
+    recordMessage: vi.fn(async () => {}),
     recordMemoryContext: vi.fn(async () => {}),
   };
   const harness = {
@@ -54,6 +55,42 @@ function setup(overrides: Record<string, unknown> = {}) {
 }
 
 describe("分析执行器", () => {
+  it("流式文字先校验当前知识范围，变更后停止交付后续正文和终态", async () => {
+    let visible = true;
+    const h = setup({ loadMemoryFingerprint: async () => visible });
+    h.harness.run.mockImplementation(async (request) => {
+      await request.onMessage!({ itemId: "a", status: "delta", content: "已查询" });
+      visible = false;
+      await request.onMessage!({ itemId: "a", status: "delta", content: "不得交付" });
+      return { status: "completed", content: "不得交付" };
+    });
+    await h.executor.execute(context, "run");
+    expect(h.runs.recordMessage).toHaveBeenCalledOnce();
+    expect(h.runs.complete).not.toHaveBeenCalled();
+    expect(h.runs.fail).toHaveBeenCalledWith(
+      context,
+      "run",
+      expect.anything(),
+      expect.objectContaining({ code: "POLICY_REJECTED" }),
+    );
+  });
+  it("知识版本只进入线程指纹，正文不注入；分析期间知识停用则拒绝交付", async () => {
+    let visible = [{ id: "knowledge", version: 1 }];
+    const h = setup({ loadMemoryFingerprint: async () => visible });
+    h.harness.run.mockImplementation(async (request) => {
+      expect(request.input).not.toContain("knowledge");
+      visible = [];
+      return { status: "completed", content: "过期规则结论" };
+    });
+    await h.executor.execute(context, "run");
+    expect(h.runs.complete).not.toHaveBeenCalled();
+    expect(h.runs.fail).toHaveBeenCalledWith(
+      context,
+      "run",
+      expect.anything(),
+      expect.objectContaining({ code: "POLICY_REJECTED" }),
+    );
+  });
   it("当前账号记忆与生效知识进入上下文，后续版本变化更新线程摘要", async () => {
     let version = 1;
     const loadMemory = vi.fn(async () => ({

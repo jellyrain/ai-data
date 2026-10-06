@@ -1,5 +1,18 @@
-import { MAX_QUERY_ROWS } from "@ai-data/contracts";
-import { z } from "zod";
+import { createHash } from "node:crypto";
+import {
+  dataSourceManagementConfigSchema,
+  databaseTargetDiscoveryRequestSchema,
+  sharedDatabaseCredentialsSchema,
+  sourceObjectDiscoveryRequestSchema,
+  sourceObjectSelectionRequestSchema,
+  sqlServerTransportUpdateSchema,
+  managedSqlServerTransportSchema,
+} from "@ai-data/contracts";
+import type { ManageableSourceObject } from "@ai-data/contracts";
+import type { z } from "zod";
+import { publicSourceObject } from "../metadata/sql-data-source-administration";
+import type { SqlDataSourceAdministration } from "../metadata/sql-data-source-administration";
+import { managedObjectCapabilities } from "./managed-object-capabilities";
 
 import type { DiscoveredDataset } from "../connectors/connector-catalog";
 import type { EncryptedDataSourceSecret } from "../secrets/secret-types";
@@ -8,158 +21,20 @@ import type { ExposedSourceObject } from "../catalog/catalog-types";
 import type { Aes256GcmSecretCipher, ActiveMasterKeyProvider } from "@ai-data/metadata/secrets";
 import type { DataSourceSecretResolver } from "../secrets/secret-resolver";
 import type { DatabaseTargetDiscovery } from "./database-target-discovery";
-import { procedureDefinitionSchema } from "../catalog/procedure-definition";
-
-/** 数据库连接器可保存的共享凭据类型。 */
-const databaseConnectorKindSchema = z.enum(["sqlserver", "mysql", "postgresql", "oracle"]);
-
-/** 管理端保存一套可由多个 source_id 复用的数据库服务器凭据，仅接受声明字段。 */
-const sharedDatabaseCredentialsSchema = z
-  .object({
-    /** 多个目标库可复用的加密凭据引用。 */
-    secret_ref: z.string().min(1),
-    /** 此凭据对应的数据库驱动类型。 */
-    connector_kind: databaseConnectorKindSchema,
-    /** 数据库服务器主机名或 IP 地址。 */
-    host: z.string().min(1),
-    /** 数据库服务器 TCP 端口。 */
-    port: z.number().int().min(1).max(65535),
-    /** 部署方授予只读权限的数据库账号；本层仅接收账号名称。 */
-    user: z.string().min(1),
-    /** 只在加密写入和连接创建期间使用的登录密码。 */
-    password: z.string().min(1),
-  })
-  .strict();
-
-/** 管理端按共享凭据发现可绑定目标库的请求，仅接受声明字段。 */
-const databaseTargetDiscoveryRequestSchema = z
-  .object({
-    /** 已保存的共享凭据引用。 */
-    secret_ref: z.string().min(1),
-    /** 用于选择目标库目录读取方式的数据库类型。 */
-    connector_kind: databaseConnectorKindSchema,
-    /** Oracle 发现必须先连接 CDB；其他数据库不使用该字段。 */
-    oracle_connect_type: z.enum(["sid", "service_name"]).optional(),
-    /** Oracle CDB 的 SID 或 Service Name。 */
-    oracle_connect_target: z.string().min(1).optional(),
-  })
-  .strict()
-  // Oracle 发现要求成对提供 CDB 连接方式和目标；其他类型省略这两个字段。
-  .superRefine((value, context) => {
-    const hasOracleTarget =
-      value.oracle_connect_type !== undefined || value.oracle_connect_target !== undefined;
-    if (
-      value.connector_kind === "oracle" &&
-      (value.oracle_connect_type === undefined || value.oracle_connect_target === undefined)
-    ) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Oracle 目标发现必须配置 CDB 的 SID 或 Service Name",
-      });
-    }
-    if (value.connector_kind !== "oracle" && hasOracleTarget) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "非 Oracle 数据库不能配置 Oracle 连接目标",
-      });
-    }
-  });
-
-/** 管理端保存一个只绑定单一目标数据库或 Oracle 连接目标的数据源，仅接受声明字段。 */
-const dataSourceManagementConfigSchema = z
-  .object({
-    /** 单一目标数据库的运行数据源标识。 */
-    source_id: z.string().regex(/^[A-Za-z_][A-Za-z0-9_.-]*$/),
-    /** 当前 source_id 使用的数据库连接器。 */
-    connector_kind: databaseConnectorKindSchema,
-    /** 指向共享服务器凭据的加密记录。 */
-    secret_ref: z.string().min(1),
-    /** SQL Server、MySQL 或 PostgreSQL 实际连接的目标数据库。 */
-    target_database: z.string().min(1).optional(),
-    /** Oracle 目标使用 SID 或 Service Name。 */
-    oracle_connect_type: z.enum(["sid", "service_name"]).optional(),
-    /** Oracle 目标的 SID 或 Service Name；与连接方式成对提供，其他类型省略。 */
-    oracle_connect_target: z.string().min(1).optional(),
-    /** 是否允许创建运行时连接器；省略时默认启用。 */
-    is_enabled: z.boolean().default(true),
-    /** 单次请求允许占用业务连接的最长时间，单位毫秒。 */
-    timeout_ms: z.number().int().min(100).max(120000),
-    /** 当前 source_id 独立连接池的最大连接数。 */
-    connection_pool_limit: z.number().int().min(1).max(100),
-    /** 当前 source_id 同时执行的最大请求数。 */
-    concurrency_limit: z.number().int().min(1).max(1000),
-    /** 当前 source_id 单次响应允许返回的最大行数。 */
-    row_limit: z.number().int().min(1).max(MAX_QUERY_ROWS),
-    /** 兼容历史配置的成本字段；新配置可省略，该值不参与执行控制。 */
-    cost_limit: z.number().int().positive().optional(),
-  })
-  .strict()
-  .superRefine((value, context) => {
-    // Oracle 使用连接方式与目标；其余数据库使用 target_database，两组配置互斥。
-    if (value.connector_kind === "oracle") {
-      if (value.oracle_connect_type === undefined || value.oracle_connect_target === undefined) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Oracle 数据源必须配置 oracle_connect_type 和 oracle_connect_target",
-        });
-      }
-      if (value.target_database !== undefined) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["target_database"],
-          message: "Oracle 数据源不能配置 target_database",
-        });
-      }
-      return;
-    }
-
-    if (value.target_database === undefined) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["target_database"],
-        message: "数据库数据源必须配置 target_database",
-      });
-    }
-    if (value.oracle_connect_type !== undefined || value.oracle_connect_target !== undefined) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "数据库数据源不能配置 Oracle 连接目标",
-      });
-    }
-  });
-
-/** 管理端请求展开一个已保存 source_id 的完整业务对象目录，仅接受声明字段。 */
-const sourceObjectDiscoveryRequestSchema = z
-  .object({
-    /** 需要展开完整对象目录的已保存数据源。 */
-    source_id: z.string().min(1),
-  })
-  .strict();
-
-/** 管理端提交的对象白名单选择项，仅接受声明字段。 */
-const sourceObjectSelectionSchema = z
-  .object({
-    /** 管理端从当前数据源目录中勾选的对象标识。 */
-    object_id: z.string().min(1),
-    /** 管理员核对的过程完整签名；省略时仅允许发现该过程。 */
-    procedure_definition: procedureDefinitionSchema.optional(),
-  })
-  .strict();
-
-/** 管理端替换一个 source_id 的 API 对象白名单，仅接受声明字段。 */
-const sourceObjectSelectionRequestSchema = z
-  .object({
-    /** 要替换白名单的已保存数据源。 */
-    source_id: z.string().min(1),
-    /** 本次应暴露的完整对象集合；空列表表示清空白名单。 */
-    objects: z.array(sourceObjectSelectionSchema),
-  })
-  .strict();
+import { parseSecretJson } from "../secrets/secret-resolver";
+import type { ResolvedDataSourceSecret } from "../secrets/secret-resolver";
+import type { DasConfig } from "../config/das-config";
+import { resolveSqlServerTransport } from "../connectors/sqlserver-transport";
+import { ManagementConflict } from "./management-conflict";
 
 /** 共享密文的写入能力。 */
 interface DataSourceSecretWriter {
-  /** 保存或更新加密后的共享凭据。 */
-  upsert(secret: EncryptedDataSourceSecret): Promise<void>;
+  findBySecretRef(secretRef: string): Promise<EncryptedDataSourceSecret | undefined>;
+  /** 只有持久化密文仍与读取基准一致才保存。 */
+  replace(
+    secret: EncryptedDataSourceSecret,
+    previous: EncryptedDataSourceSecret | undefined,
+  ): Promise<boolean>;
 }
 
 /** 单库数据源配置的写入能力。 */
@@ -184,15 +59,6 @@ interface ManagedDataSourceRuntime {
   invalidateBySecretRef(secretRef: string): Promise<void>;
 }
 
-/** 管理端展开后展示并可勾选的数据库对象。 */
-type ManageableSourceObject = Pick<
-  DiscoveredDataset,
-  "kind" | "native_schema_name" | "native_object_name" | "source_description" | "columns"
-> & {
-  /** 用于本次管理选择与保存白名单的稳定逻辑对象标识。 */
-  object_id: string;
-};
-
 /** 为 API 管理接口提供凭据、目标库、对象发现与白名单保存能力。 */
 class DataSourceManagementService {
   constructor(
@@ -204,33 +70,128 @@ class DataSourceManagementService {
     private readonly cipher: Aes256GcmSecretCipher,
     private readonly targetDiscovery: DatabaseTargetDiscovery,
     private readonly runtime: ManagedDataSourceRuntime,
+    private readonly administration: Pick<
+      SqlDataSourceAdministration,
+      "sources" | "source" | "objects" | "secrets" | "saveSource" | "saveObjects"
+    >,
+    private readonly sqlServerTransports: NonNullable<DasConfig["sqlserver_transports"]> = {},
   ) {}
+
+  /** 管理回读直接访问公开配置，不创建业务连接。 */
+  async listDataSources() {
+    return this.administration.sources();
+  }
+  async getDataSource(sourceId: string) {
+    return this.administration.source(sourceId);
+  }
+  async listSecretReferences() {
+    return this.administration.secrets();
+  }
+  async getSourceObjects(sourceId: string) {
+    const result = await this.administration.objects(sourceId);
+    return { ...result, items: result.items.map(publicSourceObject) };
+  }
 
   /** 加密保存可复用的数据库服务器凭据，并刷新依赖该凭据的运行连接器。 */
   async saveSharedCredentials(input: unknown): Promise<{ secret_ref: string }> {
     const credentials = sharedDatabaseCredentialsSchema.parse(input);
-    const activeKey = await this.activeKeyProvider.getActiveKey();
-    const encrypted = this.cipher.encrypt(
-      Buffer.from(
-        JSON.stringify({
-          connectorKind: credentials.connector_kind,
-          host: credentials.host,
-          port: credentials.port,
-          user: credentials.user,
-          password: credentials.password,
-        }),
-        "utf8",
-      ),
-      activeKey.value,
+    // 完整凭据更新省略新参数时保留最新已存值；并发变化后重新读取并合并。
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const previous = await this.secretWriter.findBySecretRef(credentials.secret_ref);
+      const existing = previous ? await this.decodeSecret(previous) : undefined;
+      const transport =
+        credentials.connector_kind === "sqlserver"
+          ? (credentials.sqlserver_transport ??
+            (existing?.connectorKind === "sqlserver" ? existing.sqlserver_transport : undefined))
+          : undefined;
+      const value = {
+        connectorKind: credentials.connector_kind,
+        host: credentials.host,
+        port: credentials.port,
+        user: credentials.user,
+        password: credentials.password,
+        ...(transport ? { sqlserver_transport: transport } : {}),
+      };
+      const next = await this.encodeSecret(credentials.secret_ref, value);
+      if (await this.secretWriter.replace(next, previous)) {
+        await this.runtime.invalidateBySecretRef(credentials.secret_ref);
+        return { secret_ref: credentials.secret_ref };
+      }
+    }
+    throw new ManagementConflict();
+  }
+
+  /** 仅回传连接选项、来源和密文修订；关联源的文件回退单独列出。 */
+  async getSqlServerTransport(secretRef: string) {
+    const { stored, value } = await this.sqlServerSecret(secretRef);
+    const current = resolveSqlServerTransport(value.sqlserver_transport);
+    const sources = (await this.administration.sources()).items.filter(
+      (source) => source.secret_ref === secretRef,
     );
-    await this.secretWriter.upsert({
-      secretRef: credentials.secret_ref,
-      keyId: activeKey.keyId,
+    return managedSqlServerTransportSchema.parse({
+      secret_ref: secretRef,
+      connector_kind: "sqlserver",
+      sqlserver_transport: current.options,
+      origin: current.origin,
+      revision: secretRevision(stored),
+      sources: sources.map((source) => {
+        const deployment = Object.hasOwn(this.sqlServerTransports, source.source_id)
+          ? this.sqlServerTransports[source.source_id]
+          : undefined;
+        const resolved = resolveSqlServerTransport(value.sqlserver_transport, deployment);
+        return {
+          source_id: source.source_id,
+          sqlserver_transport: resolved.options,
+          origin: resolved.origin,
+        };
+      }),
+    });
+  }
+
+  /** 参数更新绑定读取的整份密文，保留密码并拒绝陈旧的比较基准。 */
+  async saveSqlServerTransport(secretRef: string, input: unknown) {
+    const update = sqlServerTransportUpdateSchema.parse(input);
+    const { stored, value } = await this.sqlServerSecret(secretRef);
+    if (secretRevision(stored) !== update.expected_revision) throw new ManagementConflict();
+    const next = await this.encodeSecret(secretRef, {
+      ...value,
+      sqlserver_transport: update.sqlserver_transport,
+    });
+    if (!(await this.secretWriter.replace(next, stored))) throw new ManagementConflict();
+    await this.runtime.invalidateBySecretRef(secretRef);
+    return this.getSqlServerTransport(secretRef);
+  }
+
+  private async sqlServerSecret(secretRef: string) {
+    const stored = await this.secretWriter.findBySecretRef(secretRef);
+    if (!stored) throw new Error("凭据不存在");
+    const value = await this.decodeSecret(stored);
+    if (value.connectorKind !== "sqlserver") throw new Error("此凭据不是 SQL Server 类型");
+    return { stored, value };
+  }
+
+  private async decodeSecret(stored: EncryptedDataSourceSecret): Promise<ResolvedDataSourceSecret> {
+    const key = await this.activeKeyProvider.getKey(stored.keyId);
+    return parseSecretJson(
+      this.cipher.decrypt(
+        { encryptedPayload: stored.encryptedPayload, metadata: stored.metadata },
+        key,
+      ),
+    );
+  }
+
+  private async encodeSecret(
+    secretRef: string,
+    value: unknown,
+  ): Promise<EncryptedDataSourceSecret> {
+    const key = await this.activeKeyProvider.getActiveKey();
+    const encrypted = this.cipher.encrypt(Buffer.from(JSON.stringify(value), "utf8"), key.value);
+    return {
+      secretRef,
+      keyId: key.keyId,
       encryptedPayload: encrypted.encryptedPayload,
       metadata: encrypted.metadata,
-    });
-    await this.runtime.invalidateBySecretRef(credentials.secret_ref);
-    return { secret_ref: credentials.secret_ref };
+    };
   }
 
   /** 使用已保存共享凭据列出当前登录可访问的目标数据库。 */
@@ -283,7 +244,9 @@ class DataSourceManagementService {
       rowLimit: value.row_limit,
       costLimit: value.cost_limit ?? 1,
     };
-    await this.configWriter.upsert(config, value.is_enabled);
+    if (value.expected_revision === undefined)
+      await this.configWriter.upsert(config, value.is_enabled);
+    else await this.administration.saveSource(config, value.is_enabled, value.expected_revision);
     await this.runtime.invalidate(config.sourceId);
     return { source_id: config.sourceId };
   }
@@ -307,32 +270,61 @@ class DataSourceManagementService {
     // 保存前重新发现目录，使用服务器返回的物理映射，防止旧选择指向已变化的对象。
     const available = await this.discoverSourceObjects({ source_id: request.source_id });
     const availableByObjectId = new Map(available.items.map((item) => [item.object_id, item]));
+    const current =
+      request.expected_revision === undefined
+        ? []
+        : (await this.administration.objects(request.source_id)).items;
     const objects = [...selectedObjectIds].map((objectId) => {
-      const object = availableByObjectId.get(objectId);
+      const selection = request.objects.find((item) => item.object_id === objectId)!;
+      const previous = current.find((item) => item.objectId === objectId);
+      const discoveredId =
+        selection.discovered_object_id ??
+        (previous
+          ? [previous.objectKind, previous.nativeSchemaName, previous.nativeObjectName]
+              .filter((value) => value !== undefined)
+              .join(".")
+          : objectId);
+      const object = availableByObjectId.get(discoveredId);
       if (object === undefined) {
         throw new Error(`对象不属于当前数据源目录: ${objectId}`);
       }
-      const definition = request.objects.find(
-        (item) => item.object_id === objectId,
-      )?.procedure_definition;
+      if (
+        previous &&
+        (previous.objectKind !== object.kind ||
+          previous.nativeSchemaName !== object.native_schema_name ||
+          previous.nativeObjectName !== object.native_object_name)
+      )
+        throw new Error("已有逻辑对象不能重映射到其他物理对象");
+      const definition =
+        selection.procedure_definition === null
+          ? undefined
+          : (selection.procedure_definition ?? previous?.procedureDefinition);
       if (definition !== undefined && object.kind !== "stored_procedure") {
         throw new Error("只有存储过程可以配置过程定义");
       }
       return {
         sourceId: request.source_id,
-        objectId: object.object_id,
+        objectId,
         objectKind: object.kind,
         ...(object.native_schema_name === undefined
           ? {}
           : { nativeSchemaName: object.native_schema_name }),
         nativeObjectName: object.native_object_name,
-        isDiscoverable: true,
-        isQueryable: object.kind !== "stored_procedure" || definition !== undefined,
-        queryCapabilities: {},
+        isDiscoverable: selection.is_discoverable ?? previous?.isDiscoverable ?? true,
+        isQueryable:
+          (selection.is_queryable ?? previous?.isQueryable ?? true) &&
+          (object.kind !== "stored_procedure" || definition !== undefined),
+        queryCapabilities: managedObjectCapabilities(
+          object,
+          selection.query_capabilities ?? previous?.queryCapabilities ?? {},
+        ),
         ...(definition === undefined ? {} : { procedureDefinition: definition }),
       } satisfies ExposedSourceObject;
     });
-    await this.exposedObjectWriter.replaceForSource(request.source_id, objects);
+    if (request.expected_revision === undefined)
+      await this.exposedObjectWriter.replaceForSource(request.source_id, objects);
+    else
+      await this.administration.saveObjects(request.source_id, objects, request.expected_revision);
     return { source_id: request.source_id, object_count: objects.length };
   }
 }
@@ -368,7 +360,19 @@ function toManageableSourceObject(dataset: DiscoveredDataset): ManageableSourceO
       ? {}
       : { source_description: dataset.source_description }),
     columns: dataset.columns,
+    ...(dataset.query_capabilities === undefined
+      ? {}
+      : { query_capabilities: dataset.query_capabilities }),
   };
+}
+
+/** 修订只由密文、认证标签及密钥标识生成，不以登录资料作为公开指纹输入。 */
+function secretRevision(secret: EncryptedDataSourceSecret): string {
+  return createHash("sha256")
+    .update(secret.keyId)
+    .update(secret.encryptedPayload)
+    .update(JSON.stringify(secret.metadata))
+    .digest("hex");
 }
 
 export {

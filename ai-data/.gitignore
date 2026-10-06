@@ -11,3 +11,6 @@ apps/data-access/secrets/
 apps/api/secrets/
 /secrets/
 *.log
+# Web 浏览器验收的临时报告；交接截图单独保存。
+apps/web/test-results/
+apps/web/playwright-report/

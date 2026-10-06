@@ -1,0 +1,307 @@
+{
+  "started_at": "2026-10-03 13:37:46",
+  "environment": "isolated",
+  "business_database": "ai_bi_demo",
+  "checks": [
+    {
+      "name": "数据库目标发现",
+      "passed": true
+    },
+    {
+      "name": "真实 DAS 注册、凭据引用与完整白名单",
+      "passed": true,
+      "objects": 3
+    },
+    {
+      "name": "正式规则审核发布、未来生效管理读取和负责人选项",
+      "passed": true
+    },
+    {
+      "name": "模板固定 v1 预览、原定义更新后保持内容、新建执行与 SQL 一致",
+      "passed": true
+    },
+    {
+      "name": "浏览器读取真实 API 持久化的个人偏好与待生效知识",
+      "passed": true
+    }
+  ],
+  "queries": [
+    {
+      "name": "本年住院基准",
+      "rows": [
+        {
+          "admissions": 124
+        }
+      ]
+    }
+  ],
+  "models": [
+    {
+      "title": "首次会话",
+      "run_id": "bb54c6e5-b866-4f49-bcae-c4df99ed99aa",
+      "status": "failed",
+      "error": {
+        "code": "INVALID_INPUT",
+        "message": "分析执行失败"
+      },
+      "queries": []
+    }
+  ],
+  "policy_mode": "department_context",
+  "databases": [
+    "ai_data_management_live_d659179cf2b7451783c2d07abb4e2b2c_api",
+    "ai_data_management_live_d659179cf2b7451783c2d07abb4e2b2c_das"
+  ],
+  "root": "C:\\Users\\rain\\AppData\\Local\\Temp\\ai-data-management-live-zhQpV6",
+  "processes": [
+    7068,
+    5172,
+    28824,
+    21064
+  ],
+  "status": "failed",
+  "ui": [
+    {
+      "tag": "H2",
+      "role": null,
+      "aria": null,
+      "text": "工作空间"
+    },
+    {
+      "tag": "H2",
+      "role": null,
+      "aria": null,
+      "text": "分析能力"
+    },
+    {
+      "tag": "H2",
+      "role": null,
+      "aria": null,
+      "text": "组织管理"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": "关闭此对话框",
+      "text": ""
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": "打开导航",
+      "text": ""
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": "外观设置",
+      "text": "外观"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": "退出登录",
+      "text": "退出"
+    },
+    {
+      "tag": "H1",
+      "role": null,
+      "aria": null,
+      "text": "知识审核"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": null,
+      "text": "组织候选"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": null,
+      "text": "正式知识管理"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": null,
+      "text": "提交知识候选"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": null,
+      "text": "刷新列表"
+    },
+    {
+      "tag": "INPUT",
+      "type": "text",
+      "role": "combobox",
+      "aria": "知识类型"
+    },
+    {
+      "tag": "INPUT",
+      "type": "text",
+      "role": "combobox",
+      "aria": "候选状态"
+    },
+    {
+      "tag": "INPUT",
+      "type": "text",
+      "role": null,
+      "aria": "筛选负责人"
+    },
+    {
+      "tag": "INPUT",
+      "type": "text",
+      "role": null,
+      "aria": "搜索名称或标识"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": null,
+      "text": "报表模板 · 8e758782-3681-4d70-b395-dd5db4a37d520599e226-649b-4154-ae57-f1846b82232e已发布v1 · bootstrap-management-org"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": null,
+      "text": "待生效测试规则7723e8dd-b76f-4443-9f1e-6b2c796557f5已发布v1 · bootstrap-management-org"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": null,
+      "text": "住院统计口径d2f77fb5-3b1c-405b-8ea9-3af2981c0b89已发布v1 · bootstrap-management-org"
+    },
+    {
+      "tag": "H2",
+      "role": null,
+      "aria": null,
+      "text": "待生效测试规则"
+    },
+    {
+      "tag": "H3",
+      "role": null,
+      "aria": null,
+      "text": "待生效测试规则"
+    },
+    {
+      "tag": "H3",
+      "role": null,
+      "aria": null,
+      "text": "来源与支持"
+    },
+    {
+      "tag": "INPUT",
+      "type": "text",
+      "role": "combobox",
+      "aria": "来源会话"
+    },
+    {
+      "tag": "INPUT",
+      "type": "text",
+      "role": "combobox",
+      "aria": "来源运行"
+    },
+    {
+      "tag": "INPUT",
+      "type": "text",
+      "role": "combobox",
+      "aria": "来源证据"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": null,
+      "text": "保存来源"
+    },
+    {
+      "tag": "H3",
+      "role": null,
+      "aria": null,
+      "text": "审核记录"
+    },
+    {
+      "tag": "H3",
+      "role": null,
+      "aria": null,
+      "text": "待生效测试规则"
+    },
+    {
+      "tag": "H2",
+      "role": null,
+      "aria": null,
+      "text": "外观"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": null,
+      "text": "亮色"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": null,
+      "text": "暗色"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": null,
+      "text": "跟随系统"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": "橄榄绿",
+      "text": "橄榄绿"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": "海蓝",
+      "text": "海蓝"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": "青绿",
+      "text": "青绿"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "role": null,
+      "aria": "紫罗兰",
+      "text": "紫罗兰"
+    }
+  ],
+  "failure": {
+    "phase": "rj 跨会话偏好及正式规则",
+    "message": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'failed'\n- 'completed'\n",
+    "diagnostic": "bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1g\",\"req\":{\"method\":\"POST\",\"url\":\"/admin/knowledge-candidates/0599e226-649b-4154-ae57-f1846b82232e/publish\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1734},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005874950,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1g\",\"res\":{\"statusCode\":201},\"responseTime\":84.1880000000001,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005874952,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1h\",\"req\":{\"method\":\"PUT\",\"url\":\"/reports/8e758782-3681-4d70-b395-dd5db4a37d52/definition\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1733},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875021,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1h\",\"res\":{\"statusCode\":200},\"responseTime\":68.45630000000074,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875035,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1i\",\"req\":{\"method\":\"GET\",\"url\":\"/knowledge-candidates/0599e226-649b-4154-ae57-f1846b82232e/template-definition\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1734},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875179,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1i\",\"res\":{\"statusCode\":200},\"responseTime\":144.09029999999984,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875191,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1j\",\"req\":{\"method\":\"POST\",\"url\":\"/report-definitions\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1733},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875265,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1j\",\"res\":{\"statusCode\":201},\"responseTime\":73.62960000000021,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875267,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1k\",\"req\":{\"method\":\"POST\",\"url\":\"/reports/5e68874e-35b7-45f4-8b56-8c8d1d289998/execute\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1734},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875823,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1k\",\"res\":{\"statusCode\":200},\"responseTime\":555.7749000000003,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005877934,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1l\",\"req\":{\"method\":\"POST\",\"url\":\"/auth/refresh\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":14763},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005877935,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1l\",\"res\":{\"statusCode\":401},\"responseTime\":1.2409999999999854,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005878106,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1m\",\"req\":{\"method\":\"POST\",\"url\":\"/auth/login\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":14765},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005878157,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1m\",\"res\":{\"statusCode\":200},\"responseTime\":50.940599999999904,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005878163,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1n\",\"req\":{\"method\":\"GET\",\"url\":\"/auth/me\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":14766},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005878169,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1n\",\"res\":{\"statusCode\":200},\"responseTime\":5.750500000000102,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005878506,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1o\",\"req\":{\"method\":\"GET\",\"url\":\"/conver[redacted]tions\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":5572},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005878506,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1p\",\"req\":{\"method\":\"GET\",\"url\":\"/agents\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":5573},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005878513,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1o\",\"res\":{\"statusCode\":200},\"responseTime\":7.143000000000029,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005878522,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1p\",\"res\":{\"statusCode\":200},\"responseTime\":16.058500000001004,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005879190,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1q\",\"req\":{\"method\":\"POST\",\"url\":\"/auth/refresh\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":9983},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005879198,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1q\",\"res\":{\"statusCode\":200},\"responseTime\":7.918999999999869,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005879203,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1r\",\"req\":{\"method\":\"GET\",\"url\":\"/auth/me\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":9984},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005879204,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1r\",\"res\":{\"statusCode\":200},\"responseTime\":0.7533999999996013,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005879582,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1s\",\"req\":{\"method\":\"GET\",\"url\":\"/knowledge\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":10407},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005879670,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1s\",\"res\":{\"statusCode\":200},\"responseTime\":88.6193000000003,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880033,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1t\",\"req\":{\"method\":\"GET\",\"url\":\"/me/preferences\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":10411},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880057,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1t\",\"res\":{\"statusCode\":200},\"responseTime\":24.024900000000343,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880064,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1u\",\"req\":{\"method\":\"GET\",\"url\":\"/me/preferences/confirmations\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":10412},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880078,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1u\",\"res\":{\"statusCode\":200},\"responseTime\":14.355499999999665,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880110,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1v\",\"req\":{\"method\":\"GET\",\"url\":\"/me/preferences/default-time/edit-state\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":10413},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880118,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1v\",\"res\":{\"statusCode\":200},\"responseTime\":7.776899999998932,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880200,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1w\",\"req\":{\"method\":\"GET\",\"url\":\"/catalog/sources?limit=100\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":10414},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880230,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1w\",\"res\":{\"statusCode\":200},\"responseTime\":29.34429999999884,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880242,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1x\",\"req\":{\"method\":\"GET\",\"url\":\"/metrics\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":10415},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880259,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1x\",\"res\":{\"statusCode\":200},\"responseTime\":17.191600000000108,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880442,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1y\",\"req\":{\"method\":\"POST\",\"url\":\"/auth/logout\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":7311},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880446,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1y\",\"res\":{\"statusCode\":204},\"responseTime\":4.677799999999479,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880615,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1z\",\"req\":{\"method\":\"POST\",\"url\":\"/auth/refresh\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":9561},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880616,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-1z\",\"res\":{\"statusCode\":401},\"responseTime\":0.7509999999983847,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880739,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-20\",\"req\":{\"method\":\"POST\",\"url\":\"/auth/login\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":9564},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880803,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-20\",\"res\":{\"statusCode\":200},\"responseTime\":64.02700000000004,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880808,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-21\",\"req\":{\"method\":\"GET\",\"url\":\"/auth/me\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":9565},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880815,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-21\",\"res\":{\"statusCode\":200},\"responseTime\":6.599099999999453,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880848,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-22\",\"req\":{\"method\":\"GET\",\"url\":\"/conver[redacted]tions\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":7070},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880849,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-23\",\"req\":{\"method\":\"GET\",\"url\":\"/agents\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":7071},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880854,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-22\",\"res\":{\"statusCode\":200},\"responseTime\":5.368700000000899,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880860,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-23\",\"res\":{\"statusCode\":200},\"responseTime\":10.785200000000259,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881066,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-24\",\"req\":{\"method\":\"POST\",\"url\":\"/auth/refresh\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":3704},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881086,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-24\",\"res\":{\"statusCode\":200},\"responseTime\":20.498499999999694,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881092,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-25\",\"req\":{\"method\":\"GET\",\"url\":\"/auth/me\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":3705},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881099,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-25\",\"res\":{\"statusCode\":200},\"responseTime\":6.931400000001304,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881194,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-26\",\"req\":{\"method\":\"GET\",\"url\":\"/admin/knowledge-candidates\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":3571},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881307,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-26\",\"res\":{\"statusCode\":200},\"responseTime\":112.73530000000028,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881377,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-27\",\"req\":{\"method\":\"GET\",\"url\":\"/knowledge-candidates/7723e8dd-b76f-4443-9f1e-6b2c796557f5\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":3572},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881390,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-27\",\"res\":{\"statusCode\":200},\"responseTime\":12.531499999999141,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881401,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-28\",\"req\":{\"method\":\"GET\",\"url\":\"/knowledge-candidates/7723e8dd-b76f-4443-9f1e-6b2c796557f5/sources\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":3573},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881412,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-28\",\"res\":{\"statusCode\":200},\"responseTime\":10.528600000001461,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881430,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-29\",\"req\":{\"method\":\"GET\",\"url\":\"/conver[redacted]tions\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":3574},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881433,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-29\",\"res\":{\"statusCode\":200},\"responseTime\":3.122300000000905,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881449,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2a\",\"req\":{\"method\":\"GET\",\"url\":\"/admin/knowledge-candidates/7723e8dd-b76f-4443-9f1e-6b2c796557f5/reviews\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":3575},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881466,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2a\",\"res\":{\"statusCode\":200},\"responseTime\":17.558100000000195,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881541,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2b\",\"req\":{\"method\":\"POST\",\"url\":\"/conver[redacted]tions\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1733},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881558,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2b\",\"res\":{\"statusCode\":201},\"responseTime\":16.848700000000463,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881571,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2c\",\"req\":{\"method\":\"POST\",\"url\":\"/conver[redacted]tions/618ba919-ed72-493e-9767-a556da15a15e/mes[redacted]ges\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1734},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881601,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2c\",\"res\":{\"statusCode\":201},\"responseTime\":29.91280000000006,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881618,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2d\",\"req\":{\"method\":\"GET\",\"url\":\"/analysis-runs/bb54c6e5-b866-4f49-bcae-c4df99ed99aa\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1733},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881634,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2d\",\"res\":{\"statusCode\":200},\"responseTime\":16.009600000001228,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005882163,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2e\",\"req\":{\"method\":\"GET\",\"url\":\"/analysis-runs/bb54c6e5-b866-4f49-bcae-c4df99ed99aa\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1733},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005882172,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2e\",\"res\":{\"statusCode\":200},\"responseTime\":8.680200000000696,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005882179,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2f\",\"req\":{\"method\":\"GET\",\"url\":\"/analysis-runs/bb54c6e5-b866-4f49-bcae-c4df99ed99aa/evidence\",\"host\":\"127.0.0.1:12644\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1733},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005882187,\"service_id\":\"ai-bi-api\",\"service_version\":\"1.0.0\",\"reqId\":\"req-2f\",\"res\":{\"statusCode\":200},\"responseTime\":7.803200000000288,\"msg\":\"request completed\"}\n\n{\"level\":30,\"time\":1791005871150,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"msg\":\"Server listening at http://127.0.0.1:12645\"}\n{\"level\":30,\"time\":1791005871607,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"f6524824-91e5-4dec-ba40-8cfe31b493a3\",\"req\":{\"method\":\"GET\",\"url\":\"/health\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1742},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005871612,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"f6524824-91e5-4dec-ba40-8cfe31b493a3\",\"res\":{\"statusCode\":200},\"responseTime\":4.157600000000002,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005871681,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"88502cef-3889-4a9f-99a8-7afcf160aa0f\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/admin/data-source-secrets\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1743},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005871695,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"88502cef-3889-4a9f-99a8-7afcf160aa0f\",\"res\":{\"statusCode\":200},\"responseTime\":14.020299999999907,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005871725,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"87a22561-0449-4501-bf50-3d3d378844fc\",\"req\":{\"method\":\"PUT\",\"url\":\"/internal/admin/data-sources\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1743},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005871733,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"87a22561-0449-4501-bf50-3d3d378844fc\",\"res\":{\"statusCode\":200},\"responseTime\":7.748399999999947,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005871756,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"11711fcd-6dfa-42cf-959e-f0fababc3874\",\"req\":{\"method\":\"GET\",\"url\":\"/internal/admin/data-source-secrets/business-read/sqlserver-transport\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1743},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005871771,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"11711fcd-6dfa-42cf-959e-f0fababc3874\",\"res\":{\"statusCode\":200},\"responseTime\":14.790299999999888,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005871809,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"01ed03c2-135f-4c71-b56f-7335c155ba9e\",\"req\":{\"method\":\"PUT\",\"url\":\"/internal/admin/data-source-secrets/business-read/sqlserver-transport\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1743},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005871823,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"01ed03c2-135f-4c71-b56f-7335c155ba9e\",\"res\":{\"statusCode\":200},\"responseTime\":14.589200000000119,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005871848,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"bdd0dcfe-ebe8-4d45-9e49-a61682d71512\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/admin/database-targets\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1743},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005871884,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"bdd0dcfe-ebe8-4d45-9e49-a61682d71512\",\"res\":{\"statusCode\":200},\"responseTime\":36.13460000000009,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005871913,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"151ce54c-0aa4-4ea8-a151-ae12826605ee\",\"req\":{\"method\":\"GET\",\"url\":\"/internal/admin/data-source-objects/management-demo\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1743},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005871921,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"151ce54c-0aa4-4ea8-a151-ae12826605ee\",\"res\":{\"statusCode\":200},\"responseTime\":8.697099999999864,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005871940,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"ba01f5c9-8543-43f0-ae98-2815a1edc8cb\",\"req\":{\"method\":\"PUT\",\"url\":\"/internal/admin/data-source-objects\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1743},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005872012,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"ba01f5c9-8543-43f0-ae98-2815a1edc8cb\",\"res\":{\"statusCode\":200},\"responseTime\":71.73530000000005,\"msg\":\"request completed\"}\n\nPOST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875109,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"f11dcaa0-7735-4aa5-b60c-16ad0acfc956\",\"res\":{\"statusCode\":200},\"responseTime\":12.938000000000102,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875119,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"ab0103f1-92bc-4ac1-954d-f1711fb2f34c\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875133,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"ab0103f1-92bc-4ac1-954d-f1711fb2f34c\",\"res\":{\"statusCode\":200},\"responseTime\":13.204200000000128,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875139,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"bab28779-667c-41c1-a804-8949ad2a6245\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875154,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"bab28779-667c-41c1-a804-8949ad2a6245\",\"res\":{\"statusCode\":200},\"responseTime\":14.492999999999938,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875166,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"ef326b67-175b-4b3b-99e3-703b6df34984\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875178,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"ef326b67-175b-4b3b-99e3-703b6df34984\",\"res\":{\"statusCode\":200},\"responseTime\":12.189800000000105,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875196,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"765a63dd-2057-4d01-92a3-212cc9d68c34\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875211,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"765a63dd-2057-4d01-92a3-212cc9d68c34\",\"res\":{\"statusCode\":200},\"responseTime\":14.278900000000249,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875214,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"70fb106f-2121-4891-aa2a-c38d16f64077\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875230,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"70fb106f-2121-4891-aa2a-c38d16f64077\",\"res\":{\"statusCode\":200},\"responseTime\":15.551699999999983,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875236,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"5c98af75-2bd0-40ca-9c53-335299b35643\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875249,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"5c98af75-2bd0-40ca-9c53-335299b35643\",\"res\":{\"statusCode\":200},\"responseTime\":12.452000000000226,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875286,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"317066b1-6187-4012-ba79-c22c79c760b1\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875298,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"317066b1-6187-4012-ba79-c22c79c760b1\",\"res\":{\"statusCode\":200},\"responseTime\":11.858700000000226,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875304,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"da8dd346-e193-411c-b71f-a449ff179857\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875316,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"da8dd346-e193-411c-b71f-a449ff179857\",\"res\":{\"statusCode\":200},\"responseTime\":11.248099999999795,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875326,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"882d2f51-b6da-4a55-a756-835b29658bee\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875341,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"882d2f51-b6da-4a55-a756-835b29658bee\",\"res\":{\"statusCode\":200},\"responseTime\":14.890800000000127,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875347,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"13252c6f-61bb-40cc-985e-e23515adc46c\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875359,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"13252c6f-61bb-40cc-985e-e23515adc46c\",\"res\":{\"statusCode\":200},\"responseTime\":11.605600000000322,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875366,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"94df73e4-fff3-463c-bb41-502d43c083b6\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875379,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"94df73e4-fff3-463c-bb41-502d43c083b6\",\"res\":{\"statusCode\":200},\"responseTime\":12.70779999999968,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875395,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"2a90bd0a-9ae1-4e33-bd4b-95d98fffe2e3\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875408,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"2a90bd0a-9ae1-4e33-bd4b-95d98fffe2e3\",\"res\":{\"statusCode\":200},\"responseTime\":13.105000000000018,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875484,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"4072c4bf-c904-4b50-86f9-e53cc5c9e690\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875497,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"4072c4bf-c904-4b50-86f9-e53cc5c9e690\",\"res\":{\"statusCode\":200},\"responseTime\":12.252300000000105,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875502,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"778def74-57ab-41a5-a917-bca1ec9ff777\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875516,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"778def74-57ab-41a5-a917-bca1ec9ff777\",\"res\":{\"statusCode\":200},\"responseTime\":13.544100000000071,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875525,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"d6acf0a1-161a-4562-b5a6-f977302d2f7d\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/query\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875534,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"d6acf0a1-161a-4562-b5a6-f977302d2f7d\",\"res\":{\"statusCode\":200},\"responseTime\":9.429999999999836,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875546,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"1b578120-8148-473c-8886-1994b2c9c956\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875559,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"1b578120-8148-473c-8886-1994b2c9c956\",\"res\":{\"statusCode\":200},\"responseTime\":13.093199999999797,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875565,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"43fdd212-e7f9-4dd8-b22f-f9b0e878c7da\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875577,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"43fdd212-e7f9-4dd8-b22f-f9b0e878c7da\",\"res\":{\"statusCode\":200},\"responseTime\":12.533899999999903,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875613,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"a81740a1-38b8-4e01-92a7-dfddbd9f8857\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875626,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"a81740a1-38b8-4e01-92a7-dfddbd9f8857\",\"res\":{\"statusCode\":200},\"responseTime\":12.288100000000213,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875632,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"3639e4c1-6303-4fb0-a00b-52c4d515ca86\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875645,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"3639e4c1-6303-4fb0-a00b-52c4d515ca86\",\"res\":{\"statusCode\":200},\"responseTime\":13.672299999999723,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875656,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"837cf220-c1b7-4ba2-9e89-060edfac3d63\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875668,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"837cf220-c1b7-4ba2-9e89-060edfac3d63\",\"res\":{\"statusCode\":200},\"responseTime\":12.291699999999764,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875674,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"3beb11bf-8812-4602-9c0b-0befd17a4442\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875686,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"3beb11bf-8812-4602-9c0b-0befd17a4442\",\"res\":{\"statusCode\":200},\"responseTime\":11.59439999999995,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875691,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"38fab6d3-6f9f-448f-9e95-510194bbbe15\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875703,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"38fab6d3-6f9f-448f-9e95-510194bbbe15\",\"res\":{\"statusCode\":200},\"responseTime\":11.530299999999897,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875732,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"805b33c1-65fa-4a4e-9920-309d4e7418eb\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875745,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"805b33c1-65fa-4a4e-9920-309d4e7418eb\",\"res\":{\"statusCode\":200},\"responseTime\":13.023099999999886,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005875752,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"a50fbbdd-d2de-4949-867e-8420e0f04d9a\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005875768,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"a50fbbdd-d2de-4949-867e-8420e0f04d9a\",\"res\":{\"statusCode\":200},\"responseTime\":15.435500000000047,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005879600,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"6c7e1c94-4cb4-4300-9e26-5b6c41c73548\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005879614,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"6c7e1c94-4cb4-4300-9e26-5b6c41c73548\",\"res\":{\"statusCode\":200},\"responseTime\":13.810500000000502,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005879622,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"e2acf776-0dc3-4072-b054-91722c455ccd\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005879639,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"e2acf776-0dc3-4072-b054-91722c455ccd\",\"res\":{\"statusCode\":200},\"responseTime\":17.19640000000072,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005879653,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"cd7c8e4e-6dd3-453b-adf4-787b044892de\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005879667,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"cd7c8e4e-6dd3-453b-adf4-787b044892de\",\"res\":{\"statusCode\":200},\"responseTime\":14.365200000000186,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005880212,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"dc768095-a118-4578-b961-eeb6d5a160fe\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005880228,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"dc768095-a118-4578-b961-eeb6d5a160fe\",\"res\":{\"statusCode\":200},\"responseTime\":16.298399999999674,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881225,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"09f1b358-071b-48b1-8ece-99923f9cb473\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881242,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"09f1b358-071b-48b1-8ece-99923f9cb473\",\"res\":{\"statusCode\":200},\"responseTime\":17.41399999999885,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881250,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"e4ddd4ab-b7b1-443f-80a6-feba5e0cf911\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881272,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"e4ddd4ab-b7b1-443f-80a6-feba5e0cf911\",\"res\":{\"statusCode\":200},\"responseTime\":22.065599999999904,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1791005881286,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"2862eb01-15c3-4af9-a9b7-c01f6df8eaef\",\"req\":{\"method\":\"POST\",\"url\":\"/internal/catalog\",\"host\":\"127.0.0.1:12645\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":1756},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1791005881303,\"service_id\":\"management-das\",\"service_version\":\"1.0.0\",\"reqId\":\"2862eb01-15c3-4af9-a9b7-c01f6df8eaef\",\"res\":{\"statusCode\":200},\"responseTime\":16.285800000001473,\"msg\":\"request completed\"}\n\n\n  VITE v8.2.2  ready in 393 ms\n\n  ➜  Local:   http://127.0.0.1:12646/\n"
+  },
+  "cleaned_up": true,
+  "finished_at": "2026-10-03 13:38:02"
+}

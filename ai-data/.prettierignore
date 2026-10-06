@@ -1,1 +1,6 @@
 release/
+**/secrets/**
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/dist/
+apps/web/deploy/*.example

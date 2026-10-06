@@ -38,6 +38,130 @@ const config: DasConfig = {
 
 // 管理服务由替身提供，用例检查路由转发、响应结构及失败消息转换。
 describe("DAS 数据源管理接口", () => {
+  it("连接参数写入后的回读故障标记为服务失败，供 Web 核对保存状态", async () => {
+    const api = createManagementApi();
+    api.saveSqlServerTransport = async () => {
+      throw new Error("saved but readback unavailable private-detail");
+    };
+    const app = createApp(
+      config,
+      createHealthChecker(),
+      createCatalogReader(),
+      api,
+      undefined,
+      undefined,
+      await createServiceVerifier(),
+    );
+    app.log.level = "silent";
+    try {
+      const path = "/internal/admin/data-source-secrets/reader/sqlserver-transport";
+      const body = {
+        expected_revision: "a".repeat(64),
+        sqlserver_transport: { encrypt: true, trust_server_certificate: true },
+      };
+      const response = await app.inject({
+        method: "PUT",
+        url: path,
+        payload: body,
+        headers: { authorization: `Bearer ${await createServiceToken("PUT", path, body)}` },
+      });
+      expect(response.statusCode).toBe(500);
+      expect(response.json().code).toBe("INTERNAL_ERROR");
+      expect(response.body).not.toContain("private-detail");
+    } finally {
+      await app.close();
+    }
+  });
+  it("连接选项读写校验签名和公开合同，证书失败返回脱敏专用错误", async () => {
+    const api = createManagementApi();
+    const state = {
+      secret_ref: "reader",
+      connector_kind: "sqlserver" as const,
+      sqlserver_transport: { encrypt: true, trust_server_certificate: true },
+      origin: "credential" as const,
+      revision: "a".repeat(64),
+      sources: [],
+    };
+    api.getSqlServerTransport = async () => state;
+    api.saveSqlServerTransport = async () => state;
+    api.discoverDatabaseTargets = async () => {
+      throw new Error("self-signed certificate private-password sql.test");
+    };
+    const app = createApp(
+      config,
+      createHealthChecker(),
+      createCatalogReader(),
+      api,
+      undefined,
+      undefined,
+      await createServiceVerifier(),
+    );
+    try {
+      const path = "/internal/admin/data-source-secrets/reader/sqlserver-transport";
+      for (const method of ["GET", "PUT"] as const) {
+        const body =
+          method === "PUT"
+            ? { expected_revision: "a".repeat(64), sqlserver_transport: state.sqlserver_transport }
+            : undefined;
+        const unsigned = await app.inject({
+          method,
+          url: path,
+          ...(body ? { payload: body } : {}),
+        });
+        expect(unsigned.statusCode).toBe(401);
+        const response = await app.inject({
+          method,
+          url: path,
+          ...(body ? { payload: body } : {}),
+          headers: { authorization: `Bearer ${await createServiceToken(method, path, body)}` },
+        });
+        expect(response.statusCode).toBe(200);
+        expect(response.headers["cache-control"]).toBe("no-store");
+        expect(response.json()).toEqual(state);
+      }
+      const path2 = "/internal/admin/database-targets",
+        body = { secret_ref: "reader", connector_kind: "sqlserver" };
+      const response = await app.inject({
+        method: "POST",
+        url: path2,
+        payload: body,
+        headers: { authorization: `Bearer ${await createServiceToken("POST", path2, body)}` },
+      });
+      expect(response.statusCode).toBe(503);
+      expect(response.json().code).toBe("DATA_SOURCE_CERTIFICATE_INVALID");
+      expect(response.body).not.toMatch(/private-password|sql\.test/);
+    } finally {
+      await app.close();
+    }
+  });
+  it("签名 GET 读取停用源的公开配置，响应禁止缓存", async () => {
+    const api = createManagementApi();
+    const app = createApp(
+      config,
+      createHealthChecker(),
+      createCatalogReader(),
+      api,
+      undefined,
+      undefined,
+      await createServiceVerifier(),
+    );
+    const path = "/internal/admin/data-sources/disabled";
+    const response = await app.inject({
+      method: "GET",
+      url: path,
+      headers: { authorization: `Bearer ${await createServiceToken("GET", path, undefined)}` },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["cache-control"]).toBe("no-store");
+    expect(response.json()).toEqual({ config: null, revision: "a".repeat(64) });
+    const forged = await app.inject({
+      method: "GET",
+      url: "/internal/admin/data-sources/other",
+      headers: { authorization: `Bearer ${await createServiceToken("GET", path, undefined)}` },
+    });
+    expect(forged.statusCode).toBe(403);
+    await app.close();
+  });
   it("返回共享凭据可访问的目标数据库", async () => {
     const calls: unknown[] = [];
     const app = createApp(
@@ -132,6 +256,24 @@ function createCatalogReader(): CatalogReader {
 /** 构造数据源管理路由的最小服务替身。 */
 function createManagementApi(): DataSourceManagementApi {
   return {
+    async listDataSources() {
+      return { items: [] };
+    },
+    async getDataSource() {
+      return { config: null, revision: "a".repeat(64) };
+    },
+    getSqlServerTransport: async () => {
+      throw new Error("测试未配置连接参数读取");
+    },
+    saveSqlServerTransport: async () => {
+      throw new Error("测试未配置连接参数更新");
+    },
+    async listSecretReferences() {
+      return { items: [] };
+    },
+    async getSourceObjects() {
+      return { items: [], revision: "a".repeat(64) };
+    },
     async saveSharedCredentials() {
       return { secret_ref: "unused" };
     },

@@ -5,7 +5,7 @@ description: Build validated AI BI query DSL from API-provided datasets, fields,
 
 # Query DSL
 
-将业务问题转换为 API 工具可接收的结构化查询 DSL。根据已授权目录确认对象、字段、查询能力、参数及批准关系；口径或对象信息不足时先探索目录或澄清。
+将业务问题转换为 API 工具可接收的结构化查询 DSL。发现列表提供对象摘要；用 describe_dataset 读取选定对象的字段、参数、能力及批准关系，再构造查询。
 
 ## 按需读取
 
@@ -20,7 +20,9 @@ description: Build validated AI BI query DSL from API-provided datasets, fields,
 
 ## 执行规则
 
-- 对象类型和可用能力以目录返回值为准。查询失败时核对错误码、目录及对应子文档，修正查询后再调用。
+- query_dataset 入口若要求 arguments_json，先调用 get_tool_schema 读取其完整参数定义，再提交序列化后的业务参数对象；例如外层业务对象包含 query，而不是直接传 DSL。具体字段与分支以读取的定义为准。
+
+- 对象类型和可用能力以详情为准。table/view 选择 relational_query；stored_procedure/api_dataset 才使用参数化分支。失败时核对错误码及对应子文档，修正查询后再调用；相同参数和相同错误无需重复。
 - 使用目录中的逻辑对象 ID、字段、唯一键和批准关系；指标的时间依据、粒度及总计规则以已确认定义为准。
 - DSL 只表达业务查询意图，不包含 SQL、数据库函数、连接串、HTTP URL、JSONPath 或自由表达式。身份、行权限、列权限、脱敏规则、JWT 和签名由 API 绑定。
 - 查询使用当前数据源内已批准的关系。跨源需求由 API 分别查询并受控合并。

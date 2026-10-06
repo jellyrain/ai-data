@@ -1,0 +1,97 @@
+/* Element Plus 与原生操作共用尺寸、焦点和表面层级。 */
+.el-button {
+  font-weight: 500;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out,
+    color 150ms ease-out;
+}
+.el-button:not(.el-button--primary):not(.el-button--danger):not(.is-text):not(.is-link) {
+  --el-button-hover-bg-color: var(--app-hover);
+  --el-button-hover-text-color: var(--app-text);
+  --el-button-hover-border-color: var(--app-control-border);
+}
+.el-input__wrapper,
+.el-select__wrapper,
+.el-textarea__inner {
+  transition: box-shadow 150ms ease-out;
+}
+.el-input__wrapper,
+.el-select__wrapper {
+  background: var(--app-bg);
+}
+.el-form-item__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--app-text);
+}
+.el-dialog,
+.el-drawer {
+  --el-dialog-padding-primary: 24px;
+  color: var(--app-text);
+}
+.el-dialog,
+.el-message-box {
+  border-radius: 10px;
+  max-width: calc(100vw - 32px);
+}
+.el-dialog__header,
+.el-drawer__header {
+  color: var(--app-text);
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--app-border);
+  margin-bottom: 20px;
+}
+.el-dialog__title,
+.el-drawer__title,
+.el-message-box__title {
+  font-size: 16px;
+  font-weight: 600;
+}
+.el-drawer__body {
+  padding-top: 0;
+}
+.el-dropdown-menu {
+  padding: 5px;
+}
+.el-dropdown-menu__item {
+  border-radius: 4px;
+  padding: 7px 10px;
+  line-height: 20px;
+}
+.el-popper,
+.el-select-dropdown,
+.el-picker-panel {
+  --el-bg-color-overlay: var(--app-panel);
+}
+.el-table-v2 {
+  --el-table-header-bg-color: var(--app-surface);
+  --el-table-row-hover-bg-color: var(--app-hover);
+  --el-table-border-color: var(--app-border);
+}
+.el-table-v2__header-cell {
+  color: var(--app-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.el-select,
+.el-input,
+.el-textarea {
+  min-width: 0;
+}
+.el-pagination {
+  --el-pagination-button-bg-color: var(--app-surface);
+}
+.el-button svg,
+.navigation-menu svg {
+  stroke-width: 1.6;
+  flex-shrink: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .el-button,
+  .el-input__wrapper,
+  .el-select__wrapper,
+  .el-textarea__inner {
+    transition: none;
+  }
+}

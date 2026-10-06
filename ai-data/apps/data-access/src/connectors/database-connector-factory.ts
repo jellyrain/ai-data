@@ -5,6 +5,7 @@ import { createDatabaseDriver } from "./database-drivers";
 import type { DataSourceConnectorFactory } from "../data-sources/data-source-manager";
 import { getDatabaseDialect } from "./dialects";
 import type { DasConfig } from "../config/das-config";
+import { sqlServerDriverOptions } from "./sqlserver-transport";
 
 /** 使用真实数据库驱动创建业务连接器的默认工厂。 */
 class DatabaseConnectorFactory implements DataSourceConnectorFactory {
@@ -26,12 +27,9 @@ class DatabaseConnectorFactory implements DataSourceConnectorFactory {
     const driver = await createDatabaseDriver(
       config,
       secret,
-      transport === undefined
-        ? undefined
-        : {
-            encrypt: transport.encrypt,
-            trustServerCertificate: transport.trust_server_certificate,
-          },
+      secret.connectorKind === "sqlserver"
+        ? sqlServerDriverOptions(secret.sqlserver_transport, transport)
+        : undefined,
     );
     return new DatabaseConnector(config, driver, getDatabaseDialect(secret.connectorKind));
   }

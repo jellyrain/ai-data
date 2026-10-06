@@ -3,20 +3,18 @@ packages:
   - apps/*
   - packages/*
 
-# 允许这两个依赖运行安装构建脚本，供打包工具及数据库驱动使用。
+# 按检查结果允许打包工具、数据库驱动及 Vue 适配依赖运行安装脚本。
 allowBuilds:
   esbuild: true
   oracledb: true
+  "vue-demi@0.14.10": true
 
-# 各包通过 catalog: 引用公共依赖版本，在此集中维护。
+# 仅集中维护多个工作区包共用的依赖版本；单包专用依赖在所属 package.json 声明。
 catalog:
-  "@eslint/js": ^10.0.1
   "@types/node": ^26.2.0
   eslint: ^10.9.0
-  eslint-config-prettier: ^10.1.8
   prettier: ^3.9.6
   typescript: 7.0.2
-  typescript-eslint: ^8.67.0
   tsx: ^4.23.12
   esbuild: ^0.28.2
   vitest: ^4.1.11
@@ -25,6 +23,9 @@ catalog:
   dayjs: ^1.11.23
   axios: ^1.19.0
   pino: ^10.3.1
-  p-limit: ^7.3.1
   fastify: ^5.12.1
   jose: ^6.2.10
+
+minimumReleaseAgeExclude:
+  - "@tanstack/query-core@5.104.0"
+  - "@tanstack/vue-query@5.104.0"

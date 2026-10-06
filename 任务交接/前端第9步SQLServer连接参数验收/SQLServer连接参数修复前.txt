@@ -1,0 +1,95 @@
+
+ RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/data-access
+
+ ❯ tests/data-sources/sqlserver-transport-management.test.ts (7 tests | 4 failed) 16ms
+     × 保存连接选项并公开回读，多个源采用相同设置且秘密不回传 8ms
+     × 旧凭据明确展示默认发现设置及各源文件配置，局部保存保持完整登录内容 2ms
+     × 密码更新后旧修订无法覆盖新凭据，旧调用方省略选项时保持已存设置 1ms
+     × 布尔参数不接受字符串，并支持独立设置两个值 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/data-sources/sqlserver-transport-management.test.ts > SQL Server 业务连接选项管理 > 保存连接选项并公开回读，多个源采用相同设置且秘密不回传
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "sqlserver_transport"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"sqlserver_transport\""
+  }
+]
+ ❯ DataSourceManagementService.saveSharedCredentials src/data-sources/data-source-management-service.ts:84:57
+     82|   /** 加密保存可复用的数据库服务器凭据，并刷新依赖该凭据的运行连接器。 */
+     83|   async saveSharedCredentials(input: unknown): Promise<{ secret_ref: s…
+     84|     const credentials = sharedDatabaseCredentialsSchema.parse(input);
+       |                                                         ^
+     85|     const activeKey = await this.activeKeyProvider.getActiveKey();
+     86|     const encrypted = this.cipher.encrypt(
+ ❯ tests/data-sources/sqlserver-transport-management.test.ts:36:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/data-sources/sqlserver-transport-management.test.ts > SQL Server 业务连接选项管理 > 旧凭据明确展示默认发现设置及各源文件配置，局部保存保持完整登录内容
+TypeError: this.secretWriter.upsert is not a function
+ ❯ DataSourceManagementService.saveSharedCredentials src/data-sources/data-source-management-service.ts:99:29
+     97|       activeKey.value,
+     98|     );
+     99|     await this.secretWriter.upsert({
+       |                             ^
+    100|       secretRef: credentials.secret_ref,
+    101|       keyId: activeKey.keyId,
+ ❯ tests/data-sources/sqlserver-transport-management.test.ts:48:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/data-sources/sqlserver-transport-management.test.ts > SQL Server 业务连接选项管理 > 密码更新后旧修订无法覆盖新凭据，旧调用方省略选项时保持已存设置
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "sqlserver_transport"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"sqlserver_transport\""
+  }
+]
+ ❯ DataSourceManagementService.saveSharedCredentials src/data-sources/data-source-management-service.ts:84:57
+     82|   /** 加密保存可复用的数据库服务器凭据，并刷新依赖该凭据的运行连接器。 */
+     83|   async saveSharedCredentials(input: unknown): Promise<{ secret_ref: s…
+     84|     const credentials = sharedDatabaseCredentialsSchema.parse(input);
+       |                                                         ^
+     85|     const activeKey = await this.activeKeyProvider.getActiveKey();
+     86|     const encrypted = this.cipher.encrypt(
+ ❯ tests/data-sources/sqlserver-transport-management.test.ts:61:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/data-sources/sqlserver-transport-management.test.ts > SQL Server 业务连接选项管理 > 布尔参数不接受字符串，并支持独立设置两个值
+ZodError: [
+  {
+    "code": "unrecognized_keys",
+    "keys": [
+      "sqlserver_transport"
+    ],
+    "path": [],
+    "message": "Unrecognized key: \"sqlserver_transport\""
+  }
+]
+ ❯ tests/data-sources/sqlserver-transport-management.test.ts:72:44
+     70|   it("布尔参数不接受字符串，并支持独立设置两个值", () => {
+     71|     expect(sharedDatabaseCredentialsSchema.safeParse({ ...credentials,…
+     72|     expect(sharedDatabaseCredentialsSchema.parse({ ...credentials, sql…
+       |                                            ^
+     73|   });
+     74| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed (7)
+   Start at  10:56:34
+   Duration  4.14s (transform 749ms, setup 0ms, import 3.12s, tests 16ms, environment 0ms)
+

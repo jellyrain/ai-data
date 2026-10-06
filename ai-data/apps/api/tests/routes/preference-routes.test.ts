@@ -25,6 +25,11 @@ const preference = {
 const headers = { authorization: "Bearer user-token" };
 function setup() {
   const service = {
+    editState: vi.fn<PreferenceService["editState"]>(async () => ({
+      status: "live",
+      version: 1,
+      preference,
+    })),
     list: vi.fn<PreferenceService["list"]>(async () => [preference]),
     listPendingConfirmations: vi.fn<PreferenceService["listPendingConfirmations"]>(async () => []),
     get: vi.fn<PreferenceService["get"]>(async () => preference),
@@ -32,7 +37,10 @@ function setup() {
     delete: vi.fn<PreferenceService["delete"]>(async () => {}),
     setAutoApply: vi.fn<PreferenceService["setAutoApply"]>(async () => preference),
   };
-  const auth = { loadContext: vi.fn(async () => preferenceUser) };
+  const auth = {
+    loadContext: vi.fn(async () => preferenceUser),
+    refreshContext: vi.fn(async () => preferenceUser),
+  };
   const app = Fastify();
   registerContractErrorHandler(app);
   registerPreferenceRoutes(app, auth, service);

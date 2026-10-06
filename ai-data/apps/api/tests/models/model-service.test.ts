@@ -5,6 +5,7 @@ import type { ModelConfiguration } from "@ai-data/contracts";
 import { LocalMasterKeyStore } from "@ai-data/metadata/secrets";
 import { ModelService } from "../../src/models/model-service";
 import { ModelCredentialCipher } from "../../src/models/model-credential-cipher";
+import { ModelCapabilities } from "../../src/models/model-capabilities";
 import type { ModelRepository, StoredModel } from "../../src/models/model-types";
 import { ApplicationError } from "../../src/errors/application-error";
 import { context } from "../support/api-fixtures";
@@ -51,7 +52,12 @@ async function setup() {
     },
   };
   const credentials = new ModelCredentialCipher(new LocalMasterKeyStore(directory));
-  return { service: new ModelService({ repository, credentials }), repository, rows, directory };
+  return {
+    service: new ModelService({ repository, credentials, capabilities: new ModelCapabilities() }),
+    repository,
+    rows,
+    directory,
+  };
 }
 const admin = { ...context, roles: ["system_admin"] };
 const input = {
@@ -99,6 +105,7 @@ describe("模型配置管理", () => {
       versions[1]!.credentials.metadata.iv_hex,
     );
     const restarted = new ModelService({
+      capabilities: new ModelCapabilities(),
       repository,
       credentials: new ModelCredentialCipher(new LocalMasterKeyStore(directory)),
     });

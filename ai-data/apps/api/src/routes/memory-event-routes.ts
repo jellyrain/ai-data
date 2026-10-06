@@ -31,6 +31,7 @@ function registerMemoryEventRoutes(
       .send({ items: await events.list(context, limit) });
   });
   app.post("/admin/memory-events/:id/retry", async (request, reply) => {
+    reply.header("cache-control", "no-store");
     const context = await authorize(bearerToken(request));
     const { id } = z
       .object({ id: z.string().min(1).max(128) })

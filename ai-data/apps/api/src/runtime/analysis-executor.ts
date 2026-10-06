@@ -57,6 +57,7 @@ class AnalysisExecutor {
       const instructions = configured?.instructions ?? this.dependencies.instructions;
       const definitions = tools.definitions();
       const memory = await this.dependencies.loadMemory?.(context);
+      const memoryFingerprint = await this.dependencies.loadMemoryFingerprint?.(context);
       const reportContext = await this.dependencies.loadReportContext?.(context, runId);
       const runtimeKey = createHash("sha256")
         .update(
@@ -64,6 +65,7 @@ class AnalysisExecutor {
             tools: definitions,
             instructions,
             memory,
+            memoryFingerprint,
             runtime: configured?.runtimeKey ?? this.dependencies.runtimeKey ?? "",
           }),
         )
@@ -102,6 +104,26 @@ class AnalysisExecutor {
       )
         throw new ApplicationError("QUERY_LIMIT_EXCEEDED", "会话上下文超出分析容量");
       if (memory) await runs.recordMemoryContext(context, runId, lease, memory);
+      // 流式公开与最终交付共用授权复核，历史证据或知识范围变化立即停止后续输出。
+      const deliveryContext = async () => {
+        if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "分析已中断");
+        const current = await this.dependencies.refreshContext(context);
+        if (
+          stableStringify((await this.dependencies.loadMemoryFingerprint?.(current)) ?? null) !==
+          stableStringify(memoryFingerprint ?? null)
+        )
+          throw new ApplicationError(
+            "POLICY_REJECTED",
+            "分析期间正式知识的版本或可见范围发生变化，请重新发起分析",
+          );
+        if (
+          (await repository.loadInput(current, runId, runtimeKey)).context_hash !==
+          input.context_hash
+        )
+          throw new ApplicationError("POLICY_REJECTED", "分析期间授权范围发生变化，请重新发起分析");
+        for (const id of input.run_ids) await runs.get(current, id);
+        return current;
+      };
       const result = await harness.run({
         sessionKey: JSON.stringify([
           context.organizationId,
@@ -119,6 +141,11 @@ class AnalysisExecutor {
         ...(configured ? { configuration: configured.configuration } : {}),
         tools: definitions,
         signal: controller.signal,
+        onMessage: async (event) => {
+          const current = await deliveryContext();
+          if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "分析已中断");
+          await runs.recordMessage(current, runId, lease, event);
+        },
         onCompaction: async (event) => {
           if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "分析已中断");
           await runs.recordCompaction(context, runId, lease, event);
@@ -135,14 +162,10 @@ class AnalysisExecutor {
       if (result.status === "completed") {
         if (!result.content.trim() || result.content.length > 64000)
           throw new ApplicationError("QUERY_LIMIT_EXCEEDED", "分析结论为空或超过容量");
-        const current = await this.dependencies.refreshContext(context);
-        if (
-          (await repository.loadInput(current, runId, runtimeKey)).context_hash !==
-          input.context_hash
-        )
-          throw new ApplicationError("POLICY_REJECTED", "分析期间授权范围发生变化，请重新发起分析");
-        for (const id of input.run_ids) await runs.get(current, id);
-        await runs.complete(current, runId, lease, result.content);
+        const current = await deliveryContext();
+        if (result.messageId)
+          await runs.complete(current, runId, lease, result.content, undefined, result.messageId);
+        else await runs.complete(current, runId, lease, result.content);
       }
     } catch (error) {
       if (this.closing) await runs.release(context, runId, lease);

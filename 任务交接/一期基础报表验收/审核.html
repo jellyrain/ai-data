@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>一期基础报表 · 实际页面审核</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #252b24;
+        --muted: #626a61;
+        --line: #dde1d8;
+        --accent: #697034;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f5f6f2;
+        color: var(--ink);
+        font:
+          15px/1.65 "Microsoft YaHei",
+          system-ui,
+          sans-serif;
+      }
+      header,
+      main,
+      footer {
+        max-width: 1640px;
+        margin: auto;
+        padding: 30px;
+      }
+      header {
+        padding-top: 44px;
+        padding-bottom: 16px;
+      }
+      h1 {
+        margin: 5px 0 10px;
+        font-size: 30px;
+      }
+      header p {
+        max-width: 950px;
+        color: var(--muted);
+      }
+      .eyebrow {
+        color: var(--accent);
+        letter-spacing: 0.08em;
+        font-size: 13px;
+      }
+      nav {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+      }
+      button,
+      .doc {
+        border: 1px solid var(--line);
+        background: white;
+        padding: 9px 16px;
+        border-radius: 7px;
+        color: var(--ink);
+        font: inherit;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      button[aria-pressed="true"] {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 3px solid #959e63;
+        outline-offset: 4px;
+      }
+      main {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+        padding-top: 10px;
+      }
+      article {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: white;
+      }
+      article[hidden] {
+        display: none;
+      }
+      .image-link {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        aspect-ratio: 16/9;
+        background: #e9ece4;
+        border-bottom: 1px solid var(--line);
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      article[data-kind="mobile"] img {
+        width: auto;
+        max-width: 100%;
+      }
+      .caption {
+        padding: 18px 22px 20px;
+      }
+      .caption span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      h2 {
+        font-size: 19px;
+        margin: 5px 0;
+      }
+      p {
+        margin: 5px 0;
+        color: var(--muted);
+      }
+      footer {
+        padding-top: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      @media (max-width: 900px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+        header,
+        main,
+        footer {
+          padding-left: 18px;
+          padding-right: 18px;
+        }
+        h1 {
+          font-size: 26px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="eyebrow">AI DATA · 2026-10-04</div>
+      <h1>一期基础报表 · 实际页面审核</h1>
+      <p>
+        12 张桌面页面原图均为 1920 × 1080（16:9），另附 1
+        张窄屏编辑截图。图片采集自本轮 Web
+        生产构建，使用隔离验收数据。点击图片可打开原图。
+      </p>
+      <nav aria-label="截图分类">
+        <button data-filter="all" aria-pressed="true">全部 13</button
+        ><button data-filter="desktop" aria-pressed="false">桌面 12</button
+        ><button data-filter="mobile" aria-pressed="false">手机 1</button
+        ><a class="doc" href="../一期基础报表改造交付说明.md"
+          >交付说明与流程图</a
+        >
+      </nav>
+    </header>
+    <main>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="01-报表中心.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：报表中心"
+          ><img
+            src="01-报表中心.png"
+            alt="报表中心"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>01 · 1920 × 1080</span>
+          <h2>报表中心</h2>
+          <p>卡片入口、名称与说明、搜索及排序；截图使用既有多内容报表样例。</p>
+        </div>
+      </article>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="02-单图表详情.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：单图表详情"
+          ><img
+            src="02-单图表详情.png"
+            alt="单图表详情"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>02 · 1920 × 1080</span>
+          <h2>单图表详情</h2>
+          <p>
+            单个图表结果、顶部条件、实际运行范围；旧报表可选择其中一项内容。
+          </p>
+        </div>
+      </article>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="03-明细表详情.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：明细表详情"
+          ><img
+            src="03-明细表详情.png"
+            alt="明细表详情"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>03 · 1920 × 1080</span>
+          <h2>明细表详情</h2>
+          <p>同一份结果切换明细表，支持选择显示列。</p>
+        </div>
+      </article>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="04-筛选条件.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：筛选条件"
+          ><img
+            src="04-筛选条件.png"
+            alt="筛选条件"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>04 · 1920 × 1080</span>
+          <h2>筛选条件</h2>
+          <p>筛选项、默认值、参数绑定及使用预览。</p>
+        </div>
+      </article>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="05-数据与展示.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：数据与展示"
+          ><img
+            src="05-数据与展示.png"
+            alt="数据与展示"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>05 · 1920 × 1080</span>
+          <h2>数据与展示</h2>
+          <p>名称、说明、展示方式与上次保存结果预览。</p>
+        </div>
+      </article>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="06-数据编排.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：数据编排"
+          ><img
+            src="06-数据编排.png"
+            alt="数据编排"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>06 · 1920 × 1080</span>
+          <h2>数据编排</h2>
+          <p>已有查询节点、数据编排与属性面板。</p>
+        </div>
+      </article>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="07-AI修改.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：AI修改"
+          ><img
+            src="07-AI修改.png"
+            alt="AI修改"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>07 · 1920 × 1080</span>
+          <h2>AI修改</h2>
+          <p>AI 修改侧栏；图中为提交前状态，过程回放和完成折叠另有行为测试。</p>
+        </div>
+      </article>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="08-分享设置.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：分享设置"
+          ><img
+            src="08-分享设置.png"
+            alt="分享设置"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>08 · 1920 × 1080</span>
+          <h2>分享设置</h2>
+          <p>组织成员搜索、分页及报表访问授权。</p>
+        </div>
+      </article>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="09-导出文件.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：导出文件"
+          ><img
+            src="09-导出文件.png"
+            alt="导出文件"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>09 · 1920 × 1080</span>
+          <h2>导出文件</h2>
+          <p>Excel、Word、PDF 格式选择与固定结果范围。</p>
+        </div>
+      </article>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="10-结果历史.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：结果历史"
+          ><img
+            src="10-结果历史.png"
+            alt="结果历史"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>10 · 1920 × 1080</span>
+          <h2>结果历史</h2>
+          <p>固定结果版本、来源定义及历史切换。</p>
+        </div>
+      </article>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="11-从对话保存报表.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：从对话保存报表"
+          ><img
+            src="11-从对话保存报表.png"
+            alt="从对话保存报表"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>11 · 1920 × 1080</span>
+          <h2>从对话保存报表</h2>
+          <p>选择一份对话结果，填写名称和说明后保存为报表。</p>
+        </div>
+      </article>
+      <article data-kind="desktop">
+        <a
+          class="image-link"
+          href="12-组织模板.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：组织模板"
+          ><img
+            src="12-组织模板.png"
+            alt="组织模板"
+            loading="lazy"
+            width="1920"
+            height="1080"
+        /></a>
+        <div class="caption">
+          <span>12 · 1920 × 1080</span>
+          <h2>组织模板</h2>
+          <p>提交指定定义版本，进入组织模板审核流程。</p>
+        </div>
+      </article>
+      <article data-kind="mobile">
+        <a
+          class="image-link"
+          href="13-手机编辑.png"
+          target="_blank"
+          rel="noopener"
+          aria-label="查看原图：手机编辑"
+          ><img
+            src="13-手机编辑.png"
+            alt="手机编辑"
+            loading="lazy"
+            width="390"
+            height="844"
+        /></a>
+        <div class="caption">
+          <span>13 · 390 × 844</span>
+          <h2>手机编辑</h2>
+          <p>390 × 844 窄屏编辑布局。</p>
+        </div>
+      </article>
+    </main>
+    <footer>
+      本目录记录实际实现页面。筛选、权限、版本冲突、流式过程与导出文件的验证范围见交付说明。
+    </footer>
+    <script>
+      document.querySelectorAll("[data-filter]").forEach((button) =>
+        button.addEventListener("click", () => {
+          document
+            .querySelectorAll("[data-filter]")
+            .forEach((b) =>
+              b.setAttribute("aria-pressed", String(b === button)),
+            );
+          document
+            .querySelectorAll("article")
+            .forEach(
+              (card) =>
+                (card.hidden =
+                  button.dataset.filter !== "all" &&
+                  card.dataset.kind !== button.dataset.filter),
+            );
+        }),
+      );
+    </script>
+  </body>
+</html>

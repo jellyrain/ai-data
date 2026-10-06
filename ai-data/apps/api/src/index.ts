@@ -9,6 +9,7 @@ import { AuthContextCache } from "./auth/auth-context-cache";
 import { loadApiConfig } from "./config/api-config";
 import { JwtService } from "./auth/jwt-service";
 import { SqlAuthRepository } from "./auth/sql-auth-repository";
+import { SqlUserAdminReader } from "./auth/sql-user-admin-reader";
 import { hashPassword } from "./auth/password";
 import { ConversationService } from "./conversations/conversation-service";
 import { SqlConversationRepository } from "./conversations/sql-conversation-repository";
@@ -104,6 +105,8 @@ async function start(): Promise<void> {
     }
     memory = createMemoryServices({
       templates: {
+        preview: (context, content, executor) =>
+          reporting!.templates.preview(context, content, executor),
         validate: (context, content, executor) =>
           reporting!.templates.validate(context, content, executor),
         assertSubmit: (context, content, executor) =>
@@ -113,6 +116,7 @@ async function start(): Promise<void> {
       config,
       jwt,
       catalogClient: dataAccessCatalogClient,
+      dataAccessSessions: dataAccessRegistry,
       queryAuthorization,
       runs,
       refreshContext: (context) => authService.refreshContext(context),
@@ -213,6 +217,7 @@ async function start(): Promise<void> {
       config,
       metadataDatabase,
       auth: authService,
+      userAdmin: new SqlUserAdminReader(metadataDatabase),
       agentConfiguration,
       memory,
       reporting,

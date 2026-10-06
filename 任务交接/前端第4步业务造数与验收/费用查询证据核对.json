@@ -1,0 +1,9 @@
+{
+  "run_id": "ac776310-7725-45b7-9609-4b865f729980",
+  "status": "failed",
+  "query_evidence_matches_sql": true,
+  "categories": 10,
+  "total_cents": 226315800,
+  "total_yuan": "2263158.00",
+  "final_answer_completed": false
+}

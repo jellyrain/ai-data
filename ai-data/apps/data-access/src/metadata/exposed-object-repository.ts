@@ -10,6 +10,15 @@ import { procedureDefinitionSchema } from "../catalog/procedure-definition";
 class ExposedObjectRepository {
   constructor(private readonly executor: MetadataQueryExecutor) {}
 
+  /** 管理读取包含隐藏和不可查询项，完整替换时保留这些配置。 */
+  async listAllBySourceId(sourceId: string, lock = false): Promise<ExposedSourceObject[]> {
+    const result = await this.executor.execute({
+      sql: `SELECT source_id,object_id,object_kind,native_schema_name,native_object_name,is_discoverable,is_queryable,capabilities_json,procedure_definition_json FROM dbo.exposed_source_objects ${lock ? "WITH (UPDLOCK,HOLDLOCK)" : ""} WHERE source_id=@source_id ORDER BY object_id`,
+      parameters: [{ name: "source_id", type: "string", value: sourceId }],
+    });
+    return result.rows.map(toExposedSourceObject);
+  }
+
   /** 列出某数据源允许向 API 发现的对象。 */
   async listDiscoverableBySourceId(sourceId: string): Promise<ExposedSourceObject[]> {
     const result = await this.executor.execute({

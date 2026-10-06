@@ -1,5 +1,9 @@
 import { createHash } from "node:crypto";
 import {
+  knowledgeManagementRecordSchema,
+  knowledgeOwnerOptionSchema,
+  type KnowledgeManagementRecord,
+  type KnowledgeOwnerOptionsInput,
   knowledgeCandidateSchema,
   publishedKnowledgeSchema,
   stableStringify,
@@ -57,6 +61,45 @@ class SqlKnowledgeRepository implements KnowledgeRepository {
       { name: "org", type: "string", value: org },
       ...(id === undefined ? [] : [{ name: "id", type: "string" as const, value: id }]),
     ];
+  }
+  /** 先限定组织及最新负责人的归属再限量，停用和未来版本保留在管理视图中。 */
+  async listManagement(
+    org: string,
+    now: string,
+    ownerId?: string,
+    id?: string,
+  ): Promise<KnowledgeManagementRecord[]> {
+    const result = await this.database.execute({
+      sql: "SELECT TOP (200) h.knowledge_id,h.enabled,latest.record_json AS latest_json,current_version.record_json AS current_json FROM dbo.knowledge_heads h CROSS APPLY (SELECT TOP (1) v.record_json FROM dbo.knowledge_versions v WHERE v.organization_id=h.organization_id AND v.knowledge_id=h.knowledge_id ORDER BY v.version DESC) latest OUTER APPLY (SELECT TOP (1) v.record_json FROM dbo.knowledge_versions v WHERE v.organization_id=h.organization_id AND v.knowledge_id=h.knowledge_id AND h.enabled=1 AND v.effective_at<=CONVERT(datetime2,@now) ORDER BY v.version DESC) current_version WHERE h.organization_id=@org AND (@id IS NULL OR h.knowledge_id=@id) AND (@owner IS NULL OR JSON_VALUE(latest.record_json,'$.owner_id')=@owner) ORDER BY h.knowledge_id",
+      parameters: [
+        ...this.parameters(org),
+        { name: "id", type: "string", value: id ?? null },
+        { name: "owner", type: "string", value: ownerId ?? null },
+        { name: "now", type: "string", value: now },
+      ],
+    });
+    return result.rows.map((row) =>
+      parseStoredRecord(() =>
+        knowledgeManagementRecordSchema.parse({
+          knowledge_id: row.knowledge_id,
+          enabled: row.enabled === 0 ? false : row.enabled === 1 ? true : row.enabled,
+          latest: JSON.parse(String(row.latest_json)),
+          current: row.current_json == null ? null : JSON.parse(String(row.current_json)),
+        }),
+      ),
+    );
+  }
+  /** 仅公开有效账号的选择字段，关键词作为字面子串而非通配表达式。 */
+  async ownerOptions(org: string, input: KnowledgeOwnerOptionsInput) {
+    const result = await this.database.execute({
+      sql: "SELECT TOP (@limit) id AS user_id,username,display_name FROM dbo.users WHERE organization_id=@org AND status='active' AND (@keyword='' OR CHARINDEX(@keyword,username)>0 OR CHARINDEX(@keyword,display_name)>0) ORDER BY username,id",
+      parameters: [
+        ...this.parameters(org),
+        { name: "keyword", type: "string", value: input.keyword },
+        { name: "limit", type: "integer", value: input.limit },
+      ],
+    });
+    return result.rows.map((row) => parseStoredRecord(() => knowledgeOwnerOptionSchema.parse(row)));
   }
   async isActiveUser(
     org: string,

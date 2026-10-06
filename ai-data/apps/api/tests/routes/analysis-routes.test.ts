@@ -1,8 +1,72 @@
 import { describe, expect, it, vi } from "vitest";
 import { createApp } from "../../src/app";
 import { createApiDependencies } from "../support/api-fixtures";
+import type { SseEvent } from "@ai-data/contracts";
 
 describe("分析运行接口", () => {
+  it("提交唤醒活跃 SSE，正文在终态前到达，关闭后释放订阅", async () => {
+    const dependencies = createApiDependencies();
+    let sequence = 0;
+    let status = "running";
+    let notify = () => {};
+    const unsubscribe = vi.fn();
+    const events: SseEvent[] = [];
+    Object.assign(dependencies.analysis.runs, {
+      subscribeEvents: (_id: string, callback: () => void) => {
+        notify = callback;
+        return unsubscribe;
+      },
+    });
+    dependencies.analysis.runs.get.mockImplementation(async () => ({ status, sequence }) as never);
+    dependencies.analysis.runs.events.mockImplementation(async (_context, _id, after) =>
+      events.filter((event) => event.sequence > after),
+    );
+    const app = await createApp(dependencies);
+    app.log.level = "silent";
+    const controller = new AbortController();
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    try {
+      const url = await app.listen({ port: 0, host: "127.0.0.1" });
+      const response = await fetch(`${url}/analysis-runs/r/events`, {
+        headers: { authorization: "Bearer test" },
+        signal: controller.signal,
+      });
+      reader = response.body!.getReader();
+      await reader.read();
+      const started = performance.now();
+      sequence++;
+      events.push({
+        type: "assistant_message",
+        analysis_run_id: "r",
+        conversation_id: "c",
+        sequence,
+        message_id: "message",
+        status: "delta",
+        content: "查询中",
+      });
+      notify();
+      expect(new TextDecoder().decode((await reader.read()).value)).toContain("查询中");
+      expect(performance.now() - started).toBeLessThan(700);
+      expect(status).toBe("running");
+      status = "completed";
+      events.push({
+        type: "run_completed",
+        analysis_run_id: "r",
+        conversation_id: "c",
+        sequence: ++sequence,
+      });
+      notify();
+      while (!(await reader.read()).done) {
+        /* 读到终态，确认订阅随连接释放。 */
+      }
+      expect(unsubscribe).toHaveBeenCalledOnce();
+      expect(dependencies.analysis.runs.events.mock.calls.length).toBeLessThanOrEqual(5);
+    } finally {
+      controller.abort();
+      await reader?.cancel().catch(() => {});
+      await app.close();
+    }
+  });
   it("压缩事件和取消终态按序回放，支持前台清理压缩提示", async () => {
     const dependencies = createApiDependencies();
     dependencies.analysis.runs.get.mockResolvedValue({ status: "cancelled", sequence: 3 } as never);

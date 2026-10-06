@@ -43,6 +43,10 @@ function setup() {
     permissionContext: { department_ids: [] },
   };
   const repository = {
+    currentState: async () => ({
+      version: 0,
+      snapshot: { object_permissions: [], column_permissions: [], row_policies: [] },
+    }),
     loadRoleAuthorization: vi.fn<CatalogAdminRepository["loadRoleAuthorization"]>(async () => role),
     saveChange: vi.fn<CatalogAdminRepository["saveChange"]>(async (actor, sourceId, change) => ({
       organization_id: actor.organizationId,

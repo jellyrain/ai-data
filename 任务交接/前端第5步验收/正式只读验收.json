@@ -1,0 +1,17 @@
+{
+  "date": "2026-09-28T03:28:02.139Z",
+  "target": "http://127.0.0.1:5173",
+  "checks": [
+    {
+      "name": "正式配置登录及报表入口",
+      "passed": true
+    },
+    {
+      "name": "不存在的报表有明确错误",
+      "passed": true
+    }
+  ],
+  "rows": 0,
+  "empty": true,
+  "alerts": []
+}

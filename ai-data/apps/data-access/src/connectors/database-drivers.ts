@@ -34,7 +34,7 @@ function getOracleConnectString(config: DataSourceConfig, host: string, port: nu
 async function createSqlServerDriver(
   config: DataSourceConfig,
   secret: Extract<ResolvedDataSourceSecret, { connectorKind: "sqlserver" }>,
-  /** 由部署配置提供的链路选项；默认加密并验证证书。 */
+  /** 连接工厂已按凭据、部署配置和默认值解析的业务连接选项。 */
   transport = { encrypt: true, trustServerCertificate: false },
 ): Promise<DatabaseDriver> {
   const pool = await new mssql.ConnectionPool({

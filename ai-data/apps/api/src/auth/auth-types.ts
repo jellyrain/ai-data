@@ -100,6 +100,8 @@ type CreateUserInput = {
   roleIds: string[];
   /** 仅用于个别例外的数据范围标识列表。 */
   exceptionDataScopeIds: string[];
+  /** HTTP 管理创建必须提供操作者授权；可信的内部初始化可省略。 */
+  assignmentAuthority?: { canAssignPrivileged: boolean };
 };
 
 /** 管理员用户管理所需的仓储能力。 */
@@ -132,6 +134,7 @@ interface UserAdminRepository extends AuthRepository {
     userId: string,
     organizationId: string,
     departmentIds: string[],
+    expectedAuthorizationVersion?: number,
   ): Promise<boolean>;
 }
 

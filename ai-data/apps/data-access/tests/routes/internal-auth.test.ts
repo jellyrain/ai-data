@@ -58,6 +58,16 @@ describe("DAS 内部入口认证", () => {
             },
           },
           {
+            listDataSources: async () => ({ items: [] }),
+            getDataSource: async () => ({ config: null, revision: "a".repeat(64) }),
+            getSourceObjects: async () => ({ items: [], revision: "a".repeat(64) }),
+            getSqlServerTransport: async () => {
+              throw new Error("测试未配置连接参数读取");
+            },
+            saveSqlServerTransport: async () => {
+              throw new Error("测试未配置连接参数更新");
+            },
+            listSecretReferences: async () => ({ items: [] }),
             saveSharedCredentials: async () => {
               called();
               return { secret_ref: "test" };

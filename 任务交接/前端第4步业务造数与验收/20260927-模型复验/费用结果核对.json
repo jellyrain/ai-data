@@ -1,0 +1,12 @@
+{
+  "run_id": "6f02114c-04d3-4fe6-b4f6-1dc78d412674",
+  "sql_baseline_matches": true,
+  "category_count": 10,
+  "total_cents": 226315800,
+  "total_yuan": 2263158,
+  "final_answer_amounts_match": true,
+  "evidence_ids": [
+    "0f43cdfe-6027-48ae-84fc-716af42347f6",
+    "885a8323-bfc7-4489-8e5f-456add7c9755"
+  ]
+}

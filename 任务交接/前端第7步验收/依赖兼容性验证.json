@@ -1,0 +1,99 @@
+{
+  "installed": [
+    {
+      "name": "exceljs",
+      "version": "4.4.0",
+      "license": "MIT"
+    },
+    {
+      "name": "docx",
+      "version": "9.7.1",
+      "license": "MIT"
+    },
+    {
+      "name": "pdfmake",
+      "version": "0.3.11",
+      "license": "MIT"
+    },
+    {
+      "name": "@types/pdfmake",
+      "version": "0.3.3",
+      "license": "MIT"
+    },
+    {
+      "name": "fflate",
+      "version": "0.8.3",
+      "license": "MIT"
+    },
+    {
+      "name": "pdfjs-dist",
+      "version": "6.3.289",
+      "license": "Apache-2.0"
+    }
+  ],
+  "dependency_scripts": [],
+  "fonts": [
+    {
+      "name": "NotoSansSC-Regular.otf",
+      "verified": true,
+      "sha256": "faa6c9df652116dde789d351359f3d7e5d2285a2b2a1f04a2d7244df706d5ea9",
+      "bytes": 8331336
+    },
+    {
+      "name": "NotoSansSC-Bold.otf",
+      "verified": true,
+      "sha256": "c6cb5a93abaa9edc8ee7463b7ebb7f42d618d40e6ed2f7a5371c97b0b64767c0",
+      "bytes": 8543168
+    },
+    {
+      "name": "LICENSE",
+      "verified": true,
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "bytes": 4301
+    }
+  ],
+  "checks": [
+    "Vite 独立生产构建通过",
+    {
+      "worker_generated": "兼容样例.xlsx",
+      "bytes": 6629
+    },
+    {
+      "worker_generated": "兼容样例.docx",
+      "bytes": 8683
+    },
+    {
+      "file": "兼容样例-英文.pdf",
+      "extracted_text": "Export compatibility  Cardiology   12345.67Second page",
+      "pages": 2
+    },
+    {
+      "worker_generated": "兼容样例-英文.pdf",
+      "bytes": 14887
+    },
+    {
+      "regular_font": "g_d1_f2",
+      "bold_font": "g_d1_f1"
+    },
+    {
+      "file": "兼容样例-中文.pdf",
+      "extracted_text": "住院费用兼容性验收  正文 Regular 400：住院费用  粗体 Bold 700：住院费用  心内科   12345.67第二页：门诊、住院及费用",
+      "pages": 2
+    },
+    {
+      "worker_generated": "兼容样例-中文.pdf",
+      "bytes": 97224
+    }
+  ],
+  "errors": [],
+  "resolved_dependency_count": 123,
+  "pending_builds": [],
+  "allow_builds": {
+    "esbuild": true,
+    "oracledb": true,
+    "vue-demi@0.14.10": true
+  },
+  "base_compatibility_passed": true,
+  "chinese_pdf_passed": true,
+  "status": "兼容性通过，中文页面待人工目视核对"
+}

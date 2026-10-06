@@ -8,6 +8,7 @@ describe("Agent 会话装配", () => {
     const definition = { ...agentDefinition, enabled: true, skill_fingerprint: skillFingerprint };
     const agents = { get: vi.fn(async () => definition) };
     const models = {
+      probe: vi.fn(async () => ({ status: "available", contextWindow: 32768, source: "models" })),
       resolve: vi.fn(async () => ({
         id: "provider",
         baseUrl: "http://localhost/v1",
@@ -57,7 +58,22 @@ describe("Agent 会话装配", () => {
       s.definition.skill_names,
       skillFingerprint,
     );
-    expect(resolved.configuration).toMatchObject({ cwd: "fixed-directory", contextWindow: 8192 });
+    expect(resolved.configuration).toMatchObject({
+      cwd: "fixed-directory",
+      contextWindow: 8192,
+      autoCompactTokenLimit: 6144,
+      contextWindowSource: "model",
+    });
+  });
+  it("会话选择仅校验配置，实际探测在运行装配的事务结束后执行", async () => {
+    const s = setup();
+    await s.runtime.selectAgent(agentAdmin);
+    expect(s.models.probe).not.toHaveBeenCalled();
+    await s.runtime.resolveRun(agentAdmin, "run");
+    expect(s.models.probe).toHaveBeenCalledOnce();
+    expect(s.models.probe.mock.invocationCallOrder[0]).toBeGreaterThan(
+      s.execute.mock.invocationCallOrder.at(-1)!,
+    );
   });
   it("已停用 Agent 拒绝新会话和旧会话运行", async () => {
     const s = setup();

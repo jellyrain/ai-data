@@ -5,6 +5,8 @@ import type { ReportExecutionService } from "../reports/report-execution-service
 import type { ReportRevisionService } from "../reports/report-revision-service";
 import { bearerToken } from "./auth-routes";
 const paramsSchema = z.object({ id: z.string().min(1).max(128) }).strict();
+const revisionParamsSchema = paramsSchema.extend({ runId: z.string().min(1).max(128) });
+const emptyQuerySchema = z.object({}).strict();
 const narrativeInput = z
   .object({
     prompt: z.string().min(1).max(32000),
@@ -18,9 +20,16 @@ function registerReportExecutionRoutes(
   auth: ApiAuthService,
   services: {
     executions: Pick<ReportExecutionService, "execute" | "get" | "exportContent">;
-    revisions: Pick<ReportRevisionService, "revise" | "narrate" | "narratives">;
+    revisions: Pick<ReportRevisionService, "revise" | "narrate" | "narratives" | "binding">;
   },
 ) {
+  app.get("/reports/:id/revisions/:runId", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    const context = await auth.loadContext(bearerToken(request));
+    const { id, runId } = revisionParamsSchema.parse(request.params);
+    emptyQuerySchema.parse(request.query);
+    return services.revisions.binding(context, id, runId);
+  });
   app.post("/reports/:id/execute", async (request) =>
     services.executions.execute(
       await auth.refreshContext(await auth.loadContext(bearerToken(request))),

@@ -35,6 +35,7 @@ const input = {
 /** 健康注册实例与客户端请求使用同一 source_id，避免绕过实例选择路径。 */
 function registry(healthy = true): DataAccessServiceRegistry {
   return {
+    listRegisteredServices: async () => [],
     registerHeartbeat: async () => {
       throw new Error("测试不接收心跳");
     },
@@ -148,6 +149,7 @@ describe("DAS 错误适配", () => {
   it.each([
     ["UNAUTHORIZED_COLUMN", "UNAUTHORIZED_COLUMN"],
     ["QUERY_TIMEOUT", "QUERY_TIMEOUT"],
+    ["DATA_SOURCE_CERTIFICATE_INVALID", "DATA_SOURCE_CERTIFICATE_INVALID"],
     ["AUTHENTICATION_FAILED", "INTERNAL_ERROR"],
   ])("DAS 返回 %s 时 API 输出 %s", async (upstream, code) => {
     vi.spyOn(axios, "post").mockResolvedValue(

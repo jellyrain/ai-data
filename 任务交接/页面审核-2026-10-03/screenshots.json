@@ -1,0 +1,635 @@
+{
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "environment": "当前 Web 生产构建 + 隔离验收数据",
+  "screenshots": [
+    {
+      "id": "01",
+      "module": "登录",
+      "title": "登录页",
+      "file": "images/01-登录页.png",
+      "route": "/login",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "02",
+      "module": "分析工作台",
+      "title": "分析工作台-新会话",
+      "file": "images/02-分析工作台-新会话.png",
+      "route": "/analysis",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "03",
+      "module": "分析工作台",
+      "title": "分析工作台-文字生成中",
+      "file": "images/03-分析工作台-回答与工具.png",
+      "route": "/analysis/0a191972-0c82-4172-9b2d-c63e03ab8337",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "本轮新增流式文字；动态过程见流式验收录屏。",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "04",
+      "module": "分析工作台",
+      "title": "分析工作台-工具执行中",
+      "file": "images/04-分析工作台-展开执行过程.png",
+      "route": "/analysis/0a191972-0c82-4172-9b2d-c63e03ab8337",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "工具位于前后说明之间，完成后在原处更新状态。",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "05",
+      "module": "分析工作台",
+      "title": "分析工作台-工具后的说明",
+      "file": "images/05-分析工作台-结果与依据.png",
+      "route": "/analysis/0a191972-0c82-4172-9b2d-c63e03ab8337",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "前一工具已完成，后续说明随生成显示；最终结果另见专项验收截图。",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "06",
+      "module": "报表中心",
+      "title": "报表中心",
+      "file": "images/06-报表中心.png",
+      "route": "/reports",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "07",
+      "module": "报表中心",
+      "title": "报表详情-条件与结果",
+      "file": "images/07-报表详情-条件与结果.png",
+      "route": "/reports/report-01",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "08",
+      "module": "报表中心",
+      "title": "报表详情-图表与费用",
+      "file": "images/08-报表详情-图表与费用.png",
+      "route": "/reports/report-01",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "报表下半部分。",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 682
+      }
+    },
+    {
+      "id": "09",
+      "module": "报表中心",
+      "title": "报表导出面板",
+      "file": "images/09-报表导出面板.png",
+      "route": "/reports/report-01",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "10",
+      "module": "报表中心",
+      "title": "报表分享面板",
+      "file": "images/10-报表分享面板.png",
+      "route": "/reports/report-01",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "11",
+      "module": "报表中心",
+      "title": "报表编辑-查询表单",
+      "file": "images/11-报表编辑-查询表单.png",
+      "route": "/reports/report-01/edit",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "12",
+      "module": "报表中心",
+      "title": "报表编辑-展示配置",
+      "file": "images/12-报表编辑-展示配置.png",
+      "route": "/reports/report-01/edit",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "13",
+      "module": "报表中心",
+      "title": "报表画布-亮色",
+      "file": "images/13-报表画布-亮色.png",
+      "route": "/reports/review-graph/edit",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "14",
+      "module": "报表中心",
+      "title": "报表画布-暗色",
+      "file": "images/14-报表画布-暗色.png",
+      "route": "/reports/review-graph/edit",
+      "width": 1920,
+      "height": 1080,
+      "theme": "dark",
+      "note": "关系线动态流光在静态截图中只保留当前帧。",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "15",
+      "module": "报表中心",
+      "title": "报表画布-查询属性",
+      "file": "images/15-报表画布-查询属性.png",
+      "route": "/reports/review-graph/edit",
+      "width": 1920,
+      "height": 1080,
+      "theme": "dark",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "16",
+      "module": "模型管理",
+      "title": "模型管理-版本详情",
+      "file": "images/16-模型管理-版本详情.png",
+      "route": "/settings/models",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "17",
+      "module": "模型管理",
+      "title": "模型管理-配置表单",
+      "file": "images/17-模型管理-配置表单.png",
+      "route": "/settings/models",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "18",
+      "module": "Agent 管理",
+      "title": "Agent管理-版本详情",
+      "file": "images/18-Agent管理-版本详情.png",
+      "route": "/settings/agents",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "19",
+      "module": "Agent 管理",
+      "title": "Agent管理-配置表单",
+      "file": "images/19-Agent管理-配置表单.png",
+      "route": "/settings/agents",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "19a",
+      "module": "Agent 管理",
+      "title": "Agent管理-Skill与运行限制",
+      "file": "images/19a-Agent管理-Skill与运行限制.png",
+      "route": "/settings/agents",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "配置表单下半部分。",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 402
+      }
+    },
+    {
+      "id": "20",
+      "module": "用户管理",
+      "title": "用户管理-账号授权",
+      "file": "images/20-用户管理-账号授权.png",
+      "route": "/settings/users",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "21",
+      "module": "用户管理",
+      "title": "用户管理-创建账号",
+      "file": "images/21-用户管理-创建账号.png",
+      "route": "/settings/users",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "22",
+      "module": "角色与权限",
+      "title": "角色与权限-授权规则",
+      "file": "images/22-角色与权限-授权规则.png",
+      "route": "/settings/permissions",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "22a",
+      "module": "角色与权限",
+      "title": "角色与权限-字段操作",
+      "file": "images/22a-角色与权限-字段操作.png",
+      "route": "/settings/permissions",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "22b",
+      "module": "角色与权限",
+      "title": "角色与权限-行范围",
+      "file": "images/22b-角色与权限-行范围.png",
+      "route": "/settings/permissions",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "23",
+      "module": "数据管理",
+      "title": "数据管理-DAS与数据源",
+      "file": "images/23-数据管理-DAS与数据源.png",
+      "route": "/settings/data",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "24",
+      "module": "数据管理",
+      "title": "数据管理-对象白名单",
+      "file": "images/24-数据管理-对象白名单.png",
+      "route": "/settings/data",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "向下查看对象编辑与白名单。",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 868
+      }
+    },
+    {
+      "id": "24a",
+      "module": "数据管理",
+      "title": "数据管理-对象能力编辑",
+      "file": "images/24a-数据管理-对象能力编辑.png",
+      "route": "/settings/data",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "白名单下半部分的对象配置。",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 1379
+      }
+    },
+    {
+      "id": "25",
+      "module": "数据管理",
+      "title": "数据管理-数据库连接参数",
+      "file": "images/25-数据管理-数据库连接参数.png",
+      "route": "/settings/data",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "Web 管理业务数据库加密与证书信任。",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 644
+      }
+    },
+    {
+      "id": "26",
+      "module": "数据管理",
+      "title": "数据管理-业务目录",
+      "file": "images/26-数据管理-业务目录.png",
+      "route": "/settings/data",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "27",
+      "module": "数据管理",
+      "title": "数据管理-已发布关系图",
+      "file": "images/27-数据管理-已发布关系图.png",
+      "route": "/settings/data",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "隔离数据中发布一条关系，展示真实关系管理布局。",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 1003
+      }
+    },
+    {
+      "id": "28",
+      "module": "知识与偏好",
+      "title": "知识与偏好-企业知识",
+      "file": "images/28-知识与偏好-企业知识.png",
+      "route": "/knowledge",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "29",
+      "module": "知识与偏好",
+      "title": "知识与偏好-个人偏好",
+      "file": "images/29-知识与偏好-个人偏好.png",
+      "route": "/knowledge",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "30",
+      "module": "知识与偏好",
+      "title": "知识与偏好-我的候选",
+      "file": "images/30-知识与偏好-我的候选.png",
+      "route": "/knowledge",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "31",
+      "module": "知识与偏好",
+      "title": "知识与偏好-待我审核",
+      "file": "images/31-知识与偏好-待我审核.png",
+      "route": "/knowledge",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "32",
+      "module": "知识与偏好",
+      "title": "知识与偏好-我负责的知识",
+      "file": "images/32-知识与偏好-我负责的知识.png",
+      "route": "/knowledge",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "33",
+      "module": "知识审核",
+      "title": "知识审核-组织候选",
+      "file": "images/33-知识审核-组织候选.png",
+      "route": "/settings/knowledge",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "34",
+      "module": "知识审核",
+      "title": "知识审核-正式知识管理",
+      "file": "images/34-知识审核-正式知识管理.png",
+      "route": "/settings/knowledge",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    },
+    {
+      "id": "35",
+      "module": "后台任务",
+      "title": "后台任务-状态列表",
+      "file": "images/35-后台任务-状态列表.png",
+      "route": "/settings/tasks",
+      "width": 1920,
+      "height": 1080,
+      "theme": "light",
+      "note": "",
+      "layout": {
+        "viewport": 1920,
+        "documentWidth": 1920,
+        "scrollY": 0
+      }
+    }
+  ],
+  "failures": [],
+  "pageErrors": []
+}

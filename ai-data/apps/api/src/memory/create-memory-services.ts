@@ -9,7 +9,7 @@ import { BusinessCatalogService } from "../catalog/business-catalog-service";
 import { RegisteredDataAccessCatalog } from "../catalog/registered-data-access-catalog";
 import { SqlCatalogRepository } from "../catalog/sql-catalog-repository";
 import { SqlDataAccessServiceRegistry } from "../data-access/sql-data-access-service-registry";
-import { DataAccessSessionService } from "../data-access/data-access-session-service";
+import type { DataAccessSessionService } from "../data-access/data-access-session-service";
 import { QueryAuthorizationService } from "../query/query-authorization-service";
 import { MetricService } from "../metrics/metric-service";
 import { SqlMetricRepository } from "../metrics/sql-metric-repository";
@@ -31,6 +31,7 @@ function createMemoryServices(dependencies: {
   config: ApiConfig;
   jwt: JwtService;
   catalogClient: DataAccessCatalogClient;
+  dataAccessSessions: Pick<DataAccessSessionService, "listHealthyServices">;
   queryAuthorization: ApiQueryAuthorization;
   runs: AnalysisRunService;
   refreshContext(context: AuthContext): Promise<AuthContext>;
@@ -41,11 +42,12 @@ function createMemoryServices(dependencies: {
   const catalog = (executor: MetadataQueryExecutor) => {
     if (executor !== dependencies.database) executor = serialExecutor(executor);
     const repository = new SqlCatalogRepository(executor);
-    const registry = new DataAccessSessionService(
-      new SqlDataAccessServiceRegistry(executor),
-      dependencies.jwt,
-      dependencies.config.trusted_data_access_services ?? [],
-    );
+    const transactionRegistry = new SqlDataAccessServiceRegistry(executor);
+    // SQL 读取沿用事务连接，注册会话使用启动时创建的服务，二者共同决定可用实例。
+    const registry = {
+      listHealthyServices: () =>
+        dependencies.dataAccessSessions.listHealthyServices(transactionRegistry),
+    };
     return new BusinessCatalogService(
       new RegisteredDataAccessCatalog(registry, dependencies.catalogClient),
       repository,

@@ -1,0 +1,56 @@
+{
+  "browser": "Chromium",
+  "measured": [
+    {
+      "count": 1000,
+      "columns": 3,
+      "bytes": 48827,
+      "renderMilliseconds": 39.29999999701977,
+      "renderedRows": 10,
+      "heapBefore": 27600000,
+      "heapAfter": 27600000,
+      "longTasks": []
+    },
+    {
+      "count": 10000,
+      "columns": 3,
+      "bytes": 506929,
+      "renderMilliseconds": 23.5,
+      "renderedRows": 10,
+      "heapBefore": 27600000,
+      "heapAfter": 27600000,
+      "longTasks": []
+    },
+    {
+      "count": 50000,
+      "columns": 3,
+      "bytes": 2622929,
+      "renderMilliseconds": 5.199999988079071,
+      "renderedRows": 10,
+      "heapBefore": 27600000,
+      "heapAfter": 27600000,
+      "longTasks": []
+    },
+    {
+      "count": 100000,
+      "columns": 3,
+      "bytes": 5267931,
+      "renderMilliseconds": 5.100000008940697,
+      "renderedRows": 10,
+      "heapBefore": 27600000,
+      "heapAfter": 27600000,
+      "longTasks": []
+    },
+    {
+      "count": 1000,
+      "columns": 27,
+      "bytes": 806306,
+      "renderMilliseconds": 24,
+      "renderedRows": 10,
+      "heapBefore": 27600000,
+      "heapAfter": 27600000,
+      "longTasks": []
+    }
+  ],
+  "note": "单次本机测量；renderMilliseconds 从赋值到两帧，不含数据生成和网络；heap 是浏览器估算，未强制 GC；longTasks 不包括开始前任务。"
+}

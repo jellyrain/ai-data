@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "types": ["node"], "verbatimModuleSyntax": true },
+  "include": ["*.config.ts", "tests/e2e/**/*.ts", "tests/support/e2e-servers.ts"]
+}

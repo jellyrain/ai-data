@@ -1,0 +1,51 @@
+
+ RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/data-access
+
+{"level":30,"time":1790998236647,"service_id":"data-access-test","service_version":"0.1.0","reqId":"70e22f74-25e1-4ddd-8616-b1b086a37c77","req":{"method":"GET","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998236648,"service_id":"data-access-test","service_version":"0.1.0","reqId":"70e22f74-25e1-4ddd-8616-b1b086a37c77","res":{"statusCode":401},"responseTime":0.44830000000001746,"msg":"request completed"}
+{"level":30,"time":1790998236650,"service_id":"data-access-test","service_version":"0.1.0","reqId":"5a18c21f-e217-4104-b942-1a8c3fbaa3bc","req":{"method":"GET","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998236652,"service_id":"data-access-test","service_version":"0.1.0","reqId":"5a18c21f-e217-4104-b942-1a8c3fbaa3bc","res":{"statusCode":200},"responseTime":1.9278999999999087,"msg":"request completed"}
+{"level":30,"time":1790998236653,"service_id":"data-access-test","service_version":"0.1.0","reqId":"bd5629c1-62c5-44a7-b91f-b08fedb74a5e","req":{"method":"PUT","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998236654,"service_id":"data-access-test","service_version":"0.1.0","reqId":"bd5629c1-62c5-44a7-b91f-b08fedb74a5e","res":{"statusCode":401},"responseTime":0.659099999999853,"msg":"request completed"}
+{"level":30,"time":1790998236657,"service_id":"data-access-test","service_version":"0.1.0","reqId":"b7b299df-1650-494b-916f-c01aaa1251cd","req":{"method":"PUT","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998236658,"service_id":"data-access-test","service_version":"0.1.0","reqId":"b7b299df-1650-494b-916f-c01aaa1251cd","res":{"statusCode":200},"responseTime":1.218499999999949,"msg":"request completed"}
+{"level":30,"time":1790998236660,"service_id":"data-access-test","service_version":"0.1.0","reqId":"5f9c4910-aab4-4290-a247-5e01f5b80a7f","req":{"method":"POST","url":"/internal/admin/database-targets","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998236661,"service_id":"data-access-test","service_version":"0.1.0","reqId":"5f9c4910-aab4-4290-a247-5e01f5b80a7f","res":{"statusCode":503},"responseTime":1.0135999999999967,"msg":"request completed"}
+{"level":30,"time":1790998236669,"service_id":"data-access-test","service_version":"0.1.0","reqId":"c28e937e-84fc-47ae-800e-f7aef7e3c5b5","req":{"method":"GET","url":"/internal/admin/data-sources/disabled","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998236670,"service_id":"data-access-test","service_version":"0.1.0","reqId":"c28e937e-84fc-47ae-800e-f7aef7e3c5b5","res":{"statusCode":200},"responseTime":1.564600000000155,"msg":"request completed"}
+{"level":30,"time":1790998236673,"service_id":"data-access-test","service_version":"0.1.0","reqId":"414a5382-cc17-497f-823a-4c03b32174b0","req":{"method":"GET","url":"/internal/admin/data-sources/other","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998236674,"service_id":"data-access-test","service_version":"0.1.0","reqId":"414a5382-cc17-497f-823a-4c03b32174b0","res":{"statusCode":403},"responseTime":0.6077999999999975,"msg":"request completed"}
+{"level":30,"time":1790998236681,"service_id":"data-access-test","service_version":"0.1.0","reqId":"f8a7e47e-9148-4b7f-a518-177fde0e7526","req":{"method":"POST","url":"/internal/admin/database-targets","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998236682,"service_id":"data-access-test","service_version":"0.1.0","reqId":"f8a7e47e-9148-4b7f-a518-177fde0e7526","res":{"statusCode":200},"responseTime":1.2915000000000418,"msg":"request completed"}
+{"level":30,"time":1790998236690,"service_id":"data-access-test","service_version":"0.1.0","reqId":"cc4dbd85-89d7-4176-a5b7-d48b94834dcf","req":{"method":"POST","url":"/internal/admin/database-targets","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1790998236691,"service_id":"data-access-test","service_version":"0.1.0","reqId":"cc4dbd85-89d7-4176-a5b7-d48b94834dcf","res":{"statusCode":400},"responseTime":1.0631000000000768,"msg":"request completed"}
+ ❯ tests/routes/data-source-management-route.test.ts (5 tests | 1 failed) 266ms
+     × 连接参数写入后的回读故障标记为服务失败，供 Web 核对保存状态 212ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/data-source-management-route.test.ts > DAS 数据源管理接口 > 连接参数写入后的回读故障标记为服务失败，供 Web 核对保存状态
+AssertionError: expected 400 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 400
+
+ ❯ tests/routes/data-source-management-route.test.ts:50:35
+     48|       const body = { expected_revision: "a".repeat(64), sqlserver_tran…
+     49|       const response = await app.inject({ method: "PUT", url: path, pa…
+     50|       expect(response.statusCode).toBe(500);
+       |                                   ^
+     51|       expect(response.json().code).toBe("INTERNAL_ERROR");
+     52|       expect(response.body).not.toContain("private-detail");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  11:30:35
+   Duration  1.39s (transform 404ms, setup 0ms, import 901ms, tests 266ms, environment 0ms)
+

@@ -13,14 +13,16 @@ import {
   type RunLease,
   type QueryEvidence,
   type MetricDefinition,
+  type PublishedKnowledge,
 } from "@ai-data/contracts";
 import type { AuthContext } from "../auth/auth-types";
 import { ApplicationError } from "../errors/application-error";
 import { assertEvidenceAccess } from "../evidence/evidence-access";
-import type { RunDependencies } from "./analysis-run-types";
+import type { RunDependencies, AnalysisRunRepository } from "./analysis-run-types";
 import type { ToolAudit } from "./tool-audit-types";
-import type { HarnessCompaction } from "../harness/harness-types";
+import type { HarnessCompaction, HarnessMessage } from "../harness/harness-types";
 import { toolAuditSchema } from "./tool-audit";
+import { parseStoredRecord } from "../metadata/parse-stored-record";
 import { runTime, runTimeMilliseconds } from "./run-time";
 import {
   parseAnalysisQuery,
@@ -36,9 +38,53 @@ class AnalysisRunService {
   private readonly leaseMilliseconds: number;
   private readonly controllers = new Map<string, Set<AbortController>>();
   private readonly queries = new Map<string, Promise<QueryEvidence>>();
+  private readonly subscribers = new Map<string, Set<() => void>>();
   constructor(private readonly dependencies: RunDependencies) {
     this.now = dependencies.now ?? (() => dayjs().valueOf());
     this.leaseMilliseconds = dependencies.leaseMilliseconds ?? 30000;
+  }
+
+  /** 只持有活跃连接；通知在事务提交后发送，跨实例仍由 SSE 的低频回放覆盖。 */
+  subscribeEvents(runId: string, notify: () => void): () => void {
+    const subscribers = this.subscribers.get(runId) ?? new Set<() => void>();
+    subscribers.add(notify);
+    this.subscribers.set(runId, subscribers);
+    return () => {
+      subscribers.delete(notify);
+      if (!subscribers.size) this.subscribers.delete(runId);
+    };
+  }
+  private async change(
+    ...args: Parameters<AnalysisRunRepository["change"]>
+  ): Promise<AnalysisRunState> {
+    const state = await this.dependencies.repository.change(...args);
+    for (const notify of this.subscribers.get(args[1]) ?? []) notify();
+    return state;
+  }
+
+  /** 公开文字与证据使用相同的当前授权检查，取消/接管在写入事务内再次拒绝。 */
+  async recordMessage(
+    context: AuthContext,
+    runId: string,
+    lease: RunLease,
+    message: HarnessMessage,
+  ): Promise<void> {
+    context = await this.dependencies.refreshContext(context);
+    await this.get(context, runId);
+    await this.change(context, runId, (state) => {
+      this.assertLease(state, lease);
+      return {
+        events: [
+          {
+            type: "assistant_message",
+            message_id: message.itemId,
+            status: message.status,
+            content: message.content,
+            ...(message.phase ? { phase: message.phase } : {}),
+          },
+        ],
+      };
+    });
   }
 
   /** 设置操作与租约检查共用事务，取消或接管后不能留下迟到写入。 */
@@ -49,9 +95,50 @@ class AnalysisRunService {
     input: unknown,
   ): Promise<void> {
     const memoryContext = memoryContextSchema.parse(input);
-    await this.dependencies.repository.change(context, runId, (state) => {
+    await this.change(context, runId, (state) => {
       this.assertLease(state, lease);
       return { memoryContext };
+    });
+  }
+
+  /** 同一运行租约内合并实际读取的知识，事务行锁防止并行工具互相覆盖。 */
+  async recordKnowledgeContext(
+    context: AuthContext,
+    runId: string,
+    lease: RunLease,
+    knowledge: PublishedKnowledge[],
+  ): Promise<void> {
+    if (!knowledge.length) return;
+    await this.withLease(context, runId, lease, async (executor) => {
+      const parameters = [
+        { name: "run", type: "string" as const, value: runId },
+        { name: "epoch", type: "integer" as const, value: lease.epoch },
+      ];
+      const result = await executor.execute({
+        sql: "SELECT context_json FROM dbo.analysis_memory_contexts WHERE analysis_run_id=@run AND lease_epoch=@epoch",
+        parameters,
+      });
+      if (!result.rows[0]) throw new ApplicationError("INTERNAL_ERROR", "本轮记忆上下文尚未初始化");
+      const memory = parseStoredRecord(() =>
+        memoryContextSchema.parse(JSON.parse(String(result.rows[0]!.context_json))),
+      );
+      const unique = new Map(
+        memory.knowledge.map((item) => [`${item.knowledge_id}:${item.version}`, item]),
+      );
+      for (const item of knowledge) unique.set(`${item.knowledge_id}:${item.version}`, item);
+      if (unique.size > 30)
+        throw new ApplicationError(
+          "QUERY_LIMIT_EXCEEDED",
+          "本轮读取的知识超过追溯容量，请缩小分析范围",
+        );
+      const updated = memoryContextSchema.parse({ ...memory, knowledge: [...unique.values()] });
+      await executor.execute({
+        sql: "UPDATE dbo.analysis_memory_contexts SET context_json=@json WHERE analysis_run_id=@run AND lease_epoch=@epoch",
+        parameters: [
+          ...parameters,
+          { name: "json", type: "string", value: JSON.stringify(updated) },
+        ],
+      });
     });
   }
 
@@ -63,7 +150,7 @@ class AnalysisRunService {
     operation: (executor: MetadataQueryExecutor) => Promise<T>,
   ): Promise<T> {
     let result: T;
-    await this.dependencies.repository.change(context, runId, (state) => {
+    await this.change(context, runId, (state) => {
       this.assertLease(state, lease);
       return {
         apply: async (executor) => {
@@ -83,7 +170,7 @@ class AnalysisRunService {
     input: unknown,
   ): Promise<void> {
     const intent = memoryIntentSchema.parse(input);
-    await this.dependencies.repository.change(context, runId, (state) => {
+    await this.change(context, runId, (state) => {
       this.assertLease(state, lease);
       const source = intent.type === "query_habit" ? intent.source : intent.candidate.source;
       if (
@@ -159,7 +246,7 @@ class AnalysisRunService {
   /** created 或租约过期的 running 可以认领，成功后代次单调递增。 */
   async claim(context: AuthContext, runId: string, owner: string): Promise<RunLease> {
     await this.get(context, runId);
-    const state = await this.dependencies.repository.change(context, runId, (state) => {
+    const state = await this.change(context, runId, (state) => {
       if (
         !["created", "running"].includes(state.status) ||
         (state.lease && dayjs(runTimeMilliseconds(state.lease.expires_at)).isAfter(this.now()))
@@ -180,7 +267,7 @@ class AnalysisRunService {
 
   async renew(context: AuthContext, runId: string, lease: RunLease): Promise<RunLease> {
     await this.dependencies.refreshContext(context);
-    const state = await this.dependencies.repository.change(context, runId, (state) => {
+    const state = await this.change(context, runId, (state) => {
       this.assertLease(state, lease);
       state.lease!.expires_at = runTime(
         dayjs(this.now()).add(this.leaseMilliseconds, "millisecond"),
@@ -199,7 +286,7 @@ class AnalysisRunService {
     audit?: ToolAudit,
   ): Promise<AnalysisRunState> {
     const clarification = clarificationSchema.parse(input);
-    return this.dependencies.repository.change(context, runId, (state) => {
+    return this.change(context, runId, (state) => {
       this.assertLease(state, lease);
       state.status = "waiting_clarification";
       state.clarification = clarification;
@@ -224,7 +311,7 @@ class AnalysisRunService {
   async answer(context: AuthContext, runId: string, input: unknown): Promise<AnalysisRunState> {
     const answer = clarificationAnswerSchema.parse(input);
     await this.get(context, runId);
-    return this.dependencies.repository.change(
+    return this.change(
       context,
       runId,
       (state) => {
@@ -289,13 +376,13 @@ class AnalysisRunService {
 
   /** 先提交取消状态，再中断本进程任务；其他执行器续租或提交时也会被持久化状态拒绝。 */
   async cancel(context: AuthContext, runId: string): Promise<AnalysisRunState> {
-    await this.dependencies.repository.change(context, runId, (state) => {
+    await this.change(context, runId, (state) => {
       if (terminal.has(state.status)) return {};
       state.status = "cancelling";
       return { events: [{ type: "run_state", status: "cancelling" }] };
     });
     for (const controller of this.controllers.get(runId) ?? []) controller.abort();
-    return this.dependencies.repository.change(context, runId, (state) => {
+    return this.change(context, runId, (state) => {
       if (terminal.has(state.status)) return {};
       state.status = "cancelled";
       state.lease = null;
@@ -310,9 +397,10 @@ class AnalysisRunService {
     lease: RunLease,
     content: string,
     operation?: (executor: MetadataQueryExecutor) => Promise<void>,
+    messageId?: string,
   ): Promise<AnalysisRunState> {
     await this.get(context, runId);
-    return this.dependencies.repository.change(context, runId, (state) => {
+    return this.change(context, runId, (state) => {
       this.assertLease(state, lease);
       const expiresAt = state.lease!.expires_at;
       state.status = "completed";
@@ -330,14 +418,17 @@ class AnalysisRunService {
             }
           : {}),
         messages: [{ role: "assistant", content }],
-        events: [{ type: "final_answer", content }, { type: "run_completed" }],
+        events: [
+          { type: "final_answer", content, ...(messageId ? { message_id: messageId } : {}) },
+          { type: "run_completed" },
+        ],
       };
     });
   }
 
   /** 仅当前有效执行器可以记录失败，已过期或取消的执行不覆盖当前状态。 */
   async fail(context: AuthContext, runId: string, lease: RunLease, error: unknown): Promise<void> {
-    await this.dependencies.repository.change(context, runId, (state) => {
+    await this.change(context, runId, (state) => {
       if (
         state.status !== "running" ||
         state.lease?.owner !== lease.owner ||
@@ -364,7 +455,7 @@ class AnalysisRunService {
     event: HarnessCompaction,
   ): Promise<void> {
     await this.get(context, runId);
-    await this.dependencies.repository.change(context, runId, (state) => {
+    await this.change(context, runId, (state) => {
       this.assertLease(state, lease);
       return {
         events: [
@@ -387,7 +478,7 @@ class AnalysisRunService {
   ): Promise<void> {
     const step = analysisStepSchema.parse(input);
     await this.get(context, runId);
-    await this.dependencies.repository.change(context, runId, (state) => {
+    await this.change(context, runId, (state) => {
       this.assertLease(state, lease);
       if (
         step.analysis_run_id !== runId ||
@@ -443,7 +534,7 @@ class AnalysisRunService {
     options?: { managed: boolean },
   ): Promise<QueryEvidence> {
     const requested = parseAnalysisQuery(input);
-    await this.dependencies.repository.change(context, runId, (state) => {
+    await this.change(context, runId, (state) => {
       this.assertLease(state, lease);
       return {
         events: options?.managed
@@ -504,7 +595,7 @@ class AnalysisRunService {
         await this.dependencies.refreshContext(context),
         this.dependencies.authorization,
       );
-      await this.dependencies.repository.change(context, runId, (state) => {
+      await this.change(context, runId, (state) => {
         this.assertLease(state, lease);
         if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "运行已取消");
         state.evidence_ids.push(evidence.evidence_id);
@@ -581,7 +672,7 @@ class AnalysisRunService {
 
   /** 服务正常关闭时释放有效租约，下一实例可从持久化证据继续。 */
   async release(context: AuthContext, runId: string, lease: RunLease): Promise<void> {
-    await this.dependencies.repository.change(context, runId, (state) => {
+    await this.change(context, runId, (state) => {
       if (
         state.status !== "running" ||
         state.lease?.owner !== lease.owner ||
@@ -603,7 +694,7 @@ class AnalysisRunService {
     input: ToolAudit,
   ): Promise<void> {
     const audit = toolAuditSchema.parse(input);
-    await this.dependencies.repository.change(context, runId, (state) => {
+    await this.change(context, runId, (state) => {
       this.assertLease(state, lease);
       return {
         audits: [audit],

@@ -68,7 +68,19 @@ MVP 有三个部署单元：
 
 API 从本地 `apps/api/config/api.config.json` 的 `analysis_runtime` 读取启停、目录和调度参数。模型提供方、认证和执行预算分别从会话绑定的数据库模型与 Agent 版本装配；API 可先启动，再通过管理接口发布配置。当前由项目官方 Codex 0.154.0 app-server 访问支持普通函数调用的 Responses 服务，`AnalysisHarness` 保持模型调用接口与业务运行管理的职责边界。具体配置、版本与部署命令见[模型运行时配置](../ai-data/MODEL-RUNTIME.md)。
 
-### 3.2 扩展阶段
+### 3.2 当前模型上下文装配（2026-09-27）
+
+运行装配在数据库事务结束后，使用所选模型的加密凭据探测 `/v1/models`，匹配模型名称；llama.cpp 同时核对 `/props`。采用实际服务 `n_ctx`，训练窗口不参与预算。显式值按 Agent 优先于模型，有服务值时取两者较小值；全部缺失时返回配置错误。成功探测按连接身份缓存 60 秒并合并并发请求，失败不沿用过期结果。
+
+官方线程创建与恢复均传入 `model_context_window` 和其 75% 的 `model_auto_compact_token_limit`。压缩由官方运行时执行，现有 `context_compaction` 事件记录与 Web 展示继续沿用。服务窗口及工具、Skill、知识授权版本变化参与线程兼容性判断。
+
+新 Agent 通过启用 `get_tool_schema` 选择按需参数模式：`query_dataset`、`save_report_definition`、`save_user_preference`、`create_knowledge_candidate` 只预载 `arguments_json` 入口，完整定义按工具名读取。API 限制 JSON 为 65,536 字节并执行原完整 Zod 合同，原授权、租约、幂等、证据与审计继续生效。旧 Agent 保留原参数入口。
+
+目录与指标发现返回有界摘要，关键词按空白拆分匹配；字段、查询结构及口径由详情工具读取。企业知识按索引与正文分离，初始上下文保留通用正式规则与账号默认。对象/指标详情附带适用规则，直接查询遇到未读规则先返回 `rules_required`，成功交付规则后才能继续。实际读取知识按运行租约合并到追溯记录；交付前复核知识与权限是否变化。
+
+验收证据与工具兼容性边界见[上下文按需加载与自动压缩交付](../任务交接/上下文按需加载与自动压缩交付说明.md)。
+
+### 3.3 扩展阶段
 
 当并发、稳定性或任务执行隔离要求提高后：
 

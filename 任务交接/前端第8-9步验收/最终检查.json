@@ -1,0 +1,40 @@
+{
+  "tests": {
+    "api": 667,
+    "das": 414,
+    "contracts": 175,
+    "web": 148,
+    "engineering": 42,
+    "api_sql": 17,
+    "das_sql": 3,
+    "browser_dev": 6,
+    "browser_preview": 8,
+    "query_subset": 179,
+    "graph_browser_subset": 1
+  },
+  "note": "query_subset 已包含于 API 全量；graph_browser_subset 已包含于生产预览，勿重复累计。",
+  "typecheck": {
+    "api": true,
+    "das": true,
+    "contracts": true,
+    "web_app": true,
+    "web_node": true
+  },
+  "lint": {
+    "scoped_packages": true,
+    "final_graph_and_browser": true
+  },
+  "web_build": true,
+  "diff_check": true,
+  "dependencies_changed": 0,
+  "schema_changed": 0,
+  "subagents": 0,
+  "real_department_context": true,
+  "real_fixed_policy": true,
+  "real_cleanup": true,
+  "known_limits": [
+    "本机 SQL Server 目标发现因自签名证书失败，手填目标库接入通过。",
+    "MySQL/PostgreSQL/Oracle 尚无本轮真实服务器验收。",
+    "保留既有一个测试辅助文件的格式差异与构建大 chunk 提示。"
+  ]
+}

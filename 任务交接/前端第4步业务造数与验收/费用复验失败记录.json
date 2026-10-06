@@ -1,0 +1,52 @@
+[
+  {
+    "file": "rollout-2026-09-27T19-18-00-01a0e296-107c-7761-b9fc-21fc01ff6a3c.jsonl",
+    "terminal": [
+      {
+        "type": "task_complete",
+        "turn_id": "01a0e296-1184-7190-9142-8cf7f0fb6a3d",
+        "last_agent_message": null,
+        "started_at": 1790507880,
+        "completed_at": 1790508251,
+        "duration_ms": 370779,
+        "time_to_first_token_ms": 48139
+      }
+    ]
+  },
+  {
+    "file": "rollout-2026-09-27T19-25-57-01a0e29d-57be-7b33-b6f0-ec307d24d00d.jsonl",
+    "terminal": [
+      {
+        "type": "task_complete",
+        "turn_id": "01a0e29d-58f3-79b2-b630-c0492f23b1bb",
+        "last_agent_message": null,
+        "error": {
+          "message": "{\"error\":{\"code\":400,\"message\":\"request (34612 tokens) exceeds the available context size (32768 tokens), try increasing it\",\"type\":\"exceed_context_size_error\",\"n_prompt_tokens\":34612,\"n_ctx\":32768}}",
+          "codex_error_info": "other"
+        },
+        "started_at": 1790508357,
+        "completed_at": 1790508747,
+        "duration_ms": 389601,
+        "time_to_first_token_ms": 51237
+      }
+    ]
+  },
+  {
+    "file": "rollout-2026-09-27T19-35-19-01a0e2a5-e868-79e1-a063-1bc9975e2ef8.jsonl",
+    "terminal": [
+      {
+        "type": "task_complete",
+        "turn_id": "01a0e2a5-e98a-7453-9796-3c99f46f1641",
+        "last_agent_message": null,
+        "error": {
+          "message": "stream disconnected before completion: Transport error: network error: error decoding response body",
+          "codex_error_info": "other"
+        },
+        "started_at": 1790508919,
+        "completed_at": 1790509173,
+        "duration_ms": 254664,
+        "time_to_first_token_ms": 95316
+      }
+    ]
+  }
+]

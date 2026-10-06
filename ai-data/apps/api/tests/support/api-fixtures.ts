@@ -45,9 +45,14 @@ function createApiDependencies() {
   return {
     config,
     metadataDatabase: { checkHealth: vi.fn(async () => "healthy" as const) },
+    userAdmin: {
+      options: vi.fn(unexpectedCall),
+      roles: vi.fn(async () => []),
+      authorization: vi.fn(unexpectedCall),
+    },
     auth: {
       loadContext: vi.fn(async () => context),
-      refreshContext: vi.fn(async () => context),
+      refreshContext: vi.fn(async (value: AuthContext) => value),
       login: vi.fn(unexpectedCall),
       refresh: vi.fn(unexpectedCall),
       logout: vi.fn(async () => {}),
@@ -65,6 +70,7 @@ function createApiDependencies() {
     },
     memory: {
       preferences: {
+        editState: vi.fn(unexpectedCall),
         list: vi.fn(async () => []),
         get: vi.fn(unexpectedCall),
         save: vi.fn(unexpectedCall),
@@ -73,6 +79,10 @@ function createApiDependencies() {
         listPendingConfirmations: vi.fn(async () => []),
       },
       knowledge: {
+        listManagement: vi.fn(async () => []),
+        getManagement: vi.fn(unexpectedCall),
+        ownerOptions: vi.fn(async () => []),
+        templateDefinition: vi.fn(unexpectedCall),
         submit: vi.fn(unexpectedCall),
         submitMetric: vi.fn(unexpectedCall),
         getCandidate: vi.fn(unexpectedCall),
@@ -131,6 +141,7 @@ function createApiDependencies() {
       reports: { save: vi.fn(unexpectedCall), get: vi.fn(unexpectedCall) },
     },
     reporting: {
+      sharing: { get: vi.fn(unexpectedCall), candidates: vi.fn(unexpectedCall) },
       definitions: {
         get: vi.fn(unexpectedCall),
         save: vi.fn(unexpectedCall),
@@ -156,6 +167,7 @@ function createApiDependencies() {
         exportContent: vi.fn(unexpectedCall),
       },
       revisions: {
+        binding: vi.fn(unexpectedCall),
         revise: vi.fn(unexpectedCall),
         narrate: vi.fn(unexpectedCall),
         narratives: vi.fn(unexpectedCall),
@@ -166,14 +178,20 @@ function createApiDependencies() {
         register: vi.fn(unexpectedCall),
         heartbeat: vi.fn(async () => {}),
         issueCredential: vi.fn(unexpectedCall),
+        listRegisteredServices: async () => [],
         listHealthyServices: vi.fn(async () => []),
       },
       catalogClient: { listCatalog: vi.fn(async () => []) },
-      managementClient: { execute: vi.fn(unexpectedCall) },
+      managementClient: {
+        execute: vi.fn(unexpectedCall),
+        read: vi.fn(unexpectedCall),
+        sqlServerTransport: vi.fn(unexpectedCall),
+      },
     },
     catalog: {
       relations: { graph: vi.fn(unexpectedCall), publish: vi.fn(unexpectedCall) },
       admin: {
+        currentState: vi.fn(unexpectedCall),
         saveObjectPermission: vi.fn(unexpectedCall),
         saveColumnPermission: vi.fn(unexpectedCall),
         saveRowPolicy: vi.fn(unexpectedCall),
@@ -182,6 +200,8 @@ function createApiDependencies() {
         previewQuery: vi.fn(unexpectedCall),
       },
       service: {
+        listManaged: vi.fn(async () => []),
+        managedDetail: vi.fn(unexpectedCall),
         listAuthorized: vi.fn<ApiCatalogService["listAuthorized"]>(async () => []),
         searchAuthorized: vi.fn(async () => []),
         getAuthorized: vi.fn(async () => null),

@@ -1,0 +1,95 @@
+{
+  "checked_date": "2026-09-28",
+  "status": "六项依赖已安装；用户授权下载的静态 Noto 字体、哈希、两种字重及中文排版通过；分享与三格式导出、正式只读和容量验收完成，详见前端第7步交付说明.md",
+  "node_version": "24.19.0",
+  "package_manager": "pnpm@11.22.0",
+  "package_target": "ai-data/apps/web/package.json",
+  "verification": "六项包版本和许可通过，123 个已解析包无安装生命周期脚本，pendingBuilds 为空；Sans2.004 两份静态 OTF 及许可证大小与 SHA-256 通过；生成中文 PDF 两页、字体资源区分和内容提取通过；实际结果见前端第7步验收/依赖兼容性验证.json",
+  "packages": [
+    {
+      "name": "exceljs",
+      "version": "4.4.0",
+      "scope": "dependencies",
+      "license": "MIT",
+      "node": ">=8.3.0",
+      "source": "https://registry.npmjs.org/exceljs/4.4.0",
+      "purpose": "浏览器生成 XLSX",
+      "install_lifecycle_scripts": []
+    },
+    {
+      "name": "docx",
+      "version": "9.7.1",
+      "scope": "dependencies",
+      "license": "MIT",
+      "node": ">=10",
+      "source": "https://registry.npmjs.org/docx/9.7.1",
+      "purpose": "浏览器生成可编辑 DOCX",
+      "install_lifecycle_scripts": []
+    },
+    {
+      "name": "pdfmake",
+      "version": "0.3.11",
+      "scope": "dependencies",
+      "license": "MIT",
+      "node": ">=20",
+      "source": "https://registry.npmjs.org/pdfmake/0.3.11",
+      "purpose": "浏览器生成带中文字体的 PDF",
+      "install_lifecycle_scripts": []
+    },
+    {
+      "name": "@types/pdfmake",
+      "version": "0.3.3",
+      "scope": "devDependencies",
+      "license": "MIT",
+      "source": "https://registry.npmjs.org/@types%2Fpdfmake/0.3.3",
+      "purpose": "pdfmake 0.3 类型定义",
+      "install_lifecycle_scripts": []
+    },
+    {
+      "name": "fflate",
+      "version": "0.8.3",
+      "scope": "devDependencies",
+      "license": "MIT",
+      "source": "https://registry.npmjs.org/fflate/0.8.3",
+      "purpose": "验收 XLSX/DOCX 内部结构和单元格内容",
+      "install_lifecycle_scripts": []
+    },
+    {
+      "name": "pdfjs-dist",
+      "version": "6.3.289",
+      "scope": "devDependencies",
+      "license": "Apache-2.0",
+      "node": ">=22.13.0 || >=24",
+      "source": "https://registry.npmjs.org/pdfjs-dist/6.3.289",
+      "purpose": "验收 PDF 文本、页数和页面渲染",
+      "install_lifecycle_scripts": [],
+      "optional_dependencies": { "@napi-rs/canvas": "^1.0.0" }
+    }
+  ],
+  "fonts": {
+    "family": "Noto Sans SC",
+    "release": "Sans2.004",
+    "license": "OFL-1.1",
+    "destination": "apps/web/public/fonts/noto-sans-sc",
+    "files": [
+      {
+        "name": "NotoSansSC-Regular.otf",
+        "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/Sans2.004/Sans/SubsetOTF/SC/NotoSansSC-Regular.otf",
+        "bytes": 8331336,
+        "sha256": "faa6c9df652116dde789d351359f3d7e5d2285a2b2a1f04a2d7244df706d5ea9"
+      },
+      {
+        "name": "NotoSansSC-Bold.otf",
+        "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/Sans2.004/Sans/SubsetOTF/SC/NotoSansSC-Bold.otf",
+        "bytes": 8543168,
+        "sha256": "c6cb5a93abaa9edc8ee7463b7ebb7f42d618d40e6ed2f7a5371c97b0b64767c0"
+      },
+      {
+        "name": "LICENSE",
+        "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/Sans2.004/LICENSE",
+        "bytes": 4301,
+        "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2"
+      }
+    ]
+  }
+}

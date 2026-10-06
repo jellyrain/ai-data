@@ -1,0 +1,20 @@
+[
+  {
+    "kind": "outpatient",
+    "analysis_run_id": "bd523574-b31f-42e7-9270-4515fcd16b47",
+    "error": {
+      "message": "unexpected status 503 Service Unavailable: Unknown error, url: http://192.168.110.208:8000/v1/responses",
+      "codex_error_info": "other"
+    },
+    "duration_ms": 21632
+  },
+  {
+    "kind": "fees",
+    "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+    "error": {
+      "message": "stream disconnected before completion: Transport error: network error: error decoding response body",
+      "codex_error_info": "other"
+    },
+    "duration_ms": 128669
+  }
+]

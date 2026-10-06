@@ -1,11 +1,59 @@
 import { describe, expect, it, vi } from "vitest";
-import { userPreferenceInputSchema } from "@ai-data/contracts";
+import { userPreferenceInputSchema, type PublishedKnowledge } from "@ai-data/contracts";
 import { isExplicitPreferenceRequest } from "../../src/memory/preference-instruction";
 import { captureQueryHabit } from "../../src/memory/query-habit";
 import { MemoryRuntime } from "../../src/memory/memory-runtime";
 import { context } from "../support/api-fixtures";
 
 describe("对话记忆接入", () => {
+  it("初始仅带通用正式规则，指标和对象规则按需读取，索引不含正文", async () => {
+    const knowledge = [
+      {
+        knowledge_id: "global",
+        version: 1,
+        content: { type: "business_rule", title: "通用口径", body: "GENERAL_RULE" },
+        scope: {},
+      },
+      {
+        knowledge_id: "local",
+        version: 1,
+        content: { type: "business_rule", title: "支付口径", body: "PAYMENT_RULE" },
+        scope: { source_id: "s", object_id: "payment" },
+      },
+      {
+        knowledge_id: "metric",
+        version: 1,
+        content: { type: "metric", definition: { name: "费用", query: "FULL_METRIC" } },
+        scope: { metric_id: "fee" },
+      },
+    ] as unknown as PublishedKnowledge[];
+    const service = new MemoryRuntime({
+      preferences: { list: async () => [], listPendingConfirmations: async () => [] },
+      knowledge: {
+        listPublished: async () => knowledge,
+        getPublished: async (_context: unknown, id: string) =>
+          knowledge.find((item) => item.knowledge_id === id),
+      },
+    } as unknown as ConstructorParameters<typeof MemoryRuntime>[0]);
+    expect((await service.snapshot(context)).knowledge.map((item) => item.knowledge_id)).toEqual([
+      "global",
+    ]);
+    expect(await service.preferences(context)).not.toHaveProperty("knowledge");
+    const index = await service.knowledge(context);
+    expect(JSON.stringify(index)).not.toContain("FULL_METRIC");
+    expect(JSON.stringify(index)).not.toContain("PAYMENT_RULE");
+    expect(await service.knowledge(context, "local", 1)).toMatchObject({
+      content: { body: "PAYMENT_RULE" },
+    });
+    expect(
+      (await service.businessRules(context, [{ source_id: "s", object_id: "payment" }])).map(
+        (item) => item.knowledge_id,
+      ),
+    ).toEqual(["local"]);
+    expect(
+      await service.businessRules(context, [{ source_id: "other", object_id: "payment" }]),
+    ).toEqual([]);
+  });
   it("业务规则候选绑定本轮全部查询证据，后台和发布读取继续复核来源", async () => {
     const remember = vi.fn(async () => {});
     const service = new MemoryRuntime({

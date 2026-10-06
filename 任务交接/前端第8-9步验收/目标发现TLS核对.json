@@ -1,0 +1,5 @@
+{
+  "code": "ESOCKET",
+  "cause": "ESOCKET",
+  "message": "Failed to connect to 127.0.0.1:1433 - self-signed certificate; if the root CA is installed locally, try running Node.js with --use-system-ca"
+}

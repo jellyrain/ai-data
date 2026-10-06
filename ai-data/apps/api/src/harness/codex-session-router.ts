@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { ApplicationError } from "../errors/application-error";
 import type { CodexAppServer } from "./codex-app-server";
-import type { HarnessRequest, HarnessResult } from "./harness-types";
+import type {
+  HarnessMessage,
+  HarnessMessageState,
+  HarnessRequest,
+  HarnessResult,
+} from "./harness-types";
 
 /** 每次函数请求必须携带所属线程、轮次和唯一调用标识。 */
 const toolCallSchema = z
@@ -34,6 +39,14 @@ class CodexSessionRouter {
   private stopped = false;
   private waiting = false;
   private content = "";
+  private messageId?: string;
+  private hasFinalMessage = false;
+  private readonly messages = new Map<string, HarnessMessageState>();
+  private pending?: HarnessMessage;
+  private flushTimer?: NodeJS.Timeout;
+  private queued = 0;
+  private queuedBytes = 0;
+  private textLength = 0;
   private queue = Promise.resolve();
   private readonly calls = new Set<string>();
   private readonly compactions = new Set<string>();
@@ -53,6 +66,7 @@ class CodexSessionRouter {
   }
   fail(error: unknown): void {
     this.stopped = true;
+    this.clearPending();
     this.reject(error);
   }
   disconnected(error: Error): void {
@@ -75,8 +89,10 @@ class CodexSessionRouter {
       )
         throw new ApplicationError("INTERNAL_ERROR", "Codex 工具调用上下文无效");
       this.calls.add(call.callId);
+      this.flushText();
       const task = this.queue.then(async () => {
-        if (this.stopped || this.waiting) throw new ApplicationError("CANCELLED", "分析已停止");
+        if (this.stopped || this.waiting || this.request.signal.aborted)
+          throw new ApplicationError("CANCELLED", "分析已停止");
         const result = await this.request.executeTool(call.tool, call.arguments, call.callId);
         if (this.stopped) throw new ApplicationError("CANCELLED", "分析已停止");
         if (result.stop) {
@@ -117,25 +133,82 @@ class CodexSessionRouter {
         if (this.turnId !== turn.id) return;
         this.nativeEnded = true;
         this.end();
+        this.flushText();
         this.enqueue(async () => {
           if (this.waiting) this.resolve({ status: "waiting_clarification" });
-          else if (turn.status === "completed" && this.content.trim())
-            this.resolve({ status: "completed", content: this.content });
+          else if (
+            turn.status === "completed" &&
+            this.content.trim() &&
+            [...this.messages.values()].every((message) => message.completed)
+          )
+            this.resolve({
+              status: "completed",
+              content: this.content,
+              ...(this.request.onMessage && this.messageId ? { messageId: this.messageId } : {}),
+            });
           else this.fail(new ApplicationError("INTERNAL_ERROR", "模型未返回完整分析结果"));
         });
         return;
       }
-      if (this.stopped || this.waiting || value.turnId !== this.turnId) return;
+      if (
+        this.stopped ||
+        this.waiting ||
+        this.nativeEnded ||
+        this.request.signal.aborted ||
+        value.turnId !== this.turnId
+      )
+        return;
+      if (method === "item/agentMessage/delta") {
+        const itemId = identifier(value.itemId);
+        const delta = z.string().parse(value.delta);
+        const message = this.message(itemId);
+        if (message.completed || !delta) return;
+        this.limitText(delta.length, message.content.length + delta.length);
+        message.content += delta;
+        if (this.pending?.itemId !== itemId) this.flushText();
+        this.pending ??= {
+          itemId,
+          status: "delta",
+          content: "",
+          ...(message.phase ? { phase: message.phase } : {}),
+        };
+        this.pending.content += delta;
+        if (this.pending.content.length >= 2048) this.flushText();
+        else this.flushTimer ??= setTimeout(() => this.flushText(), 120);
+        return;
+      }
       if (!["item/started", "item/completed"].includes(method)) return;
       const item = record(value.item);
-      if (item.type === "agentMessage" && method === "item/completed")
-        this.content = z.string().parse(item.text);
+      if (item.type === "agentMessage") {
+        const itemId = identifier(item.id);
+        const message = this.message(itemId, item.phase);
+        if (message.completed) return;
+        if (method === "item/completed") {
+          const content = z.string().parse(item.text);
+          this.limitText(Math.max(0, content.length - message.content.length), content.length);
+          this.flushText();
+          message.content = content;
+          message.completed = true;
+          this.publish({
+            itemId,
+            status: "completed",
+            content,
+            ...(message.phase ? { phase: message.phase } : {}),
+          });
+          if (message.phase === "final_answer" || !this.hasFinalMessage) {
+            this.content = content;
+            this.messageId = itemId;
+            this.hasFinalMessage = message.phase === "final_answer";
+          }
+        }
+      }
       if (item.type === "contextCompaction") {
         const itemId = identifier(item.id);
         const status = method === "item/started" ? "started" : "completed";
         const key = `${status}:${itemId}`;
         if (this.compactions.has(key)) return;
         this.compactions.add(key);
+        this.flushText();
         this.enqueue(async () => {
           await this.request.onCompaction?.({ itemId, status });
         });
@@ -147,13 +220,73 @@ class CodexSessionRouter {
   private enqueue(action: () => Promise<void>): void {
     this.queue = this.queue
       .then(async () => {
-        if (!this.stopped) await action();
+        if (!this.stopped && !this.request.signal.aborted) await action();
       })
       .catch((error: unknown) => this.fail(error));
+  }
+  private message(itemId: string, phase?: unknown): HarnessMessageState {
+    if (itemId.length > 256)
+      throw new ApplicationError("QUERY_LIMIT_EXCEEDED", "助手消息标识超过容量");
+    const existing = this.messages.get(itemId);
+    const parsedPhase = phase === "commentary" || phase === "final_answer" ? phase : undefined;
+    if (existing) {
+      if (parsedPhase) existing.phase = parsedPhase;
+      return existing;
+    }
+    if (this.messages.size >= 200)
+      throw new ApplicationError("QUERY_LIMIT_EXCEEDED", "助手消息数量超过容量");
+    this.flushText();
+    const message: HarnessMessageState = {
+      content: "",
+      completed: false,
+      ...(parsedPhase ? { phase: parsedPhase } : {}),
+    };
+    this.messages.set(itemId, message);
+    this.publish({
+      itemId,
+      status: "started",
+      content: "",
+      ...(parsedPhase ? { phase: parsedPhase } : {}),
+    });
+    return message;
+  }
+  private limitText(added: number, length: number): void {
+    this.textLength += added;
+    if (length > 64000 || this.textLength > 256000)
+      throw new ApplicationError("QUERY_LIMIT_EXCEEDED", "助手文字超过分析容量");
+  }
+  private publish(event: HarnessMessage): void {
+    if (!this.request.onMessage || this.stopped || this.request.signal.aborted) return;
+    const bytes = Buffer.byteLength(event.content, "utf8");
+    if (this.queued >= 128 || this.queuedBytes + bytes > 512000) {
+      this.fail(new ApplicationError("QUERY_LIMIT_EXCEEDED", "助手文字提交队列已满"));
+      return;
+    }
+    this.queued++;
+    this.queuedBytes += bytes;
+    this.enqueue(async () => {
+      try {
+        await this.request.onMessage!(event);
+      } finally {
+        this.queued--;
+        this.queuedBytes -= bytes;
+      }
+    });
+  }
+  private flushText(): void {
+    const pending = this.pending;
+    this.clearPending();
+    if (pending?.content) this.publish(pending);
+  }
+  private clearPending(): void {
+    clearTimeout(this.flushTimer);
+    this.flushTimer = undefined;
+    this.pending = undefined;
   }
   /** 等待对应轮次终止；确认失败时保留线程占用，直到官方发来终止事件或进程退出。 */
   async interrupt(client: CodexAppServer): Promise<void> {
     this.stopped = true;
+    this.clearPending();
     if (!this.turnId || this.nativeEnded) return;
     let timer: NodeJS.Timeout | undefined;
     try {

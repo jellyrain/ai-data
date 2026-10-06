@@ -1,0 +1,146 @@
+$ pnpm run test:engineering && pnpm -r test
+$ node --test scripts/tests/*.test.mjs
+✔ 复制 ESM-only 入口与 npm 别名时保留安装名称，产物移动后可解析 (486.1843ms)
+✔ 同名多版本、必要 peer 及循环依赖按各自安装关系保留 (496.0351ms)
+✔ pnpm 目录链接转换为真实文件，复制后不依赖源目录 (91.9566ms)
+✔ win32-x64 只复制匹配的可选平台资源，保留可执行文件模式 (136.3594ms)
+✔ win32-arm64 只复制匹配的可选平台资源，保留可执行文件模式 (78.6578ms)
+✔ linux-x64 只复制匹配的可选平台资源，保留可执行文件模式 (162.3935ms)
+✔ linux-arm64 只复制匹配的可选平台资源，保留可执行文件模式 (347.9946ms)
+✔ darwin-x64 只复制匹配的可选平台资源，保留可执行文件模式 (229.4576ms)
+✔ darwin-arm64 只复制匹配的可选平台资源，保留可执行文件模式 (651.1717ms)
+✔ 缺失必要运行或 peer 依赖时拒绝，并拒绝越界包名 (462.9745ms)
+✔ 演示业务库包含 24 张有约束的表和计划数量 (12757.6001ms)
+✔ 造数金额与退款篡改能够被独立对账发现 (9461.1436ms)
+✔ 建库脚本拒绝系统库与其他数据库作为写入目标 (1.052ms)
+✔ 费用指标按费用记录标识去重，相同金额的不同费用仍分别计入 (2.469ms)
+✔ 门住院费用指标支持已批准的费用分类口径并保留科室维度 (0.7537ms)
+✔ Vue SFC 允许公共共享入口并检查纯类型导入 (32375.1786ms)
+✔ Vue SFC 禁止跨应用和共享包内部导入 (17.0661ms)
+✔ 仅作为类型使用的导入必须标记为类型导入 (153.6027ms)
+✔ 合法导入通过: import type { Dataset } from "@ai-data/contracts"; export type Example = Dataset; (7.7261ms)
+✔ 合法导入通过: import { datasetSchema, type Dataset } from "@ai-data/contracts"; export const parse = (input: unknown): Dataset => datasetSchema.parse(input); (12.3564ms)
+✔ 合法导入通过: export { SqlServerMetadataDatabase } from "@ai-data/metadata/sqlserver"; (5.1048ms)
+✔ 合法导入通过: export { createApp } from "./app"; (6.2538ms)
+✔ 合法导入通过: export { ApplicationError } from "../../src/errors/application-error"; (13.4229ms)
+✔ 越过模块边界的引用被拒绝: export { datasetSchema } from "@ai-data/contracts/src/catalog/dataset"; (6.8852ms)
+✔ 越过模块边界的引用被拒绝: export { SqlServerMetadataDatabase } from "@ai-data/metadata/private"; (5.5099ms)
+✔ 越过模块边界的引用被拒绝: export { datasetSchema } from "../../../packages/contracts/src/catalog/dataset"; (6.1912ms)
+✔ 越过模块边界的引用被拒绝: export { createApp } from "../../data-access/src/app"; (6.2653ms)
+✔ 越过模块边界的引用被拒绝: export { createApp } from "@ai-data/data-access"; (6.0436ms)
+✔ 越过模块边界的引用被拒绝: export const load = () => import("../../data-access/src/app"); (6.3862ms)
+✔ 越过模块边界的引用被拒绝: export type Example = import("@ai-data/contracts/src/catalog/dataset-types").Dataset; (6.5009ms)
+✔ 规则对包目录执行 lint 和绝对导入路径同样生效 (38.2906ms)
+✔ 共享包使用自身内部相对导入 (9.9687ms)
+✔ 按平台生成两个独立目录，完整携带示例迁移和 Skill，重复整理不影响另一服务 (760.9ms)
+✔ 缺失依赖时保留原发布目录，拒绝未知应用或架构 (220.8083ms)
+✔ 拒绝通过发布目录链接写到外部，也保留已放入产物目录的实例状态 (651.3412ms)
+✔ API 缺少当前平台原生程序时拒绝交付，补齐后可解析 npm 别名布局 (2857.0776ms)
+✔ 目标标识 win32-x64 (0.8924ms)
+✔ 目标标识 win32-arm64 (0.4438ms)
+✔ 目标标识 linux-x64 (0.2489ms)
+✔ 目标标识 linux-arm64 (0.3857ms)
+✔ 目标标识 darwin-x64 (7.4336ms)
+✔ 目标标识 darwin-arm64 (0.5042ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42799.4934
+Scope: 5 of 6 workspace projects
+packages/contracts test$ vitest run --pool=threads --maxWorkers=1
+packages/metadata test$ vitest run --pool=threads --maxWorkers=1
+packages/metadata test:  RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/packages/metadata
+packages/contracts test:  RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/packages/contracts
+packages/metadata test:  Test Files  5 passed (5)
+packages/metadata test:       Tests  28 passed (28)
+packages/metadata test:    Start at  11:29:11
+packages/metadata test:    Duration  2.18s (transform 127ms, setup 0ms, import 321ms, tests 164ms, environment 1ms)
+packages/metadata test: Done
+packages/contracts test:  Test Files  26 passed (26)
+packages/contracts test:       Tests  185 passed (185)
+packages/contracts test:    Start at  11:29:11
+packages/contracts test:    Duration  15.66s (transform 678ms, setup 0ms, import 6.71s, tests 503ms, environment 5ms)
+packages/contracts test: Done
+apps/api test$ vitest run --pool=threads --maxWorkers=1
+apps/data-access test$ vitest run --pool=threads --maxWorkers=1
+apps/web test$ vitest run
+apps/api test:  RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/api
+apps/data-access test:  RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/data-access
+apps/web test:  RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/web
+apps/data-access test: {"level":30,"time":1790998170186,"service_id":"data-access-test","service_version":"0.1.0","reqId":"51e5eb8b-b8ba-484d-825b-4f2c34948496","req":{"method":"GET","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998170192,"service_id":"data-access-test","service_version":"0.1.0","reqId":"51e5eb8b-b8ba-484d-825b-4f2c34948496","res":{"statusCode":401},"responseTime":5.0776999999998225,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998170198,"service_id":"data-access-test","service_version":"0.1.0","reqId":"5976ebf5-7de0-42f4-bbab-159ad694d484","req":{"method":"GET","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998170203,"service_id":"data-access-test","service_version":"0.1.0","reqId":"5976ebf5-7de0-42f4-bbab-159ad694d484","res":{"statusCode":200},"responseTime":4.824099999999817,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998170205,"service_id":"data-access-test","service_version":"0.1.0","reqId":"0a0f203f-267d-4fae-a56e-23e8600801f4","req":{"method":"PUT","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998170208,"service_id":"data-access-test","service_version":"0.1.0","reqId":"0a0f203f-267d-4fae-a56e-23e8600801f4","res":{"statusCode":401},"responseTime":2.667699999999968,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998170211,"service_id":"data-access-test","service_version":"0.1.0","reqId":"4e54bb67-8fe7-4b69-a1f7-0c8761f18caf","req":{"method":"PUT","url":"/internal/admin/data-source-secrets/reader/sqlserver-transport","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998170213,"service_id":"data-access-test","service_version":"0.1.0","reqId":"4e54bb67-8fe7-4b69-a1f7-0c8761f18caf","res":{"statusCode":200},"responseTime":1.8731000000002496,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998170216,"service_id":"data-access-test","service_version":"0.1.0","reqId":"00fba5e1-07d4-4789-aef1-23711f00290d","req":{"method":"POST","url":"/internal/admin/database-targets","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998170217,"service_id":"data-access-test","service_version":"0.1.0","reqId":"00fba5e1-07d4-4789-aef1-23711f00290d","res":{"statusCode":503},"responseTime":1.2247000000002117,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998170230,"service_id":"data-access-test","service_version":"0.1.0","reqId":"6675c75e-21b6-4f78-b71a-46daca540f36","req":{"method":"GET","url":"/internal/admin/data-sources/disabled","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998170233,"service_id":"data-access-test","service_version":"0.1.0","reqId":"6675c75e-21b6-4f78-b71a-46daca540f36","res":{"statusCode":200},"responseTime":2.410699999999906,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998170236,"service_id":"data-access-test","service_version":"0.1.0","reqId":"c43e227f-4188-4069-9d6d-c0538050eb46","req":{"method":"GET","url":"/internal/admin/data-sources/other","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998170237,"service_id":"data-access-test","service_version":"0.1.0","reqId":"c43e227f-4188-4069-9d6d-c0538050eb46","res":{"statusCode":403},"responseTime":1.0823999999997795,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998170250,"service_id":"data-access-test","service_version":"0.1.0","reqId":"9f316eab-ea25-4e92-8a1c-6075abc25a2b","req":{"method":"POST","url":"/internal/admin/database-targets","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998170252,"service_id":"data-access-test","service_version":"0.1.0","reqId":"9f316eab-ea25-4e92-8a1c-6075abc25a2b","res":{"statusCode":200},"responseTime":1.6842999999998938,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998170262,"service_id":"data-access-test","service_version":"0.1.0","reqId":"89c1e408-1cd3-4553-a3de-fc9961282fc7","req":{"method":"POST","url":"/internal/admin/database-targets","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998170265,"service_id":"data-access-test","service_version":"0.1.0","reqId":"89c1e408-1cd3-4553-a3de-fc9961282fc7","res":{"statusCode":400},"responseTime":1.9875999999999294,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998175748,"service_id":"data-access-test","service_version":"0.1.0","reqId":"e804326e-96dd-48b8-8b47-e025e53b6306","req":{"method":"POST","url":"/internal/catalog","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998175761,"service_id":"data-access-test","service_version":"0.1.0","reqId":"e804326e-96dd-48b8-8b47-e025e53b6306","res":{"statusCode":200},"responseTime":11.943900000000212,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998175775,"service_id":"data-access-test","service_version":"0.1.0","reqId":"93d18755-50b3-40f9-9ce8-37a4256bb620","req":{"method":"POST","url":"/internal/catalog","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998175778,"service_id":"data-access-test","service_version":"0.1.0","reqId":"93d18755-50b3-40f9-9ce8-37a4256bb620","res":{"statusCode":400},"responseTime":2.6199999999989814,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998178023,"service_id":"data-access-test","service_version":"0.1.0","reqId":"982fae3c-6083-444a-9245-2152befc4dbb","req":{"method":"GET","url":"/health","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998178042,"service_id":"data-access-test","service_version":"0.1.0","reqId":"6c1cc352-2068-463c-be37-c669ab507dfb","req":{"method":"GET","url":"/health","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/data-access test: {"level":30,"time":1790998178031,"service_id":"data-access-test","service_version":"0.1.0","reqId":"982fae3c-6083-444a-9245-2152befc4dbb","res":{"statusCode":200},"responseTime":6.232099999999264,"msg":"request completed"}
+apps/data-access test: {"level":30,"time":1790998178043,"service_id":"data-access-test","service_version":"0.1.0","reqId":"6c1cc352-2068-463c-be37-c669ab507dfb","res":{"statusCode":503},"responseTime":0.5652000000009139,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194520,"service_id":"api-test","service_version":"1","reqId":"req-1","req":{"method":"GET","url":"/reports/report/sharing","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194587,"service_id":"api-test","service_version":"1","reqId":"req-1","req":{"method":"PUT","url":"/reports/report/sharing","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194529,"service_id":"api-test","service_version":"1","reqId":"req-1","res":{"statusCode":401},"responseTime":8.074699999997392,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194530,"service_id":"api-test","service_version":"1","reqId":"req-2","req":{"method":"GET","url":"/reports/report/sharing","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194533,"service_id":"api-test","service_version":"1","reqId":"req-2","res":{"statusCode":200},"responseTime":2.622400000000198,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194537,"service_id":"api-test","service_version":"1","reqId":"req-3","req":{"method":"GET","url":"/reports/report/share-candidates?search=%E7%A7%91&limit=20","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194538,"service_id":"api-test","service_version":"1","reqId":"req-3","res":{"statusCode":200},"responseTime":1.8158000000003085,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194539,"service_id":"api-test","service_version":"1","reqId":"req-4","req":{"method":"GET","url":"/reports/report/sharing?user_id=other","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194541,"service_id":"api-test","service_version":"1","reqId":"req-4","res":{"statusCode":400},"responseTime":1.4781999999977415,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194541,"service_id":"api-test","service_version":"1","reqId":"req-5","req":{"method":"GET","url":"/reports/report/share-candidates?organization_id=other","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194542,"service_id":"api-test","service_version":"1","reqId":"req-5","res":{"statusCode":400},"responseTime":0.8408999999992375,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194543,"service_id":"api-test","service_version":"1","reqId":"req-6","req":{"method":"GET","url":"/reports/report/share-candidates?limit=101","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194544,"service_id":"api-test","service_version":"1","reqId":"req-6","res":{"statusCode":400},"responseTime":0.730199999998149,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194592,"service_id":"api-test","service_version":"1","reqId":"req-1","res":{"statusCode":200},"responseTime":4.545799999999872,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194592,"service_id":"api-test","service_version":"1","reqId":"req-2","req":{"method":"PUT","url":"/reports/report/sharing","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194630,"service_id":"api-test","service_version":"1","reqId":"req-1","req":{"method":"GET","url":"/reports/report/export-content?version=2","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194661,"service_id":"api-test","service_version":"1","reqId":"req-1","req":{"method":"GET","url":"/conversations/conversation/export-content","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194594,"service_id":"api-test","service_version":"1","reqId":"req-2","res":{"statusCode":401},"responseTime":1.573099999997794,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194632,"service_id":"api-test","service_version":"1","reqId":"req-1","res":{"statusCode":200},"responseTime":1.4532999999973981,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194633,"service_id":"api-test","service_version":"1","reqId":"req-2","req":{"method":"GET","url":"/reports/report/export-content?version=2","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194634,"service_id":"api-test","service_version":"1","reqId":"req-2","res":{"statusCode":401},"responseTime":0.7013999999981024,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194662,"service_id":"api-test","service_version":"1","reqId":"req-1","res":{"statusCode":200},"responseTime":0.7616000000016356,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998194663,"service_id":"api-test","service_version":"1","reqId":"req-2","req":{"method":"GET","url":"/conversations/conversation/export-content","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998194663,"service_id":"api-test","service_version":"1","reqId":"req-2","res":{"statusCode":401},"responseTime":0.45939999999973224,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998198371,"service_id":"api-test","service_version":"1","reqId":"req-1","req":{"method":"GET","url":"/reports/report/revisions/run","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998198380,"service_id":"api-test","service_version":"1","reqId":"req-1","res":{"statusCode":401},"responseTime":7.986799999998766,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998198382,"service_id":"api-test","service_version":"1","reqId":"req-2","req":{"method":"GET","url":"/reports/report/revisions/run?user_id=other","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998198385,"service_id":"api-test","service_version":"1","reqId":"req-2","res":{"statusCode":400},"responseTime":3.5662999999985914,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998198386,"service_id":"api-test","service_version":"1","reqId":"req-3","req":{"method":"GET","url":"/reports/report/revisions/run","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998198387,"service_id":"api-test","service_version":"1","reqId":"req-3","res":{"statusCode":200},"responseTime":0.7089000000014494,"msg":"request completed"}
+apps/api test: {"level":30,"time":1790998198390,"service_id":"api-test","service_version":"1","reqId":"req-4","req":{"method":"GET","url":"/reports/report/revisions/run","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+apps/api test: {"level":30,"time":1790998198391,"service_id":"api-test","service_version":"1","reqId":"req-4","res":{"statusCode":404},"responseTime":0.7968000000000757,"msg":"request completed"}
+apps/data-access test:  Test Files  47 passed (47)
+apps/data-access test:       Tests  425 passed (425)
+apps/data-access test:    Start at  11:29:28
+apps/data-access test:    Duration  35.26s (transform 1.42s, setup 0ms, import 17.91s, tests 3.98s, environment 8ms)
+apps/data-access test: Done
+apps/api test:  Test Files  86 passed (86)
+apps/api test:       Tests  670 passed (670)
+apps/api test:    Start at  11:29:28
+apps/api test:    Duration  72.44s (transform 2.28s, setup 0ms, import 27.17s, tests 23.39s, environment 14ms)
+apps/api test: Done
+apps/web test:  Test Files  30 passed (30)
+apps/web test:       Tests  148 passed (148)
+apps/web test:    Start at  11:29:28
+apps/web test:    Duration  92.91s (transform 1.50s, setup 0ms, import 24.31s, tests 1.93s, environment 59.83s)
+apps/web test: Done

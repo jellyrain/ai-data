@@ -93,6 +93,36 @@ function setup() {
 }
 
 describe("运行状态、租约、澄清与证据", () => {
+  it("消息在有效租约内提交后唤醒 SSE；权限收回、过期和取消后不能追加", async () => {
+    const h = setup();
+    const lease = await h.service.claim(context, "run", "worker");
+    const notified = vi.fn(() => {
+      expect(h.events.at(-1)?.type).toBe("assistant_message");
+    });
+    const unsubscribe = h.service.subscribeEvents("run", notified);
+    const message = { itemId: "message", status: "delta" as const, content: "已查到" };
+    await h.service.recordMessage(context, "run", lease, message);
+    expect(notified).toHaveBeenCalledOnce();
+    expect(h.events.at(-1)).toMatchObject({
+      type: "assistant_message",
+      message_id: "message",
+      content: "已查到",
+    });
+    h.refreshContext.mockRejectedValueOnce(new Error("身份撤销"));
+    await expect(h.service.recordMessage(context, "run", lease, message)).rejects.toThrow(
+      "身份撤销",
+    );
+    h.advance();
+    await expect(h.service.recordMessage(context, "run", lease, message)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    unsubscribe();
+    await h.service.cancel(context, "run");
+    await expect(h.service.recordMessage(context, "run", lease, message)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    expect(notified).toHaveBeenCalledOnce();
+  });
   it("压缩事件按租约持久化，终态后拒绝晚到事件", async () => {
     const h = setup();
     const lease = await h.service.claim(context, "run", "worker");

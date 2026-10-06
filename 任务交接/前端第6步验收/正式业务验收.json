@@ -1,0 +1,1063 @@
+{
+  "date": "2026-09-28 13:44:17",
+  "reports": [
+    {
+      "key": "outpatient",
+      "title": "门诊科室人次",
+      "report_id": "6590692f-afe6-44aa-abe9-b3c6519708c1",
+      "version": 1,
+      "definition": {
+        "title": "门诊科室人次",
+        "parameters": [
+          {
+            "name": "parameter_1",
+            "label": "科室名称",
+            "data_type": "string",
+            "required": false
+          }
+        ],
+        "queries": [
+          {
+            "query_id": "query_1",
+            "query": {
+              "type": "relational_query",
+              "source_id": "clinical-demo",
+              "from": {
+                "object_id": "table.dbo.visits",
+                "alias": "t"
+              },
+              "joins": [
+                {
+                  "type": "left",
+                  "object_id": "table.dbo.departments",
+                  "alias": "t_1",
+                  "source_alias": "t",
+                  "relation_id": "rel_visits_department_id"
+                }
+              ],
+              "select": [
+                {
+                  "field": "t_1.name",
+                  "as": "department_name"
+                },
+                {
+                  "field": "t.visit_id",
+                  "aggregation": "count_distinct",
+                  "as": "visit_count"
+                }
+              ],
+              "filters": {
+                "logic": "and",
+                "items": []
+              },
+              "group_by": [
+                "t_1.name"
+              ],
+              "order_by": [],
+              "limit": 1000
+            },
+            "bindings": [
+              {
+                "parameter": "parameter_1",
+                "target": {
+                  "type": "filter",
+                  "field": "t_1.name",
+                  "op": "eq",
+                  "scope": "query"
+                }
+              }
+            ]
+          }
+        ],
+        "presentation": [
+          {
+            "section_id": "main",
+            "title": "分析结果",
+            "blocks": [
+              {
+                "block_id": "block_1",
+                "type": "table",
+                "title": "门诊科室人次",
+                "query_ids": [
+                  "query_1"
+                ]
+              },
+              {
+                "block_id": "block_2",
+                "type": "chart",
+                "title": "科室人次分布",
+                "query_ids": [
+                  "query_1"
+                ],
+                "chart": {
+                  "type": "bar",
+                  "x": "department_name",
+                  "y": "visit_count"
+                }
+              }
+            ]
+          }
+        ],
+        "block_references": [],
+        "editor_layout": {
+          "nodes": [
+            {
+              "id": "node_56d6b105c7189749",
+              "x": 120,
+              "y": 156
+            }
+          ]
+        }
+      },
+      "executions": [
+        {
+          "execution_id": "4d4457b5-7390-4467-8457-d47c3eae82de",
+          "definition_version": 1,
+          "snapshot_version": 2,
+          "parameters": {},
+          "results": [
+            {
+              "query_id": "query_1",
+              "rows": [
+                {
+                  "department_name": "中医科",
+                  "visit_count": 1411
+                },
+                {
+                  "department_name": "康复科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "消化科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "心内科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "神经内科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "口腔科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "内科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "儿科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "妇科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "泌尿科",
+                  "visit_count": 1411
+                },
+                {
+                  "department_name": "皮肤科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "外科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "耳鼻喉科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "产科",
+                  "visit_count": 1411
+                },
+                {
+                  "department_name": "骨科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "呼吸科",
+                  "visit_count": 1411
+                },
+                {
+                  "department_name": "眼科",
+                  "visit_count": 1412
+                }
+              ],
+              "authorized_query": {
+                "type": "relational_query",
+                "source_id": "clinical-demo",
+                "from": {
+                  "object_id": "table.dbo.visits",
+                  "alias": "t"
+                },
+                "joins": [
+                  {
+                    "type": "left",
+                    "object_id": "table.dbo.departments",
+                    "alias": "t_1",
+                    "relation_id": "rel_visits_department_id",
+                    "on": [
+                      {
+                        "left": "t.department_id",
+                        "op": "eq",
+                        "right": "t_1.department_id"
+                      }
+                    ]
+                  }
+                ],
+                "select": [
+                  {
+                    "field": "t_1.name",
+                    "as": "department_name"
+                  },
+                  {
+                    "field": "t.visit_id",
+                    "aggregation": "count_distinct",
+                    "as": "visit_count"
+                  }
+                ],
+                "filters": {
+                  "logic": "and",
+                  "items": []
+                },
+                "group_by": [
+                  "t_1.name"
+                ],
+                "order_by": [],
+                "limit": 1000
+              }
+            }
+          ]
+        },
+        {
+          "execution_id": "2cd5d4a0-af78-4cfa-9858-c896734523fb",
+          "definition_version": 2,
+          "snapshot_version": 3,
+          "parameters": {},
+          "results": [
+            {
+              "query_id": "query_1",
+              "rows": [
+                {
+                  "department_name": "中医科",
+                  "visit_count": 1411
+                },
+                {
+                  "department_name": "康复科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "消化科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "心内科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "神经内科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "口腔科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "内科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "儿科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "妇科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "泌尿科",
+                  "visit_count": 1411
+                },
+                {
+                  "department_name": "皮肤科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "外科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "耳鼻喉科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "产科",
+                  "visit_count": 1411
+                },
+                {
+                  "department_name": "骨科",
+                  "visit_count": 1412
+                },
+                {
+                  "department_name": "呼吸科",
+                  "visit_count": 1411
+                },
+                {
+                  "department_name": "眼科",
+                  "visit_count": 1412
+                }
+              ],
+              "authorized_query": {
+                "type": "relational_query",
+                "source_id": "clinical-demo",
+                "from": {
+                  "object_id": "table.dbo.visits",
+                  "alias": "t"
+                },
+                "joins": [
+                  {
+                    "type": "left",
+                    "object_id": "table.dbo.departments",
+                    "alias": "t_1",
+                    "relation_id": "rel_visits_department_id",
+                    "on": [
+                      {
+                        "left": "t.department_id",
+                        "op": "eq",
+                        "right": "t_1.department_id"
+                      }
+                    ]
+                  }
+                ],
+                "select": [
+                  {
+                    "field": "t_1.name",
+                    "as": "department_name"
+                  },
+                  {
+                    "field": "t.visit_id",
+                    "aggregation": "count_distinct",
+                    "as": "visit_count"
+                  }
+                ],
+                "filters": {
+                  "logic": "and",
+                  "items": []
+                },
+                "group_by": [
+                  "t_1.name"
+                ],
+                "order_by": [],
+                "limit": 1000
+              }
+            }
+          ]
+        }
+      ],
+      "ai": {
+        "receipt": {
+          "conversation_id": "4bc38af0-163d-4ccb-ad03-ac4f66e52129",
+          "analysis_run_id": "7637bc13-0c6e-4790-9a2c-de7f95ce6653"
+        },
+        "status": "已保存版本 2"
+      }
+    },
+    {
+      "key": "inpatient",
+      "title": "住院情况",
+      "report_id": "4be90771-90a6-4598-9454-077cffed9762",
+      "version": 1,
+      "definition": {
+        "title": "住院情况",
+        "parameters": [],
+        "queries": [
+          {
+            "query_id": "query_1",
+            "query": {
+              "type": "metric_query",
+              "metric_id": "demo-admissions",
+              "version": 1,
+              "output": "grouped",
+              "start": "2026-01-01 00:00:00",
+              "end": "2026-09-27 23:59:59",
+              "dimensions": [
+                "d.name"
+              ]
+            },
+            "bindings": []
+          },
+          {
+            "query_id": "query_2",
+            "query": {
+              "type": "metric_query",
+              "metric_id": "demo-discharges",
+              "version": 1,
+              "output": "grouped",
+              "start": "2026-01-01 00:00:00",
+              "end": "2026-09-27 23:59:59",
+              "dimensions": [
+                "d.name"
+              ]
+            },
+            "bindings": []
+          }
+        ],
+        "presentation": [
+          {
+            "section_id": "main",
+            "title": "分析结果",
+            "blocks": [
+              {
+                "block_id": "block_1",
+                "type": "table",
+                "title": "入院人次（入院时间）",
+                "query_ids": [
+                  "query_1"
+                ]
+              },
+              {
+                "block_id": "block_2",
+                "type": "table",
+                "title": "出院人次（出院时间）",
+                "query_ids": [
+                  "query_2"
+                ]
+              }
+            ]
+          }
+        ],
+        "block_references": []
+      },
+      "executions": [
+        {
+          "execution_id": "a4bd7c97-f621-48aa-a7d0-e7375982f292",
+          "definition_version": 1,
+          "snapshot_version": 1,
+          "parameters": {},
+          "results": [
+            {
+              "query_id": "query_1",
+              "rows": [
+                {
+                  "dimension_0": "儿科",
+                  "count": 124
+                },
+                {
+                  "dimension_0": "耳鼻喉科",
+                  "count": 123
+                },
+                {
+                  "dimension_0": "妇科",
+                  "count": 124
+                },
+                {
+                  "dimension_0": "骨科",
+                  "count": 123
+                },
+                {
+                  "dimension_0": "康复科",
+                  "count": 123
+                },
+                {
+                  "dimension_0": "口腔科",
+                  "count": 123
+                },
+                {
+                  "dimension_0": "内科",
+                  "count": 124
+                },
+                {
+                  "dimension_0": "皮肤科",
+                  "count": 123
+                },
+                {
+                  "dimension_0": "神经内科",
+                  "count": 123
+                },
+                {
+                  "dimension_0": "外科",
+                  "count": 124
+                },
+                {
+                  "dimension_0": "心内科",
+                  "count": 123
+                },
+                {
+                  "dimension_0": "眼科",
+                  "count": 123
+                }
+              ],
+              "authorized_query": {
+                "type": "relational_query",
+                "source_id": "clinical-demo",
+                "from": {
+                  "object_id": "table.dbo.admissions",
+                  "alias": "t"
+                },
+                "joins": [
+                  {
+                    "type": "inner",
+                    "object_id": "table.dbo.departments",
+                    "alias": "d",
+                    "on": [
+                      {
+                        "left": "t.department_id",
+                        "op": "eq",
+                        "right": "d.department_id"
+                      }
+                    ]
+                  }
+                ],
+                "select": [
+                  {
+                    "field": "d.name",
+                    "as": "dimension_0"
+                  },
+                  {
+                    "field": "t.admission_id",
+                    "aggregation": "count_distinct",
+                    "as": "count"
+                  }
+                ],
+                "filters": {
+                  "logic": "and",
+                  "items": [
+                    {
+                      "logic": "and",
+                      "items": []
+                    },
+                    {
+                      "field": "t.admitted_at",
+                      "op": "between",
+                      "data_type": "datetime",
+                      "value": [
+                        "2026-01-01 00:00:00",
+                        "2026-09-27 23:59:59"
+                      ]
+                    }
+                  ]
+                },
+                "group_by": [
+                  "d.name"
+                ],
+                "order_by": [
+                  {
+                    "field": "d.name",
+                    "direction": "asc"
+                  }
+                ],
+                "limit": 5000
+              }
+            },
+            {
+              "query_id": "query_2",
+              "rows": [
+                {
+                  "dimension_0": "儿科",
+                  "count": 107
+                },
+                {
+                  "dimension_0": "耳鼻喉科",
+                  "count": 107
+                },
+                {
+                  "dimension_0": "妇科",
+                  "count": 107
+                },
+                {
+                  "dimension_0": "骨科",
+                  "count": 107
+                },
+                {
+                  "dimension_0": "康复科",
+                  "count": 106
+                },
+                {
+                  "dimension_0": "口腔科",
+                  "count": 106
+                },
+                {
+                  "dimension_0": "内科",
+                  "count": 107
+                },
+                {
+                  "dimension_0": "皮肤科",
+                  "count": 107
+                },
+                {
+                  "dimension_0": "神经内科",
+                  "count": 106
+                },
+                {
+                  "dimension_0": "外科",
+                  "count": 107
+                },
+                {
+                  "dimension_0": "心内科",
+                  "count": 106
+                },
+                {
+                  "dimension_0": "眼科",
+                  "count": 107
+                }
+              ],
+              "authorized_query": {
+                "type": "relational_query",
+                "source_id": "clinical-demo",
+                "from": {
+                  "object_id": "table.dbo.admissions",
+                  "alias": "t"
+                },
+                "joins": [
+                  {
+                    "type": "inner",
+                    "object_id": "table.dbo.departments",
+                    "alias": "d",
+                    "on": [
+                      {
+                        "left": "t.department_id",
+                        "op": "eq",
+                        "right": "d.department_id"
+                      }
+                    ]
+                  }
+                ],
+                "select": [
+                  {
+                    "field": "d.name",
+                    "as": "dimension_0"
+                  },
+                  {
+                    "field": "t.admission_id",
+                    "aggregation": "count_distinct",
+                    "as": "count"
+                  }
+                ],
+                "filters": {
+                  "logic": "and",
+                  "items": [
+                    {
+                      "logic": "and",
+                      "items": []
+                    },
+                    {
+                      "field": "t.discharged_at",
+                      "op": "between",
+                      "data_type": "datetime",
+                      "value": [
+                        "2026-01-01 00:00:00",
+                        "2026-09-27 23:59:59"
+                      ]
+                    }
+                  ]
+                },
+                "group_by": [
+                  "d.name"
+                ],
+                "order_by": [
+                  {
+                    "field": "d.name",
+                    "direction": "asc"
+                  }
+                ],
+                "limit": 5000
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "fees",
+      "title": "门住院有效费用",
+      "report_id": "47dfa9e0-8e34-4999-b9be-475732e75dc2",
+      "version": 1,
+      "definition": {
+        "title": "门住院有效费用",
+        "parameters": [],
+        "queries": [
+          {
+            "query_id": "query_1",
+            "query": {
+              "type": "metric_query",
+              "metric_id": "demo-outpatient-fees",
+              "version": 2,
+              "output": "grouped",
+              "start": "2026-01-01 00:00:00",
+              "end": "2026-09-27 23:59:59",
+              "dimensions": [
+                "d.name"
+              ]
+            },
+            "bindings": []
+          },
+          {
+            "query_id": "query_2",
+            "query": {
+              "type": "metric_query",
+              "metric_id": "demo-inpatient-fees",
+              "version": 2,
+              "output": "grouped",
+              "start": "2026-01-01 00:00:00",
+              "end": "2026-09-27 23:59:59",
+              "dimensions": [
+                "d.name"
+              ]
+            },
+            "bindings": []
+          }
+        ],
+        "presentation": [
+          {
+            "section_id": "main",
+            "title": "分析结果",
+            "blocks": [
+              {
+                "block_id": "block_1",
+                "type": "table",
+                "title": "门诊有效费用（费用发生时间）",
+                "query_ids": [
+                  "query_1"
+                ]
+              },
+              {
+                "block_id": "block_2",
+                "type": "table",
+                "title": "住院有效费用（费用发生时间）",
+                "query_ids": [
+                  "query_2"
+                ]
+              }
+            ]
+          }
+        ],
+        "block_references": []
+      },
+      "executions": [
+        {
+          "execution_id": "a502321b-f847-4d17-a080-8fde6af3b256",
+          "definition_version": 1,
+          "snapshot_version": 1,
+          "parameters": {},
+          "results": [
+            {
+              "query_id": "query_1",
+              "rows": [
+                {
+                  "dimension_0": "产科",
+                  "amount_cents": 6610622
+                },
+                {
+                  "dimension_0": "儿科",
+                  "amount_cents": 6277999
+                },
+                {
+                  "dimension_0": "耳鼻喉科",
+                  "amount_cents": 6815961
+                },
+                {
+                  "dimension_0": "妇科",
+                  "amount_cents": 6291186
+                },
+                {
+                  "dimension_0": "骨科",
+                  "amount_cents": 6246362
+                },
+                {
+                  "dimension_0": "呼吸科",
+                  "amount_cents": 7331328
+                },
+                {
+                  "dimension_0": "康复科",
+                  "amount_cents": 7909557
+                },
+                {
+                  "dimension_0": "口腔科",
+                  "amount_cents": 7585523
+                },
+                {
+                  "dimension_0": "泌尿科",
+                  "amount_cents": 6996916
+                },
+                {
+                  "dimension_0": "内科",
+                  "amount_cents": 6282010
+                },
+                {
+                  "dimension_0": "皮肤科",
+                  "amount_cents": 7219482
+                },
+                {
+                  "dimension_0": "神经内科",
+                  "amount_cents": 7914569
+                },
+                {
+                  "dimension_0": "外科",
+                  "amount_cents": 6249098
+                },
+                {
+                  "dimension_0": "消化科",
+                  "amount_cents": 7788473
+                },
+                {
+                  "dimension_0": "心内科",
+                  "amount_cents": 7917319
+                },
+                {
+                  "dimension_0": "眼科",
+                  "amount_cents": 6426178
+                },
+                {
+                  "dimension_0": "中医科",
+                  "amount_cents": 6252691
+                }
+              ],
+              "authorized_query": {
+                "type": "relational_query",
+                "source_id": "clinical-demo",
+                "from": {
+                  "object_id": "table.dbo.outpatient_charge_details",
+                  "alias": "t"
+                },
+                "joins": [
+                  {
+                    "type": "inner",
+                    "object_id": "table.dbo.departments",
+                    "alias": "d",
+                    "on": [
+                      {
+                        "left": "t.department_id",
+                        "op": "eq",
+                        "right": "d.department_id"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "inner",
+                    "object_id": "table.dbo.charge_items",
+                    "alias": "i",
+                    "on": [
+                      {
+                        "left": "t.item_id",
+                        "op": "eq",
+                        "right": "i.item_id"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "inner",
+                    "object_id": "table.dbo.charge_categories",
+                    "alias": "c",
+                    "on": [
+                      {
+                        "left": "i.category_id",
+                        "op": "eq",
+                        "right": "c.category_id"
+                      }
+                    ]
+                  }
+                ],
+                "select": [
+                  {
+                    "field": "d.name",
+                    "as": "dimension_0"
+                  },
+                  {
+                    "field": "t.amount_cents",
+                    "aggregation": "sum",
+                    "as": "amount_cents"
+                  }
+                ],
+                "filters": {
+                  "logic": "and",
+                  "items": [
+                    {
+                      "logic": "and",
+                      "items": []
+                    },
+                    {
+                      "field": "t.charged_at",
+                      "op": "between",
+                      "data_type": "datetime",
+                      "value": [
+                        "2026-01-01 00:00:00",
+                        "2026-09-27 23:59:59"
+                      ]
+                    }
+                  ]
+                },
+                "group_by": [
+                  "d.name"
+                ],
+                "order_by": [
+                  {
+                    "field": "d.name",
+                    "direction": "asc"
+                  }
+                ],
+                "limit": 5000
+              }
+            },
+            {
+              "query_id": "query_2",
+              "rows": [
+                {
+                  "dimension_0": "儿科",
+                  "amount_cents": 18968520
+                },
+                {
+                  "dimension_0": "耳鼻喉科",
+                  "amount_cents": 18805920
+                },
+                {
+                  "dimension_0": "妇科",
+                  "amount_cents": 18960000
+                },
+                {
+                  "dimension_0": "骨科",
+                  "amount_cents": 18827340
+                },
+                {
+                  "dimension_0": "康复科",
+                  "amount_cents": 18791790
+                },
+                {
+                  "dimension_0": "口腔科",
+                  "amount_cents": 18784500
+                },
+                {
+                  "dimension_0": "内科",
+                  "amount_cents": 18978960
+                },
+                {
+                  "dimension_0": "皮肤科",
+                  "amount_cents": 18807210
+                },
+                {
+                  "dimension_0": "神经内科",
+                  "amount_cents": 18794370
+                },
+                {
+                  "dimension_0": "外科",
+                  "amount_cents": 18981480
+                },
+                {
+                  "dimension_0": "心内科",
+                  "amount_cents": 18808080
+                },
+                {
+                  "dimension_0": "眼科",
+                  "amount_cents": 18807630
+                }
+              ],
+              "authorized_query": {
+                "type": "relational_query",
+                "source_id": "clinical-demo",
+                "from": {
+                  "object_id": "table.dbo.inpatient_charge_details",
+                  "alias": "t"
+                },
+                "joins": [
+                  {
+                    "type": "inner",
+                    "object_id": "table.dbo.departments",
+                    "alias": "d",
+                    "on": [
+                      {
+                        "left": "t.department_id",
+                        "op": "eq",
+                        "right": "d.department_id"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "inner",
+                    "object_id": "table.dbo.charge_items",
+                    "alias": "i",
+                    "on": [
+                      {
+                        "left": "t.item_id",
+                        "op": "eq",
+                        "right": "i.item_id"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "inner",
+                    "object_id": "table.dbo.charge_categories",
+                    "alias": "c",
+                    "on": [
+                      {
+                        "left": "i.category_id",
+                        "op": "eq",
+                        "right": "c.category_id"
+                      }
+                    ]
+                  }
+                ],
+                "select": [
+                  {
+                    "field": "d.name",
+                    "as": "dimension_0"
+                  },
+                  {
+                    "field": "t.amount_cents",
+                    "aggregation": "sum",
+                    "as": "amount_cents"
+                  }
+                ],
+                "filters": {
+                  "logic": "and",
+                  "items": [
+                    {
+                      "logic": "and",
+                      "items": []
+                    },
+                    {
+                      "field": "t.charged_at",
+                      "op": "between",
+                      "data_type": "datetime",
+                      "value": [
+                        "2026-01-01 00:00:00",
+                        "2026-09-27 23:59:59"
+                      ]
+                    }
+                  ]
+                },
+                "group_by": [
+                  "d.name"
+                ],
+                "order_by": [
+                  {
+                    "field": "d.name",
+                    "direction": "asc"
+                  }
+                ],
+                "limit": 5000
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "三份正式报表及AI修改",
+      "passed": true
+    }
+  ],
+  "attempt_errors": [
+    {
+      "error": "page.waitForResponse: Timeout 120000ms exceeded while waiting for event \"response\"",
+      "recorded_at": "2026-09-28 14:10:40",
+      "note": "前次自动化等待失败，保留历史；本次从已创建报表继续。"
+    }
+  ],
+  "status": "passed"
+}

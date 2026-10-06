@@ -22,6 +22,7 @@ const contractErrorCodeSchema = z.enum([
   "QUERY_TIMEOUT",
   /** 目标数据源当前不可用或连接失败。 */
   "DATA_SOURCE_UNAVAILABLE",
+  "DATA_SOURCE_CERTIFICATE_INVALID",
   /** 请求方触发了接口或数据源的速率限制。 */
   "RATE_LIMITED",
   /** 请求引用的资源不存在。 */

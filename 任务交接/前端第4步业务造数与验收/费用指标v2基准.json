@@ -1,0 +1,258 @@
+[
+  {
+    "metric_id": "demo-outpatient-fees",
+    "version": 2,
+    "start": "2026-09-01 00:00:00",
+    "end": "2026-09-27 23:59:59",
+    "expected": [
+      {
+        "category": "材料",
+        "amount_cents": 875270
+      },
+      {
+        "category": "手术",
+        "amount_cents": 876796
+      },
+      {
+        "category": "检验",
+        "amount_cents": 917182
+      },
+      {
+        "category": "治疗",
+        "amount_cents": 906969
+      },
+      {
+        "category": "药品",
+        "amount_cents": 927500
+      },
+      {
+        "category": "其他",
+        "amount_cents": 905237
+      },
+      {
+        "category": "护理",
+        "amount_cents": 865705
+      },
+      {
+        "category": "诊察",
+        "amount_cents": 895304
+      },
+      {
+        "category": "床位",
+        "amount_cents": 869246
+      },
+      {
+        "category": "检查",
+        "amount_cents": 925349
+      }
+    ],
+    "grouped": {
+      "columns": [
+        {
+          "name": "category",
+          "data_type": "string"
+        },
+        {
+          "name": "amount_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "category": "材料",
+          "amount_cents": 875270
+        },
+        {
+          "category": "手术",
+          "amount_cents": 876796
+        },
+        {
+          "category": "检验",
+          "amount_cents": 917182
+        },
+        {
+          "category": "治疗",
+          "amount_cents": 906969
+        },
+        {
+          "category": "药品",
+          "amount_cents": 927500
+        },
+        {
+          "category": "其他",
+          "amount_cents": 905237
+        },
+        {
+          "category": "护理",
+          "amount_cents": 865705
+        },
+        {
+          "category": "诊察",
+          "amount_cents": 895304
+        },
+        {
+          "category": "床位",
+          "amount_cents": 869246
+        },
+        {
+          "category": "检查",
+          "amount_cents": 925349
+        }
+      ],
+      "row_count": 10,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 10
+      }
+    },
+    "total": {
+      "columns": [
+        {
+          "name": "amount_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "amount_cents": 8964558
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "metric_id": "demo-inpatient-fees",
+    "version": 2,
+    "start": "2026-01-01 00:00:00",
+    "end": "2026-09-27 23:59:59",
+    "expected": [
+      {
+        "category": "材料",
+        "amount_cents": 22773200
+      },
+      {
+        "category": "床位",
+        "amount_cents": 22682080
+      },
+      {
+        "category": "护理",
+        "amount_cents": 22595080
+      },
+      {
+        "category": "检查",
+        "amount_cents": 22579880
+      },
+      {
+        "category": "检验",
+        "amount_cents": 22794760
+      },
+      {
+        "category": "其他",
+        "amount_cents": 22674760
+      },
+      {
+        "category": "手术",
+        "amount_cents": 22512200
+      },
+      {
+        "category": "药品",
+        "amount_cents": 22495880
+      },
+      {
+        "category": "诊察",
+        "amount_cents": 22587760
+      },
+      {
+        "category": "治疗",
+        "amount_cents": 22620200
+      }
+    ],
+    "grouped": {
+      "columns": [
+        {
+          "name": "category",
+          "data_type": "string"
+        },
+        {
+          "name": "amount_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "category": "材料",
+          "amount_cents": 22773200
+        },
+        {
+          "category": "床位",
+          "amount_cents": 22682080
+        },
+        {
+          "category": "护理",
+          "amount_cents": 22595080
+        },
+        {
+          "category": "检查",
+          "amount_cents": 22579880
+        },
+        {
+          "category": "检验",
+          "amount_cents": 22794760
+        },
+        {
+          "category": "其他",
+          "amount_cents": 22674760
+        },
+        {
+          "category": "手术",
+          "amount_cents": 22512200
+        },
+        {
+          "category": "药品",
+          "amount_cents": 22495880
+        },
+        {
+          "category": "诊察",
+          "amount_cents": 22587760
+        },
+        {
+          "category": "治疗",
+          "amount_cents": 22620200
+        }
+      ],
+      "row_count": 10,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 10
+      }
+    },
+    "total": {
+      "columns": [
+        {
+          "name": "amount_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "amount_cents": 226315800
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  }
+]

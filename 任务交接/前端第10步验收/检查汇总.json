@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-03",
+  "api": {
+    "command": "node node_modules/vitest/vitest.mjs run",
+    "cwd": "ai-data/apps/api",
+    "files": 89,
+    "passed": 677,
+    "failed": 0
+  },
+  "contracts": {
+    "files": 27,
+    "passed": 188,
+    "failed": 0,
+    "log": "contracts-test.txt"
+  },
+  "web": {
+    "files": 32,
+    "passed": 155,
+    "failed": 0,
+    "log": "web-test.txt"
+  },
+  "engineering": {
+    "passed": 42,
+    "failed": 0,
+    "log": "engineering.txt"
+  },
+  "sql": {
+    "command": "node node_modules/vitest/vitest.mjs run tests/integration/knowledge.integration.ts tests/integration/preferences.integration.ts tests/integration/memory-events.integration.ts --config vitest.integration.config.ts",
+    "cwd": "ai-data/apps/api",
+    "files": 3,
+    "passed": 26,
+    "failed": 0
+  },
+  "dependencies_changed": 0,
+  "migrations_changed": 0,
+  "agents": 0,
+  "browser": {
+    "scenarios": 29,
+    "first_run_passed": 28,
+    "theme_recheck_passed": 1,
+    "unresolved": 0,
+    "logs": [
+      "browser-preview.txt",
+      "browser-themes.txt"
+    ]
+  },
+  "real_api_das_web": "passed",
+  "real_rj": "passed",
+  "final_lint": "passed",
+  "typecheck": "passed",
+  "build": "passed"
+}

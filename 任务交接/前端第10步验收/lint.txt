@@ -1,0 +1,6 @@
+
+D:\porject_new_2026\ai-data\ai-data\apps\web\src\features\knowledge\components\knowledge-content.vue
+  7:5  warning  Prop 'template' requires default value to be set  vue/require-default-prop
+
+✖ 1 problem (0 errors, 1 warning)
+

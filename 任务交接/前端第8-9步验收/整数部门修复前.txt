@@ -1,0 +1,36 @@
+
+ RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/api
+
+ ❯ tests/query/query-policy-authorization.test.ts (73 tests | 2 failed) 407ms
+     × 整数部门字段的 in 条件使用完整、无损转换后的范围 14ms
+     × 整数部门字段的 not_in 条件使用完整、无损转换后的范围 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/query/query-policy-authorization.test.ts > 关系查询的对象行授权 > 整数部门字段的 in 条件使用完整、无损转换后的范围
+ FAIL  tests/query/query-policy-authorization.test.ts > 关系查询的对象行授权 > 整数部门字段的 not_in 条件使用完整、无损转换后的范围
+QueryAuthorizationError: 行策略值无法表达为有效对象过滤
+ ❯ evaluateRowCondition src/query/row-policy-filters.ts:45:11
+     43|   });
+     44|   if (!evaluated.success)
+     45|     throw new QueryAuthorizationError("行策略值无法表达为有效对象过滤", "POLICY_REJEC…
+       |           ^
+     46|   return evaluated.data;
+     47| }
+ ❯ src/query/row-policy-filters.ts:62:12
+ ❯ buildObjectFilters src/query/row-policy-filters.ts:58:31
+ ❯ authorizeObject src/query/relational-authorization.ts:76:21
+ ❯ authorizeRelationalQuery src/query/relational-authorization.ts:81:30
+ ❯ QueryAuthorizationService.preview src/query/query-authorization-service.ts:83:22
+ ❯ QueryAuthorizationService.authorize src/query/query-authorization-service.ts:38:53
+ ❯ authorize tests/query/query-policy-authorization.test.ts:147:18
+ ❯ tests/query/query-policy-authorization.test.ts:520:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 71 passed (73)
+   Start at  21:49:15
+   Duration  4.16s (transform 1.04s, setup 0ms, import 3.13s, tests 407ms, environment 0ms)
+

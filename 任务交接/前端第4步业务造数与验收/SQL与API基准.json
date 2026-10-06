@@ -1,0 +1,1813 @@
+[
+  {
+    "name": "门诊科室人次及患者去重",
+    "sql": "SELECT d.name AS department,COUNT(DISTINCT v.visit_id) AS visits,COUNT(DISTINCT v.patient_id) AS patients FROM dbo.visits v JOIN dbo.departments d ON d.department_id=v.department_id WHERE v.status='completed' AND v.visited_at BETWEEN '2026-09-01' AND '2026-09-27 23:59:59' GROUP BY d.name",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.visits",
+        "alias": "v"
+      },
+      "select": [
+        {
+          "field": "d.name",
+          "as": "department"
+        },
+        {
+          "field": "v.visit_id",
+          "as": "visits",
+          "aggregation": "count_distinct"
+        },
+        {
+          "field": "v.patient_id",
+          "as": "patients",
+          "aggregation": "count_distinct"
+        }
+      ],
+      "joins": [
+        {
+          "object_id": "table.dbo.departments",
+          "alias": "d",
+          "type": "inner",
+          "on": [
+            {
+              "left": "v.department_id",
+              "op": "eq",
+              "right": "d.department_id"
+            }
+          ]
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "v.visited_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-09-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          },
+          {
+            "field": "v.status",
+            "op": "eq",
+            "data_type": "string",
+            "value": "completed"
+          }
+        ]
+      },
+      "group_by": [
+        "d.name"
+      ]
+    },
+    "expected": [
+      {
+        "department": "产科",
+        "visits": 60,
+        "patients": 60
+      },
+      {
+        "department": "儿科",
+        "visits": 40,
+        "patients": 40
+      },
+      {
+        "department": "耳鼻喉科",
+        "visits": 40,
+        "patients": 40
+      },
+      {
+        "department": "妇科",
+        "visits": 40,
+        "patients": 40
+      },
+      {
+        "department": "骨科",
+        "visits": 40,
+        "patients": 40
+      },
+      {
+        "department": "呼吸科",
+        "visits": 60,
+        "patients": 60
+      },
+      {
+        "department": "康复科",
+        "visits": 40,
+        "patients": 40
+      },
+      {
+        "department": "口腔科",
+        "visits": 41,
+        "patients": 41
+      },
+      {
+        "department": "泌尿科",
+        "visits": 60,
+        "patients": 60
+      },
+      {
+        "department": "内科",
+        "visits": 40,
+        "patients": 40
+      },
+      {
+        "department": "皮肤科",
+        "visits": 40,
+        "patients": 40
+      },
+      {
+        "department": "神经内科",
+        "visits": 40,
+        "patients": 40
+      },
+      {
+        "department": "外科",
+        "visits": 40,
+        "patients": 40
+      },
+      {
+        "department": "消化科",
+        "visits": 61,
+        "patients": 61
+      },
+      {
+        "department": "心内科",
+        "visits": 40,
+        "patients": 40
+      },
+      {
+        "department": "眼科",
+        "visits": 40,
+        "patients": 40
+      },
+      {
+        "department": "中医科",
+        "visits": 41,
+        "patients": 41
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "department",
+          "data_type": "string"
+        },
+        {
+          "name": "visits",
+          "data_type": "integer"
+        },
+        {
+          "name": "patients",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "department": "产科",
+          "visits": 60,
+          "patients": 60
+        },
+        {
+          "department": "儿科",
+          "visits": 40,
+          "patients": 40
+        },
+        {
+          "department": "耳鼻喉科",
+          "visits": 40,
+          "patients": 40
+        },
+        {
+          "department": "妇科",
+          "visits": 40,
+          "patients": 40
+        },
+        {
+          "department": "骨科",
+          "visits": 40,
+          "patients": 40
+        },
+        {
+          "department": "呼吸科",
+          "visits": 60,
+          "patients": 60
+        },
+        {
+          "department": "康复科",
+          "visits": 40,
+          "patients": 40
+        },
+        {
+          "department": "口腔科",
+          "visits": 41,
+          "patients": 41
+        },
+        {
+          "department": "泌尿科",
+          "visits": 60,
+          "patients": 60
+        },
+        {
+          "department": "内科",
+          "visits": 40,
+          "patients": 40
+        },
+        {
+          "department": "皮肤科",
+          "visits": 40,
+          "patients": 40
+        },
+        {
+          "department": "神经内科",
+          "visits": 40,
+          "patients": 40
+        },
+        {
+          "department": "外科",
+          "visits": 40,
+          "patients": 40
+        },
+        {
+          "department": "消化科",
+          "visits": 61,
+          "patients": 61
+        },
+        {
+          "department": "心内科",
+          "visits": 40,
+          "patients": 40
+        },
+        {
+          "department": "眼科",
+          "visits": 40,
+          "patients": 40
+        },
+        {
+          "department": "中医科",
+          "visits": 41,
+          "patients": 41
+        }
+      ],
+      "row_count": 17,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 17
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "挂号与就诊 LEFT JOIN",
+    "sql": "SELECT COUNT(DISTINCT r.registration_id) AS registrations,COUNT(DISTINCT v.visit_id) AS visits FROM dbo.registrations r LEFT JOIN dbo.visits v ON v.registration_id=r.registration_id",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.registrations",
+        "alias": "r"
+      },
+      "select": [
+        {
+          "field": "r.registration_id",
+          "as": "registrations",
+          "aggregation": "count_distinct"
+        },
+        {
+          "field": "v.visit_id",
+          "as": "visits",
+          "aggregation": "count_distinct"
+        }
+      ],
+      "joins": [
+        {
+          "object_id": "table.dbo.visits",
+          "alias": "v",
+          "type": "left",
+          "on": [
+            {
+              "left": "r.registration_id",
+              "op": "eq",
+              "right": "v.registration_id"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": [
+      {
+        "registrations": 30000,
+        "visits": 24000
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "registrations",
+          "data_type": "integer"
+        },
+        {
+          "name": "visits",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "registrations": 30000,
+          "visits": 24000
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "诊断与费用多明细关联去重",
+    "sql": "SELECT COUNT(DISTINCT v.visit_id) AS visits FROM dbo.visits v JOIN dbo.visit_diagnoses d ON d.visit_id=v.visit_id JOIN dbo.outpatient_charge_details f ON f.visit_id=v.visit_id",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.visits",
+        "alias": "v"
+      },
+      "select": [
+        {
+          "field": "v.visit_id",
+          "as": "visits",
+          "aggregation": "count_distinct"
+        }
+      ],
+      "joins": [
+        {
+          "object_id": "table.dbo.visit_diagnoses",
+          "alias": "d",
+          "type": "inner",
+          "on": [
+            {
+              "left": "v.visit_id",
+              "op": "eq",
+              "right": "d.visit_id"
+            }
+          ]
+        },
+        {
+          "object_id": "table.dbo.outpatient_charge_details",
+          "alias": "f",
+          "type": "inner",
+          "on": [
+            {
+              "left": "v.visit_id",
+              "op": "eq",
+              "right": "f.visit_id"
+            }
+          ]
+        }
+      ]
+    },
+    "expected": [
+      {
+        "visits": 24000
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "visits",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "visits": 24000
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "住院入院人次",
+    "sql": "SELECT COUNT(DISTINCT admission_id) AS admissions FROM dbo.admissions WHERE admitted_at BETWEEN '2026-09-01' AND '2026-09-27 23:59:59'",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.admissions",
+        "alias": "a"
+      },
+      "select": [
+        {
+          "field": "a.admission_id",
+          "as": "admissions",
+          "aggregation": "count_distinct"
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "a.admitted_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-09-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          }
+        ]
+      }
+    },
+    "expected": [
+      {
+        "admissions": 40
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "admissions",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "admissions": 40
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "住院出院人次",
+    "sql": "SELECT COUNT(DISTINCT admission_id) AS discharges FROM dbo.admissions WHERE discharged_at BETWEEN '2026-09-01' AND '2026-09-27 23:59:59'",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.admissions",
+        "alias": "a"
+      },
+      "select": [
+        {
+          "field": "a.admission_id",
+          "as": "discharges",
+          "aggregation": "count_distinct"
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "a.discharged_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-09-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          }
+        ]
+      }
+    },
+    "expected": [
+      {
+        "discharges": 0
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "discharges",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "discharges": 0
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "指定时间在院人次",
+    "sql": "SELECT COUNT(DISTINCT admission_id) AS inpatients FROM dbo.admissions WHERE admitted_at<='2026-09-27 18:00:00' AND (discharged_at IS NULL OR discharged_at>'2026-09-27 18:00:00')",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.admissions",
+        "alias": "a"
+      },
+      "select": [
+        {
+          "field": "a.admission_id",
+          "as": "inpatients",
+          "aggregation": "count_distinct"
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "a.admitted_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "1900-01-01 00:00:00",
+              "2026-09-27 18:00:00"
+            ]
+          },
+          {
+            "logic": "or",
+            "items": [
+              {
+                "field": "a.discharged_at",
+                "op": "is_null",
+                "data_type": "datetime"
+              },
+              {
+                "field": "a.discharged_at",
+                "op": "between",
+                "data_type": "datetime",
+                "value": [
+                  "2026-09-27 18:00:01",
+                  "9999-12-31 23:59:59"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "expected": [
+      {
+        "inpatients": 200
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "inpatients",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "inpatients": 200
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "住院费用分类与冲销",
+    "sql": "SELECT c.name AS category,SUM(f.amount_cents) AS amount_cents FROM dbo.inpatient_charge_details f JOIN dbo.charge_items i ON i.item_id=f.item_id JOIN dbo.charge_categories c ON c.category_id=i.category_id WHERE f.charged_at BETWEEN '2026-01-01' AND '2026-09-27 23:59:59' GROUP BY c.name",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.inpatient_charge_details",
+        "alias": "f"
+      },
+      "select": [
+        {
+          "field": "c.name",
+          "as": "category"
+        },
+        {
+          "field": "f.amount_cents",
+          "as": "amount_cents",
+          "aggregation": "sum"
+        }
+      ],
+      "joins": [
+        {
+          "object_id": "table.dbo.charge_items",
+          "alias": "i",
+          "type": "inner",
+          "on": [
+            {
+              "left": "f.item_id",
+              "op": "eq",
+              "right": "i.item_id"
+            }
+          ]
+        },
+        {
+          "object_id": "table.dbo.charge_categories",
+          "alias": "c",
+          "type": "inner",
+          "on": [
+            {
+              "left": "i.category_id",
+              "op": "eq",
+              "right": "c.category_id"
+            }
+          ]
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "f.charged_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-01-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          }
+        ]
+      },
+      "group_by": [
+        "c.name"
+      ]
+    },
+    "expected": [
+      {
+        "category": "材料",
+        "amount_cents": 22773200
+      },
+      {
+        "category": "床位",
+        "amount_cents": 22682080
+      },
+      {
+        "category": "护理",
+        "amount_cents": 22595080
+      },
+      {
+        "category": "检查",
+        "amount_cents": 22579880
+      },
+      {
+        "category": "检验",
+        "amount_cents": 22794760
+      },
+      {
+        "category": "其他",
+        "amount_cents": 22674760
+      },
+      {
+        "category": "手术",
+        "amount_cents": 22512200
+      },
+      {
+        "category": "药品",
+        "amount_cents": 22495880
+      },
+      {
+        "category": "诊察",
+        "amount_cents": 22587760
+      },
+      {
+        "category": "治疗",
+        "amount_cents": 22620200
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "category",
+          "data_type": "string"
+        },
+        {
+          "name": "amount_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "category": "材料",
+          "amount_cents": 22773200
+        },
+        {
+          "category": "床位",
+          "amount_cents": 22682080
+        },
+        {
+          "category": "护理",
+          "amount_cents": 22595080
+        },
+        {
+          "category": "检查",
+          "amount_cents": 22579880
+        },
+        {
+          "category": "检验",
+          "amount_cents": 22794760
+        },
+        {
+          "category": "其他",
+          "amount_cents": 22674760
+        },
+        {
+          "category": "手术",
+          "amount_cents": 22512200
+        },
+        {
+          "category": "药品",
+          "amount_cents": 22495880
+        },
+        {
+          "category": "诊察",
+          "amount_cents": 22587760
+        },
+        {
+          "category": "治疗",
+          "amount_cents": 22620200
+        }
+      ],
+      "row_count": 10,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 10
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "预交金台账收支与抵扣",
+    "sql": "SELECT kind,SUM(amount_cents) AS amount_cents FROM dbo.inpatient_deposit_transactions GROUP BY kind",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.inpatient_deposit_transactions",
+        "alias": "t"
+      },
+      "select": [
+        {
+          "field": "t.kind",
+          "as": "kind"
+        },
+        {
+          "field": "t.amount_cents",
+          "as": "amount_cents",
+          "aggregation": "sum"
+        }
+      ],
+      "group_by": [
+        "t.kind"
+      ]
+    },
+    "expected": [
+      {
+        "kind": "receive",
+        "amount_cents": 198843320
+      },
+      {
+        "kind": "return",
+        "amount_cents": -1000000
+      },
+      {
+        "kind": "apply",
+        "amount_cents": -197843320
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "kind",
+          "data_type": "string"
+        },
+        {
+          "name": "amount_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "kind": "receive",
+          "amount_cents": 198843320
+        },
+        {
+          "kind": "return",
+          "amount_cents": -1000000
+        },
+        {
+          "kind": "apply",
+          "amount_cents": -197843320
+        }
+      ],
+      "row_count": 3,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 3
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "空时间范围",
+    "sql": "SELECT visit_id FROM dbo.visits WHERE visited_at<'2024-01-01'",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.visits",
+        "alias": "v"
+      },
+      "select": [
+        {
+          "field": "v.visit_id",
+          "as": "visit_id"
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "v.visited_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "1900-01-01 00:00:00",
+              "2023-12-31 23:59:59"
+            ]
+          }
+        ]
+      }
+    },
+    "expected": [],
+    "result": {
+      "columns": [
+        {
+          "name": "visit_id",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [],
+      "row_count": 0,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 0
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "outpatient settlements 独立时间与金额",
+    "sql": "SELECT SUM(fee_cents) AS fee_cents,SUM(discount_cents) AS discount_cents,SUM(due_cents) AS due_cents,SUM(patient_due_cents) AS patient_due_cents,SUM(insurance_due_cents) AS insurance_due_cents,SUM(deposit_applied_cents) AS deposit_applied_cents,SUM(unpaid_cents) AS unpaid_cents FROM dbo.outpatient_settlements WHERE settled_at BETWEEN '2026-09-01' AND '2026-09-27 23:59:59'",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.outpatient_settlements",
+        "alias": "t"
+      },
+      "select": [
+        {
+          "field": "t.fee_cents",
+          "as": "fee_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.discount_cents",
+          "as": "discount_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.due_cents",
+          "as": "due_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.patient_due_cents",
+          "as": "patient_due_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.insurance_due_cents",
+          "as": "insurance_due_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.deposit_applied_cents",
+          "as": "deposit_applied_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.unpaid_cents",
+          "as": "unpaid_cents",
+          "aggregation": "sum"
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "t.settled_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-09-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          }
+        ]
+      }
+    },
+    "expected": [
+      {
+        "fee_cents": 8230488,
+        "discount_cents": 14100,
+        "due_cents": 8216388,
+        "patient_due_cents": 7351134,
+        "insurance_due_cents": 865254,
+        "deposit_applied_cents": 0,
+        "unpaid_cents": 113080
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "fee_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "discount_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "due_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "patient_due_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "insurance_due_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "deposit_applied_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "unpaid_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "fee_cents": 8230488,
+          "discount_cents": 14100,
+          "due_cents": 8216388,
+          "patient_due_cents": 7351134,
+          "insurance_due_cents": 865254,
+          "deposit_applied_cents": 0,
+          "unpaid_cents": 113080
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "outpatient payments 独立时间与金额",
+    "sql": "SELECT SUM(amount_cents) AS amount_cents FROM dbo.outpatient_payments WHERE paid_at BETWEEN '2026-09-01' AND '2026-09-27 23:59:59'",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.outpatient_payments",
+        "alias": "t"
+      },
+      "select": [
+        {
+          "field": "t.amount_cents",
+          "as": "amount_cents",
+          "aggregation": "sum"
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "t.paid_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-09-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          }
+        ]
+      }
+    },
+    "expected": [
+      {
+        "amount_cents": 8159631
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "amount_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "amount_cents": 8159631
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "outpatient refunds 独立时间与金额",
+    "sql": "SELECT SUM(amount_cents) AS amount_cents FROM dbo.outpatient_refunds WHERE refunded_at BETWEEN '2026-09-01' AND '2026-09-27 23:59:59'",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.outpatient_refunds",
+        "alias": "t"
+      },
+      "select": [
+        {
+          "field": "t.amount_cents",
+          "as": "amount_cents",
+          "aggregation": "sum"
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "t.refunded_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-09-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          }
+        ]
+      }
+    },
+    "expected": [
+      {
+        "amount_cents": 8200
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "amount_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "amount_cents": 8200
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "inpatient settlements 独立时间与金额",
+    "sql": "SELECT SUM(fee_cents) AS fee_cents,SUM(discount_cents) AS discount_cents,SUM(due_cents) AS due_cents,SUM(patient_due_cents) AS patient_due_cents,SUM(insurance_due_cents) AS insurance_due_cents,SUM(deposit_applied_cents) AS deposit_applied_cents,SUM(unpaid_cents) AS unpaid_cents FROM dbo.inpatient_settlements WHERE settled_at BETWEEN '2026-09-01' AND '2026-09-27 23:59:59'",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.inpatient_settlements",
+        "alias": "t"
+      },
+      "select": [
+        {
+          "field": "t.fee_cents",
+          "as": "fee_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.discount_cents",
+          "as": "discount_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.due_cents",
+          "as": "due_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.patient_due_cents",
+          "as": "patient_due_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.insurance_due_cents",
+          "as": "insurance_due_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.deposit_applied_cents",
+          "as": "deposit_applied_cents",
+          "aggregation": "sum"
+        },
+        {
+          "field": "t.unpaid_cents",
+          "as": "unpaid_cents",
+          "aggregation": "sum"
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "t.settled_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-09-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          }
+        ]
+      }
+    },
+    "expected": [
+      {
+        "fee_cents": 6695400,
+        "discount_cents": 800,
+        "due_cents": 6694600,
+        "patient_due_cents": 6694600,
+        "insurance_due_cents": 0,
+        "deposit_applied_cents": 2231528,
+        "unpaid_cents": 1673640
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "fee_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "discount_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "due_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "patient_due_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "insurance_due_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "deposit_applied_cents",
+          "data_type": "integer"
+        },
+        {
+          "name": "unpaid_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "fee_cents": 6695400,
+          "discount_cents": 800,
+          "due_cents": 6694600,
+          "patient_due_cents": 6694600,
+          "insurance_due_cents": 0,
+          "deposit_applied_cents": 2231528,
+          "unpaid_cents": 1673640
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "inpatient payments 独立时间与金额",
+    "sql": "SELECT SUM(amount_cents) AS amount_cents FROM dbo.inpatient_payments WHERE paid_at BETWEEN '2026-09-01' AND '2026-09-27 23:59:59'",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.inpatient_payments",
+        "alias": "t"
+      },
+      "select": [
+        {
+          "field": "t.amount_cents",
+          "as": "amount_cents",
+          "aggregation": "sum"
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "t.paid_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-09-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          }
+        ]
+      }
+    },
+    "expected": [
+      {
+        "amount_cents": 2789432
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "amount_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "amount_cents": 2789432
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "inpatient refunds 独立时间与金额",
+    "sql": "SELECT SUM(amount_cents) AS amount_cents FROM dbo.inpatient_refunds WHERE refunded_at BETWEEN '2026-09-01' AND '2026-09-27 23:59:59'",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.inpatient_refunds",
+        "alias": "t"
+      },
+      "select": [
+        {
+          "field": "t.amount_cents",
+          "as": "amount_cents",
+          "aggregation": "sum"
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "t.refunded_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-09-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          }
+        ]
+      }
+    },
+    "expected": [
+      {
+        "amount_cents": null
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "amount_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "amount_cents": null
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "挂号时间口径与跨日就诊",
+    "sql": "SELECT COUNT(DISTINCT v.visit_id) AS visits FROM dbo.visits v JOIN dbo.registrations r ON r.registration_id=v.registration_id WHERE r.registered_at BETWEEN '2026-09-01' AND '2026-09-27 23:59:59' AND v.status='completed'",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.visits",
+        "alias": "v"
+      },
+      "select": [
+        {
+          "field": "v.visit_id",
+          "as": "visits",
+          "aggregation": "count_distinct"
+        }
+      ],
+      "joins": [
+        {
+          "object_id": "table.dbo.registrations",
+          "alias": "r",
+          "type": "inner",
+          "on": [
+            {
+              "left": "v.registration_id",
+              "op": "eq",
+              "right": "r.registration_id"
+            }
+          ]
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "r.registered_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-09-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          },
+          {
+            "field": "v.status",
+            "op": "eq",
+            "data_type": "string",
+            "value": "completed"
+          }
+        ]
+      }
+    },
+    "expected": [
+      {
+        "visits": 760
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "visits",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "visits": 760
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "全期门诊复诊与跨科室患者去重",
+    "sql": "SELECT COUNT(DISTINCT visit_id) AS visits,COUNT(DISTINCT patient_id) AS patients FROM dbo.visits",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.visits",
+        "alias": "v"
+      },
+      "select": [
+        {
+          "field": "v.visit_id",
+          "as": "visits",
+          "aggregation": "count_distinct"
+        },
+        {
+          "field": "v.patient_id",
+          "as": "patients",
+          "aggregation": "count_distinct"
+        }
+      ]
+    },
+    "expected": [
+      {
+        "visits": 24000,
+        "patients": 15000
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "visits",
+          "data_type": "integer"
+        },
+        {
+          "name": "patients",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "visits": 24000,
+          "patients": 15000
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "门诊费用分类与冲销",
+    "sql": "SELECT c.name AS category,SUM(f.amount_cents) AS amount_cents FROM dbo.outpatient_charge_details f JOIN dbo.charge_items i ON i.item_id=f.item_id JOIN dbo.charge_categories c ON c.category_id=i.category_id WHERE f.charged_at BETWEEN '2026-09-01' AND '2026-09-27 23:59:59' GROUP BY c.name",
+    "query": {
+      "type": "relational_query",
+      "source_id": "clinical-demo",
+      "from": {
+        "object_id": "table.dbo.outpatient_charge_details",
+        "alias": "f"
+      },
+      "select": [
+        {
+          "field": "c.name",
+          "as": "category"
+        },
+        {
+          "field": "f.amount_cents",
+          "as": "amount_cents",
+          "aggregation": "sum"
+        }
+      ],
+      "joins": [
+        {
+          "object_id": "table.dbo.charge_items",
+          "alias": "i",
+          "type": "inner",
+          "on": [
+            {
+              "left": "f.item_id",
+              "op": "eq",
+              "right": "i.item_id"
+            }
+          ]
+        },
+        {
+          "object_id": "table.dbo.charge_categories",
+          "alias": "c",
+          "type": "inner",
+          "on": [
+            {
+              "left": "i.category_id",
+              "op": "eq",
+              "right": "c.category_id"
+            }
+          ]
+        }
+      ],
+      "filters": {
+        "logic": "and",
+        "items": [
+          {
+            "field": "f.charged_at",
+            "op": "between",
+            "data_type": "datetime",
+            "value": [
+              "2026-09-01 00:00:00",
+              "2026-09-27 23:59:59"
+            ]
+          }
+        ]
+      },
+      "group_by": [
+        "c.name"
+      ]
+    },
+    "expected": [
+      {
+        "category": "材料",
+        "amount_cents": 875270
+      },
+      {
+        "category": "手术",
+        "amount_cents": 876796
+      },
+      {
+        "category": "检验",
+        "amount_cents": 917182
+      },
+      {
+        "category": "治疗",
+        "amount_cents": 906969
+      },
+      {
+        "category": "药品",
+        "amount_cents": 927500
+      },
+      {
+        "category": "其他",
+        "amount_cents": 905237
+      },
+      {
+        "category": "护理",
+        "amount_cents": 865705
+      },
+      {
+        "category": "诊察",
+        "amount_cents": 895304
+      },
+      {
+        "category": "床位",
+        "amount_cents": 869246
+      },
+      {
+        "category": "检查",
+        "amount_cents": 925349
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "category",
+          "data_type": "string"
+        },
+        {
+          "name": "amount_cents",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "category": "材料",
+          "amount_cents": 875270
+        },
+        {
+          "category": "手术",
+          "amount_cents": 876796
+        },
+        {
+          "category": "检验",
+          "amount_cents": 917182
+        },
+        {
+          "category": "治疗",
+          "amount_cents": 906969
+        },
+        {
+          "category": "药品",
+          "amount_cents": 927500
+        },
+        {
+          "category": "其他",
+          "amount_cents": 905237
+        },
+        {
+          "category": "护理",
+          "amount_cents": 865705
+        },
+        {
+          "category": "诊察",
+          "amount_cents": 895304
+        },
+        {
+          "category": "床位",
+          "amount_cents": 869246
+        },
+        {
+          "category": "检查",
+          "amount_cents": 925349
+        }
+      ],
+      "row_count": 10,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 10
+      }
+    },
+    "passed": true
+  },
+  {
+    "name": "真实 SQL 限额与截断",
+    "passed": true,
+    "rows": 100
+  },
+  {
+    "name": "科室行权限与患者对象拒绝",
+    "passed": true,
+    "expected": [
+      {
+        "department_id": 1,
+        "visits": 1412
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "department_id",
+          "data_type": "integer"
+        },
+        {
+          "name": "visits",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "department_id": 1,
+          "visits": 1412
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    }
+  },
+  {
+    "name": "admissions 科室行权限",
+    "passed": true,
+    "sql": "SELECT department_id,COUNT(*) AS records FROM dbo.admissions WHERE department_id=1 GROUP BY department_id",
+    "expected": [
+      {
+        "department_id": 1,
+        "records": 334
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "department_id",
+          "data_type": "integer"
+        },
+        {
+          "name": "records",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "department_id": 1,
+          "records": 334
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    }
+  },
+  {
+    "name": "inpatient_stays 科室行权限",
+    "passed": true,
+    "sql": "SELECT department_id,COUNT(*) AS records FROM dbo.inpatient_stays WHERE department_id=1 GROUP BY department_id",
+    "expected": [
+      {
+        "department_id": 1,
+        "records": 543
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "department_id",
+          "data_type": "integer"
+        },
+        {
+          "name": "records",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "department_id": 1,
+          "records": 543
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    }
+  },
+  {
+    "name": "inpatient_charge_details 科室行权限",
+    "passed": true,
+    "sql": "SELECT department_id,COUNT(*) AS records FROM dbo.inpatient_charge_details WHERE department_id=1 GROUP BY department_id",
+    "expected": [
+      {
+        "department_id": 1,
+        "records": 15030
+      }
+    ],
+    "result": {
+      "columns": [
+        {
+          "name": "department_id",
+          "data_type": "integer"
+        },
+        {
+          "name": "records",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "department_id": 1,
+          "records": 15030
+        }
+      ],
+      "row_count": 1,
+      "truncated": false,
+      "delivery": {
+        "status": "complete",
+        "total_row_count": 1
+      }
+    }
+  }
+]

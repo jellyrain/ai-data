@@ -21,6 +21,12 @@ function requireCatalogAdmin(context: AuthContext): void {
 class CatalogAdminService {
   constructor(private readonly dependencies: CatalogAdminDependencies) {}
 
+  /** 当前规则包含早期初始化数据，不能仅依赖已有审计版本。 */
+  async currentState(context: AuthContext, sourceId: string, roleId: string) {
+    requireCatalogAdmin(context);
+    return this.dependencies.repository.currentState(context.organizationId, sourceId, roleId);
+  }
+
   /** 对象权限经共享合同和当前目录校验后写入事务版本。 */
   async saveObjectPermission(
     context: AuthContext,

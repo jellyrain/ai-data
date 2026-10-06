@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { saveUserPreferenceInputSchema } from "@ai-data/contracts";
 import type { ApiAuthService } from "../app-types";
 import type { PreferenceService } from "../preferences/preference-service";
@@ -32,29 +32,38 @@ const autoApplySchema = mutationSchema.extend({ auto_apply: z.boolean() }).stric
 /** 当前账号偏好的 HTTP 管理边界，直接用户操作由此赋予可信 user 来源。 */
 function registerPreferenceRoutes(
   app: FastifyInstance,
-  auth: Pick<ApiAuthService, "loadContext">,
+  auth: Pick<ApiAuthService, "loadContext" | "refreshContext">,
   service: Pick<
     PreferenceService,
-    "list" | "listPendingConfirmations" | "get" | "save" | "delete" | "setAutoApply"
+    "editState" | "list" | "listPendingConfirmations" | "get" | "save" | "delete" | "setAutoApply"
   >,
 ): void {
-  app.get("/me/preferences", async (request) => {
-    const context = await auth.loadContext(bearerToken(request));
+  const currentContext = async (request: FastifyRequest, reply: FastifyReply) => {
+    reply.header("cache-control", "no-store");
+    return auth.refreshContext(await auth.loadContext(bearerToken(request)));
+  };
+  app.get("/me/preferences/:key/edit-state", async (request, reply) => {
+    const context = await currentContext(request, reply);
+    querySchema.parse(request.query);
+    return service.editState(context, paramsSchema.parse(request.params).key);
+  });
+  app.get("/me/preferences", async (request, reply) => {
+    const context = await currentContext(request, reply);
     querySchema.parse(request.query);
     return { items: await service.list(context) };
   });
-  app.get("/me/preferences/:key", async (request) => {
-    const context = await auth.loadContext(bearerToken(request));
+  app.get("/me/preferences/:key", async (request, reply) => {
+    const context = await currentContext(request, reply);
     querySchema.parse(request.query);
     return service.get(context, paramsSchema.parse(request.params).key);
   });
-  app.get("/me/preferences/confirmations", async (request) => {
-    const context = await auth.loadContext(bearerToken(request));
+  app.get("/me/preferences/confirmations", async (request, reply) => {
+    const context = await currentContext(request, reply);
     querySchema.parse(request.query);
     return { items: await service.listPendingConfirmations(context) };
   });
-  app.put("/me/preferences/:key", async (request) => {
-    const context = await auth.loadContext(bearerToken(request));
+  app.put("/me/preferences/:key", async (request, reply) => {
+    const context = await currentContext(request, reply);
     querySchema.parse(request.query);
     const input = saveUserPreferenceInputSchema.parse({
       ...saveBodySchema.parse(request.body),
@@ -63,7 +72,7 @@ function registerPreferenceRoutes(
     return service.save(context, input, { origin: "user" });
   });
   app.delete("/me/preferences/:key", async (request, reply) => {
-    const context = await auth.loadContext(bearerToken(request));
+    const context = await currentContext(request, reply);
     querySchema.parse(request.query);
     await service.delete(
       context,
@@ -72,8 +81,8 @@ function registerPreferenceRoutes(
     );
     return reply.code(204).send();
   });
-  app.patch("/me/preferences/:key/auto-apply", async (request) => {
-    const context = await auth.loadContext(bearerToken(request));
+  app.patch("/me/preferences/:key/auto-apply", async (request, reply) => {
+    const context = await currentContext(request, reply);
     querySchema.parse(request.query);
     return service.setAutoApply(
       context,

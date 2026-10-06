@@ -106,6 +106,7 @@ class ReportQueryService {
     }
     const definition = reportDefinitionSchema.parse({
       title: snapshot.title,
+      description: snapshot.description,
       queries,
       presentation: snapshot.sections.map((section) => ({
         ...section,

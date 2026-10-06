@@ -9,6 +9,7 @@ import type {
 } from "./catalog-types";
 import { resolveParameterDefinitions } from "./parameter-config";
 import { validateRelationConfig, validateUniqueKeys } from "./relation-config";
+import { requireCatalogAdmin } from "../catalog-admin/catalog-admin-service";
 
 /** 用户目录中一个可用数据集与其有效行策略。 */
 type AuthorizedDataset = {
@@ -31,6 +32,25 @@ class BusinessCatalogService {
     private readonly configRepository: ApiDatasetConfigRepository,
     private readonly permissionRepository: CatalogPermissionRepository,
   ) {}
+
+  /** 目录管理按完整 DAS 白名单读取，普通业务目录仍走用户授权。 */
+  async listManaged(context: AuthContext, sourceId: string): Promise<Dataset[]> {
+    requireCatalogAdmin(context);
+    return this.rawCatalog.listRawCatalog(sourceId);
+  }
+
+  /** 配置读取前后复核单调版本，关系发布同样会推进该基准。 */
+  async managedDetail(context: AuthContext, sourceId: string, objectId: string) {
+    const dataset = (await this.listManaged(context, sourceId)).find(
+      (item) => item.object_id === objectId,
+    );
+    if (!dataset) throw new ApplicationError("NOT_FOUND", "目录对象不存在");
+    const version = await this.getConfigVersion(sourceId, objectId);
+    const config = await this.configRepository.find(sourceId, objectId);
+    if (version !== (await this.getConfigVersion(sourceId, objectId)))
+      throw new ApplicationError("CONFLICT", "目录配置已更新，请重新读取");
+    return { dataset, config, config_version: version };
+  }
 
   /** 返回当前身份可见的一个数据源业务目录。 */
   async listAuthorized(context: AuthContext, sourceId: string): Promise<AuthorizedDataset[]> {
@@ -109,10 +129,20 @@ class BusinessCatalogService {
     query: string,
     limit: number,
   ): Promise<AuthorizedDataset[]> {
-    const keyword = query.trim().toLocaleLowerCase();
+    const keywords = [...new Set(query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean))];
     return (await this.listAuthorized(context, sourceId))
-      .filter((item) => catalogSearchText(item.dataset).includes(keyword))
-      .slice(0, limit);
+      .map((item) => ({
+        item,
+        score: keywords.filter((keyword) => catalogSearchText(item.dataset).includes(keyword))
+          .length,
+      }))
+      .filter((entry) => !keywords.length || entry.score > 0)
+      .sort(
+        (a, b) =>
+          b.score - a.score || a.item.dataset.object_id.localeCompare(b.item.dataset.object_id),
+      )
+      .slice(0, limit)
+      .map((entry) => entry.item);
   }
 
   /** 保存管理员业务配置前，检查说明、字段策略和批准关联引用的对象与列是否存在。 */

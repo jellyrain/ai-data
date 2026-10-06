@@ -1,0 +1,115 @@
+{
+  "runtime_version": "0.154.0",
+  "source": "本机 codex.exe app-server generate-json-schema",
+  "delta": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "properties": {
+      "delta": {
+        "type": "string"
+      },
+      "itemId": {
+        "type": "string"
+      },
+      "threadId": {
+        "type": "string"
+      },
+      "turnId": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "delta",
+      "itemId",
+      "threadId",
+      "turnId"
+    ],
+    "title": "AgentMessageDeltaNotification",
+    "type": "object"
+  },
+  "agentMessage": {
+    "properties": {
+      "delivery": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AgentMessageDelivery"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "id": {
+        "type": "string"
+      },
+      "memoryCitation": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/MemoryCitation"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "phase": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/MessagePhase"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "questions": {
+        "default": null,
+        "items": {
+          "$ref": "#/definitions/AsyncUserInputQuestion"
+        },
+        "type": [
+          "array",
+          "null"
+        ]
+      },
+      "text": {
+        "type": "string"
+      },
+      "type": {
+        "enum": [
+          "agentMessage"
+        ],
+        "title": "AgentMessageThreadItemType",
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "text",
+      "type"
+    ],
+    "title": "AgentMessageThreadItem",
+    "type": "object"
+  },
+  "phase": {
+    "description": "Classifies an assistant message as interim commentary or final answer text.\n\nProviders do not emit this consistently, so callers must treat `None` as \"phase unknown\" and keep compatibility behavior for legacy models.",
+    "oneOf": [
+      {
+        "description": "Mid-turn assistant text (for example preamble/progress narration).\n\nAdditional tool calls or assistant output may follow before turn completion.",
+        "enum": [
+          "commentary"
+        ],
+        "type": "string"
+      },
+      {
+        "description": "The assistant's terminal answer text for the current turn.",
+        "enum": [
+          "final_answer"
+        ],
+        "type": "string"
+      }
+    ]
+  }
+}

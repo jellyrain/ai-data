@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 D:/porject_new_2026/ai-data/ai-data/apps/web
+
+
+ Test Files  30 passed (30)
+      Tests  148 passed (148)
+   Start at  21:38:34
+   Duration  72.24s (transform 1.39s, setup 0ms, import 17.12s, tests 2.08s, environment 44.80s)
+

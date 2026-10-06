@@ -2,7 +2,7 @@ import { generateKeyPairSync, randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { mkdirSync, mkdtempSync } from "node:fs";
-import { rm } from "node:fs/promises";
+import { rm, mkdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import dayjs from "dayjs";
 import Fastify, { type FastifyInstance } from "fastify";
@@ -89,6 +89,7 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
   let auditDatabase: SqlServerMetadataDatabase;
   let app: FastifyInstance;
   let runs: AnalysisRunService;
+  const executionFailures: string[] = [];
   let tools: AnalysisTools;
   let toolDependencies: ConstructorParameters<typeof AnalysisTools>[0];
   let repository: SqlRuntimeRepository;
@@ -227,6 +228,11 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
       authorization,
       client,
       refreshContext,
+    });
+    const recordFailure = runs.fail.bind(runs);
+    vi.spyOn(runs, "fail").mockImplementation(async (...args) => {
+      executionFailures.push(args[3] instanceof Error ? args[3].message : String(args[3]));
+      await recordFailure(...args);
     });
     toolDependencies = {
       skills,
@@ -595,6 +601,7 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
         protocol: "responses",
         base_url: "http://localhost/v1",
         model: "scripted",
+        context_window: 32768,
       });
       await services.agents.publish(manager, {
         agent_id: "scripted-agent",
@@ -649,7 +656,10 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
         resolveConfiguration,
       );
       await runtime.execute(restricted.context, submitted.runId);
-      expect(await runs.get(restricted.context, submitted.runId)).toMatchObject({
+      expect(
+        await runs.get(restricted.context, submitted.runId),
+        JSON.stringify(executionFailures),
+      ).toMatchObject({
         status: "completed",
         agent_id: "scripted-agent",
         agent_version: 1,
@@ -720,16 +730,33 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
       models.push(model);
       const threadIds: string[] = [];
       const attempts: { name: string; input: unknown; output: unknown }[] = [];
+      const started = Date.now();
+      const streamTiming: Record<string, unknown>[] = [];
       const harness: AnalysisHarness = {
         run: (request) =>
           model.run({
             ...request,
+            onMessage: async (event) => {
+              const received = Date.now() - started;
+              await request.onMessage?.(event);
+              streamTiming.push({
+                type: "assistant_message",
+                status: event.status,
+                phase: event.phase,
+                item_id: event.itemId,
+                characters: event.content.length,
+                received_ms: received,
+                committed_ms: Date.now() - started,
+              });
+            },
             onThreadStarted: async (id) => {
               threadIds.push(id);
               await request.onThreadStarted(id);
             },
             executeTool: async (name, input, id) => {
+              streamTiming.push({ type: "tool_start", name, elapsed_ms: Date.now() - started });
               const result = await request.executeTool(name, input, id);
+              streamTiming.push({ type: "tool_end", name, elapsed_ms: Date.now() - started });
               attempts.push({ name, input, output: result.output });
               return result;
             },
@@ -742,7 +769,32 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
       const runtime = executor(harness, instructions, resolveConfiguration);
       await runtime.execute(restricted.context, submitted.runId);
       const state = await runs.get(restricted.context, submitted.runId);
-      expect(state.status, JSON.stringify({ error: state.error, attempts })).toBe("completed");
+      const streamDirectory = fileURLToPath(
+        new URL("../../../../../任务交接/页面03-05流式验收/", import.meta.url),
+      );
+      await mkdir(streamDirectory, { recursive: true });
+      await writeFile(
+        join(streamDirectory, "真实模型流式时序.json"),
+        JSON.stringify(
+          {
+            model: provider.model,
+            status: state.status,
+            elapsed_ms: Date.now() - started,
+            streamTiming,
+          },
+          null,
+          2,
+        ),
+      );
+      expect(
+        state.status,
+        JSON.stringify({ error: state.error, attempts, executionFailures }),
+      ).toBe("completed");
+      expect(
+        streamTiming.some(
+          (event) => event.type === "assistant_message" && event.status === "delta",
+        ),
+      ).toBe(true);
       const evidence = await runs.evidence(restricted.context, submitted.runId);
       expect(evidence.length).toBeGreaterThanOrEqual(1);
       expect(

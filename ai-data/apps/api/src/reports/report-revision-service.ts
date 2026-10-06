@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import {
   reportRevisionInputSchema,
+  reportRevisionBindingSchema,
   stableStringify,
   reportNarrativeSchema,
   type RunLease,
@@ -20,6 +21,30 @@ class ReportRevisionService {
   /** 工具门禁只读取固定目标，分析说明运行的取数范围限制为该次执行。 */
   async target(context: AuthContext, runId: string) {
     return this.dependencies.repository.get(context, runId);
+  }
+
+  /** 只读恢复入口：仓储限定组织和账号，定义服务重新核对当前权限。 */
+  async binding(context: AuthContext, reportId: string, runId: string) {
+    const target = await this.dependencies.repository.get(context, runId);
+    if (
+      !target ||
+      target.mode !== "revision" ||
+      target.report_id !== reportId ||
+      target.expected_version < 1
+    )
+      throw new ApplicationError("NOT_FOUND", "报表修改任务不存在");
+    const version = await this.dependencies.definitions.get(
+      context,
+      reportId,
+      target.expected_version,
+    );
+    if (version.user_id !== context.userId || version.organization_id !== context.organizationId)
+      throw new ApplicationError("UNAUTHORIZED", "仅作者可以恢复报表修改");
+    return reportRevisionBindingSchema.parse({
+      report_id: reportId,
+      analysis_run_id: runId,
+      expected_version: target.expected_version,
+    });
   }
 
   async revise(context: AuthContext, reportId: string, input: unknown) {

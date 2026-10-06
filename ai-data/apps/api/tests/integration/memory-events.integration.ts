@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import dayjs from "dayjs";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { queryDslSchema, userPreferenceInputSchema } from "@ai-data/contracts";
+import {
+  queryDslSchema,
+  userPreferenceInputSchema,
+  publishedKnowledgeSchema,
+} from "@ai-data/contracts";
 import { SqlServerMetadataDatabase } from "@ai-data/metadata/sqlserver";
 import { apiConfigSchema } from "../../src/config/api-config";
 import { SqlAuthRepository } from "../../src/auth/sql-auth-repository";
@@ -209,6 +213,51 @@ describe("SQL Server：记忆事件事务、租约与恢复", () => {
   const month = userPreferenceInputSchema.parse({
     key: "period",
     value: { type: "time_range", range: { type: "relative", period: "this_month" } },
+  });
+  it("按需知识在同一租约中并发合并且去重，取消后拒绝迟到写入", async () => {
+    const current = await dialogue("核对正式知识");
+    await runs.recordMemoryContext(
+      context,
+      current.runId,
+      current.lease,
+      await memory.snapshot(context),
+    );
+    const rule = (id: string) =>
+      publishedKnowledgeSchema.parse({
+        knowledge_id: id,
+        version: 1,
+        organization_id: context.organizationId,
+        content: { type: "business_rule", title: id, body: "按已确认口径统计" },
+        scope: {},
+        owner_id: context.userId,
+        published_by: context.userId,
+        published_at: "2026-09-27 10:00:00",
+        effective_at: "2026-09-27 10:00:00",
+        source_candidate_id: id,
+      });
+    await Promise.all([
+      runs.recordKnowledgeContext(context, current.runId, current.lease, [rule("first")]),
+      runs.recordKnowledgeContext(context, current.runId, current.lease, [rule("second")]),
+    ]);
+    await runs.recordKnowledgeContext(context, current.runId, current.lease, [rule("first")]);
+    const read = async () => {
+      const result = await database.execute({
+        sql: "SELECT context_json FROM dbo.analysis_memory_contexts WHERE analysis_run_id=@id AND lease_epoch=@epoch",
+        parameters: [
+          { name: "id", type: "string", value: current.runId },
+          { name: "epoch", type: "integer", value: current.lease.epoch },
+        ],
+      });
+      return JSON.parse(String(result.rows[0]!.context_json))
+        .knowledge.map((item: { knowledge_id: string }) => item.knowledge_id)
+        .sort();
+    };
+    expect(await read()).toEqual(["first", "second"]);
+    await runs.cancel(context, current.runId);
+    await expect(
+      runs.recordKnowledgeContext(context, current.runId, current.lease, [rule("late")]),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(await read()).toEqual(["first", "second"]);
   });
   it("工具首次保存无需确认，同账号新会话读取，其他账号隔离", async () => {
     const first = await dialogue("以后默认按本年统计");

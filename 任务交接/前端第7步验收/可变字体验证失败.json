@@ -1,0 +1,80 @@
+{
+  "installed": [
+    {
+      "name": "exceljs",
+      "version": "4.4.0",
+      "license": "MIT"
+    },
+    {
+      "name": "docx",
+      "version": "9.7.1",
+      "license": "MIT"
+    },
+    {
+      "name": "pdfmake",
+      "version": "0.3.11",
+      "license": "MIT"
+    },
+    {
+      "name": "@types/pdfmake",
+      "version": "0.3.3",
+      "license": "MIT"
+    },
+    {
+      "name": "fflate",
+      "version": "0.8.3",
+      "license": "MIT"
+    },
+    {
+      "name": "pdfjs-dist",
+      "version": "6.3.289",
+      "license": "Apache-2.0"
+    }
+  ],
+  "dependency_scripts": [],
+  "fonts": [
+    {
+      "name": "NotoSansSC-VF.ttf",
+      "verified": true,
+      "sha256": "763146584cf0710223441356b4395e279021b0806c196614377a7a0174ae074a",
+      "bytes": 17773244
+    },
+    {
+      "name": "LICENSE",
+      "verified": true,
+      "sha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+      "bytes": 4388
+    }
+  ],
+  "checks": [
+    "Vite 独立生产构建通过",
+    {
+      "worker_generated": "兼容样例.xlsx",
+      "bytes": 6629
+    },
+    {
+      "worker_generated": "兼容样例.docx",
+      "bytes": 8680
+    },
+    {
+      "file": "兼容样例-英文.pdf",
+      "extracted_text": "Export compatibility  Cardiology   12345.67Second page",
+      "pages": 2
+    },
+    {
+      "worker_generated": "兼容样例-英文.pdf",
+      "bytes": 14887
+    }
+  ],
+  "errors": [
+    "page.evaluate: Error: First argument to DataView constructor must be an ArrayBuffer\n    at r.onmessage (http://127.0.0.1:5347/assets/compatibility-BtrXOorB.js:1:970)\n    at D:\\porject_new_2026\\ai-data\\任务交接\\前端第7步验收\\依赖兼容性验证.mjs:162:29"
+  ],
+  "resolved_dependency_count": 123,
+  "pending_builds": [],
+  "allow_builds": {
+    "esbuild": true,
+    "oracledb": true,
+    "vue-demi@0.14.10": true
+  },
+  "status": "兼容性检查失败"
+}

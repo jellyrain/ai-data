@@ -1,0 +1,307 @@
+{
+  "kind": "fees",
+  "prompt": "请查询 clinical-demo 数据源，统计2026年1月1日至9月27日的住院有效费用，按费用发生时间和费用分类汇总金额。金额字段单位是分，请在回答中换算成元，保留冲销负数。给出各分类费用和合计，并说明费用与支付流水的区别。",
+  "receipts": [
+    {
+      "message": {
+        "id": "38117578-8b1e-483e-a7a4-02697903394f",
+        "conversationId": "0edef282-d515-42c1-93ce-3c9143418e9a",
+        "role": "user",
+        "content": "请查询 clinical-demo 数据源，统计2026年1月1日至9月27日的住院有效费用，按费用发生时间和费用分类汇总金额。金额字段单位是分，请在回答中换算成元，保留冲销负数。给出各分类费用和合计，并说明费用与支付流水的区别。",
+        "sequence": 0,
+        "createdAt": "2026-09-27T10:44:56.848Z"
+      },
+      "analysisRun": {
+        "id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+        "conversationId": "0edef282-d515-42c1-93ce-3c9143418e9a",
+        "organizationId": "organization-001",
+        "userId": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+        "status": "created",
+        "errorCode": null,
+        "errorMessage": null,
+        "startedAt": null,
+        "completedAt": null,
+        "createdAt": "2026-09-27T10:44:56.848Z"
+      }
+    }
+  ],
+  "runs": [
+    {
+      "id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+      "state": {
+        "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+        "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+        "organization_id": "organization-001",
+        "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+        "agent_id": "default",
+        "agent_version": 1,
+        "status": "failed",
+        "created_at": "2026-09-27 18:44:56",
+        "updated_at": "2026-09-27 18:47:06",
+        "lease_epoch": 1,
+        "lease": null,
+        "sequence": 24,
+        "clarification": null,
+        "evidence_ids": [],
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "分析执行失败"
+        }
+      },
+      "evidence": [],
+      "events": [
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 1,
+          "lease_epoch": 1,
+          "type": "run_started"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 2,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "9d31132d94db636e6bb0b2c1279f8351b22e56ee1f78ab9c7180ce3cce36e44e",
+          "tool_name": "list_sources",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 3,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "9d31132d94db636e6bb0b2c1279f8351b22e56ee1f78ab9c7180ce3cce36e44e",
+          "tool_name": "list_sources",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 4,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "baa5e91244f26c7b7424a2e5956e3f07100e7cf62c06b4bbd79c880cf5f0010b",
+          "tool_name": "list_metrics",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 5,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "baa5e91244f26c7b7424a2e5956e3f07100e7cf62c06b4bbd79c880cf5f0010b",
+          "tool_name": "list_metrics",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 6,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "8596ef0fab4dc872bd1c4485b5313053eb8b0825723e43219f19beaaaa786c82",
+          "tool_name": "search_catalog",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 7,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "8596ef0fab4dc872bd1c4485b5313053eb8b0825723e43219f19beaaaa786c82",
+          "tool_name": "search_catalog",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 8,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "cca3b85c5a573805ed552fef5c940977a1e34b703f496ce4ac0b6bd0df7a42c2",
+          "tool_name": "list_datasets",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 9,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "cca3b85c5a573805ed552fef5c940977a1e34b703f496ce4ac0b6bd0df7a42c2",
+          "tool_name": "list_datasets",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 10,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "7dbe95e72772f9a3a3caadef378e26115f373c70fdbc588596869120df30502e",
+          "tool_name": "describe_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 11,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "7dbe95e72772f9a3a3caadef378e26115f373c70fdbc588596869120df30502e",
+          "tool_name": "describe_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 12,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "5f4f69e86d0fdd55c6a7ebbdfff60fb6b118c612d7b7cda3eff1c675ea669745",
+          "tool_name": "read_skill_reference",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 13,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "5f4f69e86d0fdd55c6a7ebbdfff60fb6b118c612d7b7cda3eff1c675ea669745",
+          "tool_name": "read_skill_reference",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 14,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "55583ef32990921862527d7da52649d06fe8cb0fc975b32c174b4a29feebf808",
+          "tool_name": "search_catalog",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 15,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "55583ef32990921862527d7da52649d06fe8cb0fc975b32c174b4a29feebf808",
+          "tool_name": "search_catalog",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 16,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "2b6251dd4268b75c1fb0639ec8e9c3c5f65384f7192a008adb159e55d8ac14fc",
+          "tool_name": "search_catalog",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 17,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "2b6251dd4268b75c1fb0639ec8e9c3c5f65384f7192a008adb159e55d8ac14fc",
+          "tool_name": "search_catalog",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 18,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "fca2385dc5dffdb4b4f544b7aed7f9ffaec5c5a5a5e67c4d471dc954aca69098",
+          "tool_name": "read_skill_reference",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 19,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "fca2385dc5dffdb4b4f544b7aed7f9ffaec5c5a5a5e67c4d471dc954aca69098",
+          "tool_name": "read_skill_reference",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 20,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "c6b01952e1e8f11f7c964f46ba68e3d0ea85de9417c35bd939c66e91906296f8",
+          "tool_name": "describe_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 21,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "c6b01952e1e8f11f7c964f46ba68e3d0ea85de9417c35bd939c66e91906296f8",
+          "tool_name": "describe_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 22,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "3f6568559e634615eefb641c6f9f59a6a94b9cd51f896e1e057464f7cba4b881",
+          "tool_name": "describe_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 23,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "3f6568559e634615eefb641c6f9f59a6a94b9cd51f896e1e057464f7cba4b881",
+          "tool_name": "describe_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0edef282-d515-42c1-93ce-3c9143418e9a",
+          "analysis_run_id": "2eabfe8a-6830-4c48-851a-631c414fc619",
+          "sequence": 24,
+          "lease_epoch": 1,
+          "type": "run_failed",
+          "code": "INTERNAL_ERROR",
+          "message": "分析执行失败"
+        }
+      ]
+    }
+  ],
+  "page_errors": [],
+  "sse": [
+    200
+  ]
+}

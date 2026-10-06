@@ -77,6 +77,10 @@ function setup() {
     },
   );
   const repository: CatalogAdminRepository = {
+    currentState: async () => ({
+      version: 0,
+      snapshot: { object_permissions: [], column_permissions: [], row_policies: [] },
+    }),
     loadRoleAuthorization: async (_org, roleId) => ({
       roles: ["clinician"],
       roleIds: [roleId],

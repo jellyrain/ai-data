@@ -152,6 +152,7 @@ const reportPresentationBlockSchema = z
 const reportDefinitionSchema = z
   .object({
     title: z.string().min(1).max(512),
+    description: z.string().max(1000).optional(),
     parameters: z.array(reportParameterSchema).max(100).default([]),
     queries: z.array(reportQueryItemSchema).min(1).max(100),
     presentation: z
@@ -261,6 +262,15 @@ const reportRevisionInputSchema = z
   })
   .strict();
 
+/** 刷新恢复由服务端核对固定报表和基准版本，客户端不能自行拼接绑定。 */
+const reportRevisionBindingSchema = z
+  .object({
+    report_id: id,
+    analysis_run_id: id,
+    expected_version: z.number().int().positive(),
+  })
+  .strict();
+
 export {
   reportParameterValueSchema,
   reportParameterSchema,
@@ -274,4 +284,5 @@ export {
   reportDefinitionVersionSchema,
   reusableReportBlockSchema,
   reportRevisionInputSchema,
+  reportRevisionBindingSchema,
 };

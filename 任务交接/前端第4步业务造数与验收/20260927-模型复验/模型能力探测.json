@@ -1,0 +1,63 @@
+{
+  "server": "http://192.168.110.208:8000",
+  "records": [
+    {
+      "path": "/v1/models",
+      "status": 200,
+      "response": {
+        "object": "list",
+        "data": [
+          {
+            "id": "rj-model-v1",
+            "object": "model",
+            "owned_by": "llamacpp",
+            "meta": {
+              "vocab_type": true,
+              "n_vocab": 248320,
+              "n_ctx": 32768,
+              "n_ctx_train": 262144,
+              "n_embd": 5120,
+              "n_params": 27320697856,
+              "size": 17912397824,
+              "ftype": "Q4_K - Small"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "path": "/props",
+      "status": 200,
+      "response": {
+        "keys": [
+          "default_generation_settings",
+          "total_slots",
+          "model_alias",
+          "model_ftype",
+          "model_path",
+          "modalities",
+          "media_marker",
+          "endpoint_slots",
+          "endpoint_props",
+          "endpoint_metrics",
+          "ui",
+          "ui_settings",
+          "chat_template",
+          "chat_template_caps",
+          "bos_token",
+          "eos_token",
+          "build_info",
+          "is_sleeping",
+          "cors_proxy_enabled"
+        ],
+        "default_generation_settings": {
+          "n_ctx": 32768
+        },
+        "total_slots": 4,
+        "model_alias": "rj-model-v1",
+        "is_sleeping": false,
+        "build_info": "b0-unknown"
+      }
+    }
+  ]
+}

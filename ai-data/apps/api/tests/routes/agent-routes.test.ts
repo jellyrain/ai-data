@@ -12,7 +12,10 @@ function setup() {
     get: vi.fn<AgentService["get"]>(async () => agentVersion),
     setEnabled: vi.fn<AgentService["setEnabled"]>(async () => {}),
   };
-  const auth = { loadContext: vi.fn(async () => agentAdmin) };
+  const auth = {
+    loadContext: vi.fn(async () => agentAdmin),
+    refreshContext: vi.fn(async () => agentAdmin),
+  };
   const app = Fastify();
   registerContractErrorHandler(app);
   registerAgentRoutes(app, auth, service);

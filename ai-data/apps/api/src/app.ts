@@ -25,6 +25,10 @@ import { registerMemoryEventRoutes } from "./routes/memory-event-routes";
 import { registerReportManagementRoutes } from "./routes/report-management-routes";
 import { registerReportExecutionRoutes } from "./routes/report-execution-routes";
 import { registerCatalogRelationRoutes } from "./routes/catalog-relation-routes";
+import { registerCatalogSourceRoutes } from "./routes/catalog-source-routes";
+import { AuthorizedSourceService } from "./catalog/authorized-source-service";
+import { registerUserAssignmentRoutes } from "./routes/user-assignment-routes";
+import { registerCatalogManagementRoutes } from "./routes/catalog-management-routes";
 
 /** 在分配应用资源前定位运行时缺失项，补充 TypeScript 无法覆盖的 JavaScript 调用入口。 */
 function validateDependencies(dependencies: ApiDependencies): void {
@@ -32,6 +36,7 @@ function validateDependencies(dependencies: ApiDependencies): void {
     config: dependencies.config,
     metadataDatabase: dependencies.metadataDatabase,
     auth: dependencies.auth,
+    userAdmin: dependencies.userAdmin,
     conversations: dependencies.conversations,
     "agentConfiguration.agents": dependencies.agentConfiguration?.agents,
     "agentConfiguration.models": dependencies.agentConfiguration?.models,
@@ -91,11 +96,18 @@ async function createApp(dependencies: ApiDependencies): Promise<FastifyInstance
   registerDataAccessRoutes(app, dataAccess, auth);
   registerAuthRoutes(app, auth, config.node_env === "production");
   registerUserAdminRoutes(app, auth);
+  registerUserAssignmentRoutes(app, auth, dependencies.userAdmin);
   registerConversationRoutes(app, auth, conversations);
   registerAgentRoutes(app, auth, dependencies.agentConfiguration.agents);
   registerModelResourceRoutes(app, auth, dependencies.agentConfiguration);
   registerCatalogRoutes(app, auth, catalog.service, catalog.permissions, catalog.admin);
+  registerCatalogSourceRoutes(
+    app,
+    auth,
+    new AuthorizedSourceService({ registry: dataAccess.registry, catalog: catalog.service }),
+  );
   registerCatalogAdminRoutes(app, auth, catalog.admin);
+  registerCatalogManagementRoutes(app, auth, catalog, dataAccess.registry);
   registerCatalogRelationRoutes(app, auth, catalog.relations);
   registerReportManagementRoutes(app, auth, dependencies.reporting);
   registerReportExecutionRoutes(app, auth, dependencies.reporting);

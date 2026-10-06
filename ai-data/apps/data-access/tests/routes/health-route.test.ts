@@ -103,6 +103,16 @@ function createCatalogReader(): CatalogReader {
 /** 构造健康检查测试不使用的数据源管理接口替身。 */
 function createManagementApi() {
   return {
+    listDataSources: async () => ({ items: [] }),
+    getDataSource: async () => ({ config: null, revision: "a".repeat(64) }),
+    getSourceObjects: async () => ({ items: [], revision: "a".repeat(64) }),
+    getSqlServerTransport: async () => {
+      throw new Error("测试未配置连接参数读取");
+    },
+    saveSqlServerTransport: async () => {
+      throw new Error("测试未配置连接参数更新");
+    },
+    listSecretReferences: async () => ({ items: [] }),
     async saveSharedCredentials() {
       return { secret_ref: "unused" };
     },

@@ -96,6 +96,7 @@ describe("SQL Server：Agent 管理发布与会话固定版本", () => {
       protocol: "responses",
       base_url: "http://127.0.0.1:19000/v1",
       model: "demo",
+      context_window: 32768,
       api_key: "test-only-key",
     });
     await services.agents.publish(context, {

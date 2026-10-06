@@ -9,6 +9,7 @@ import {
   saveUserPreferenceResultSchema,
   userPreferenceInputSchema,
   userPreferenceSchema,
+  type PreferenceEditState,
   type MemorySource,
   type PreferenceConfirmation,
   type SaveUserPreferenceInput,
@@ -102,6 +103,14 @@ class PreferenceService {
       items.push(record);
     }
     return items;
+  }
+  /** 显式用户编辑可读取删除版本，恢复仍由原保存事务校验预期版本。 */
+  async editState(context: AuthContext, key: string): Promise<PreferenceEditState> {
+    const record = await this.dependencies.repository.find(context, idSchema.parse(key));
+    if (!record) return { status: "missing", version: 0 };
+    if (!isLive(record)) return { status: "deleted", version: record.version };
+    await this.validate(context, record, record.source);
+    return { status: "live", version: record.version, preference: record };
   }
   async get(context: AuthContext, key: string): Promise<UserPreference> {
     const record = await this.dependencies.repository.find(context, idSchema.parse(key));

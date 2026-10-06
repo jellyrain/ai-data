@@ -6,6 +6,7 @@ import type { SkillSnapshotStore } from "../skills/skill-snapshot-store";
 import type { AuthContext } from "../auth/auth-types";
 import { ApplicationError } from "../errors/application-error";
 import { parseStoredRecord } from "../metadata/parse-stored-record";
+import { contextBudget } from "./context-budget";
 
 /** 迁移前的会话允许未绑定；两个字段须同时为空或同时提供。 */
 const bindingSchema = z
@@ -22,7 +23,7 @@ class AgentRuntime {
     private readonly dependencies: {
       database: MetadataTransactionalExecutor;
       agents: Pick<AgentService, "get">;
-      models: Pick<ModelService, "resolve">;
+      models: Pick<ModelService, "resolve" | "probe">;
       snapshots: Pick<SkillSnapshotStore, "load">;
     },
   ) {}
@@ -78,6 +79,12 @@ class AgentRuntime {
       agent.model_id,
       agent.model_version,
     );
+    const capability = await this.dependencies.models.probe(provider);
+    const budget = contextBudget({
+      serviceWindow: capability.status === "available" ? capability.contextWindow : undefined,
+      modelWindow: provider.contextWindow,
+      agentWindow: agent.limits.context_window,
+    });
     const snapshot = await this.dependencies.snapshots.load(
       context.organizationId,
       agent.agent_id,
@@ -92,7 +99,8 @@ class AgentRuntime {
         cwd: snapshot.cwd,
         skills: snapshot.skills,
         timeoutMs: agent.limits.timeout_ms,
-        contextWindow: agent.limits.context_window ?? provider.contextWindow,
+        ...budget,
+        contextCapability: capability,
       },
       runtimeKey: JSON.stringify({
         agent: agent.agent_id,
@@ -100,6 +108,8 @@ class AgentRuntime {
         model: agent.model_id,
         modelVersion: agent.model_version,
         skills: agent.skill_fingerprint,
+        contextWindow: budget.contextWindow,
+        autoCompactTokenLimit: budget.autoCompactTokenLimit,
       }),
     };
   }

@@ -1,0 +1,80 @@
+
+Running 29 tests using 1 worker
+
+(node:3324) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [chromium] › tests\e2e\knowledge.spec.ts:49:1 › 个人偏好保存、删除后重新设置与未保存离页保护 (3.5s)
+  ok  2 [chromium] › tests\e2e\knowledge.spec.ts:79:1 › 知识候选分配、固定版本审核发布、停用后管理回读 (3.4s)
+  ok  3 [chromium] › tests\e2e\knowledge.spec.ts:98:1 › 报表固定版本提交为模板，发布后创建个人草稿 (3.8s)
+  ok  4 [chromium] › tests\e2e\knowledge.spec.ts:118:1 › 记忆任务失败重试与窄屏、主题适配 (2.1s)
+  ok  5 [chromium] › tests\e2e\knowledge.spec.ts:143:1 › 普通用户可使用个人知识入口，不能进入组织管理页 (962ms)
+  ok  6 [chromium] › tests\e2e\knowledge.spec.ts:151:1 › 偏好版本冲突保留草稿，撤权后清理旧内容 (1.3s)
+  ok  7 [chromium] › tests\e2e\knowledge.spec.ts:179:1 › 分类偏好表单保存有类型的条件、分组、指标和查询习惯 (11.4s)
+  x   8 [chromium] › tests\e2e\knowledge.spec.ts:248:1 › 知识长表单的四配色亮暗模式与三种宽度 (9.5s)
+(node:15856) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  9 [chromium] › tests\e2e\knowledge.spec.ts:284:1 › 任务来源必须通过原分析运行授权才导航 (992ms)
+  ok 10 [chromium] › tests\e2e\knowledge.spec.ts:295:1 › 指标候选修改口径保留完整查询，指定负责人从个人入口审核 (2.4s)
+  ok 11 [chromium] › tests\e2e\report-editor.spec.ts:63:1 › 从中心新建报表，表单与画布切换保留草稿 (1.1s)
+  ok 12 [chromium] › tests\e2e\report-editor.spec.ts:79:1 › 编辑标识符允许完整输入，失焦后同步查询和参数引用 (1.6s)
+  ok 13 [chromium] › tests\e2e\report-editor.spec.ts:97:1 › 离开时保存草稿到原报表后继续目标页面，关闭确认保留编辑 (1.6s)
+  ok 14 [chromium] › tests\e2e\report-editor.spec.ts:105:1 › AI 请求待确认时选择继续查看留在编辑页 (1.9s)
+  ok 15 [chromium] › tests\e2e\report-editor.spec.ts:123:1 › 刷新含未核对修订的链接保持锁定，不能再次发送 AI 修改 (1.3s)
+  ok 16 [chromium] › tests\e2e\report-editor.spec.ts:136:1 › AI 修改刷新恢复澄清与完成版本，恢复不重复提交 (5.4s)
+  ok 17 [chromium] › tests\e2e\report-editor.spec.ts:164:1 › 运行中刷新仍可停止，失败刷新保留定义，绑定读取错误可重试 (4.6s)
+  ok 18 [chromium] › tests\e2e\report-editor.spec.ts:198:1 › 展示预览可读取标明版本的历史结果，整个过程不执行查询 (2.0s)
+  ok 19 [chromium] › tests\e2e\report-editor.spec.ts:214:1 › 画布主题、窄屏、键盘入口和离开时恢复导航 (11.5s)
+  ok 20 [chromium] › tests\e2e\report-editor.spec.ts:258:1 › 单查询51个节点和50条关系可以选择与缩放，隐藏页面暂停流光 (2.0s)
+  ok 21 [chromium] › tests\e2e\report-editor.spec.ts:279:1 › 添加批准关系、流光方向与布局保存，重新打开保持定义和坐标 (6.7s)
+  ok 22 [chromium] › tests\e2e\reports.spec.ts:25:1 › 中心游标分页、筛选、旧快照与仅定义报表 (1.5s)
+  ok 23 [chromium] › tests\e2e\reports.spec.ts:44:1 › 固定版本运行、来源映射、重复回执与刷新恢复 (3.5s)
+  ok 24 [chromium] › tests\e2e\reports.spec.ts:83:1 › 执行失败保留原结果，权限收窄清除数据 (1.7s)
+  ok 25 [chromium] › tests\e2e\reports.spec.ts:105:1 › AI 说明澄清、完成读取、停止与历史切换 (5.1s)
+  ok 26 [chromium] › tests\e2e\reports.spec.ts:147:1 › 执行可超过通用 20 秒等待 (23.4s)
+  ok 27 [chromium] › tests\e2e\reports.spec.ts:155:1 › 空列表与读取错误可恢复，空结果与五千行分页只读 (2.4s)
+  ok 28 [chromium] › tests\e2e\reports.spec.ts:173:1 › 四套亮暗配色、三档宽度与键盘操作 (12.5s)
+  ok 29 [chromium] › tests\e2e\reports.spec.ts:202:1 › 退出和换号后旧执行及说明不会残留 (2.1s)
+
+
+  1) [chromium] › tests\e2e\knowledge.spec.ts:248:1 › 知识长表单的四配色亮暗模式与三种宽度 ───────────────────────────
+
+    Error: expect(locator).toBeInViewport() failed
+
+    Locator:  getByRole('button', { name: '保存偏好', exact: true })
+    Expected: in viewport
+    Received: viewport ratio 0
+    Timeout:  8000ms
+
+    Call log:
+      - Expect "toBeInViewport" getByRole('button', { name: '保存偏好', exact: true }) with timeout 8000ms
+      - waiting for getByRole('button', { name: '保存偏好', exact: true })
+        19 × locator resolved to <button type="button" aria-disabled="false" class="el-button el-button--primary">…</button>
+           - unexpected value "viewport ratio 0"
+
+
+      269 |           .toBe(true);
+      270 |         await page.getByRole("button", { name: "保存偏好", exact: true }).scrollIntoViewIfNeeded();
+    > 271 |         await expect(page.getByRole("button", { name: "保存偏好", exact: true })).toBeInViewport();
+          |                                                                               ^
+      272 |         if (id === "blue" && width !== 1024) {
+      273 |           await page.getByRole("heading", { name: "知识与偏好", exact: true }).click();
+      274 |           await page.screenshot({
+        at D:\porject_new_2026\ai-data\ai-data\apps\web\tests\e2e\knowledge.spec.ts:271:79
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\knowledge-知识长表单的四配色亮暗模式与三种宽度-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\knowledge-知识长表单的四配色亮暗模式与三种宽度-chromium\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\knowledge-知识长表单的四配色亮暗模式与三种宽度-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\knowledge-知识长表单的四配色亮暗模式与三种宽度-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › tests\e2e\knowledge.spec.ts:248:1 › 知识长表单的四配色亮暗模式与三种宽度 ────────────────────────────
+  28 passed (2.3m)

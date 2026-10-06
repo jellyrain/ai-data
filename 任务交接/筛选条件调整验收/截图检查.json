@@ -1,0 +1,38 @@
+{
+  "environment": "Web production preview + isolated fixtures",
+  "images": [
+    {
+      "name": "01-筛选条件编辑-改前.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "01-筛选条件编辑-改后.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "02-详情筛选栏-改前.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "02-详情筛选栏-改后.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "03-筛选条件编辑-暗色.png",
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "name": "04-筛选条件编辑-手机.png",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "switches": "passed",
+  "checked_links": 5,
+  "errors": []
+}

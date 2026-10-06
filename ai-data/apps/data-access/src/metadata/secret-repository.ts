@@ -8,6 +8,45 @@ import type { EncryptedDataSourceSecret } from "../secrets/secret-types";
 class SecretRepository {
   constructor(private readonly executor: MetadataQueryExecutor) {}
 
+  /** 原子比较旧密文；缺失记录以键范围锁保护首次插入，返回是否确实提交。 */
+  async replace(
+    secret: EncryptedDataSourceSecret,
+    previous: EncryptedDataSourceSecret | undefined,
+  ): Promise<boolean> {
+    const result = await this.executor.execute<{ changed: number }>({
+      sql: previous
+        ? `
+        UPDATE dbo.data_source_secrets SET key_id = @key_id,
+          encrypted_payload = @encrypted_payload, encryption_metadata_json = @metadata, updated_at = GETDATE()
+        WHERE secret_ref = @secret_ref AND key_id = @previous_key AND encrypted_payload = @previous_payload;
+        SELECT @@ROWCOUNT AS changed;
+      `
+        : `
+        INSERT INTO dbo.data_source_secrets (secret_ref, encryption_algorithm, key_id, encrypted_payload, encryption_metadata_json)
+        SELECT @secret_ref, N'AES-256-GCM', @key_id, @encrypted_payload, @metadata
+        WHERE NOT EXISTS (SELECT 1 FROM dbo.data_source_secrets WITH (UPDLOCK, HOLDLOCK) WHERE secret_ref = @secret_ref);
+        SELECT @@ROWCOUNT AS changed;
+      `,
+      parameters: [
+        { name: "secret_ref", type: "string", value: secret.secretRef },
+        { name: "key_id", type: "string", value: secret.keyId },
+        { name: "encrypted_payload", type: "binary", value: secret.encryptedPayload },
+        { name: "metadata", type: "string", value: JSON.stringify(secret.metadata) },
+        ...(previous
+          ? [
+              { name: "previous_key", type: "string" as const, value: previous.keyId },
+              {
+                name: "previous_payload",
+                type: "binary" as const,
+                value: previous.encryptedPayload,
+              },
+            ]
+          : []),
+      ],
+    });
+    return result.rows[0]?.changed === 1;
+  }
+
   /** 按密钥引用读取 AES-GCM 密文和认证元数据。 */
   async findBySecretRef(secretRef: string): Promise<EncryptedDataSourceSecret | undefined> {
     const result = await this.executor.execute({

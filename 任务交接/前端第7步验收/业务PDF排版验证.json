@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Word实际排版",
+    "pages": 2,
+    "characters": 725
+  },
+  {
+    "name": "Word宽表实际排版",
+    "pages": 29,
+    "characters": 17133
+  },
+  {
+    "name": "正式报表/门诊",
+    "pages": 2,
+    "characters": 640
+  },
+  {
+    "name": "正式报表/住院",
+    "pages": 2,
+    "characters": 1159
+  },
+  {
+    "name": "正式报表/费用",
+    "pages": 2,
+    "characters": 1386
+  },
+  {
+    "name": "正式报表/已有费用会话",
+    "pages": 3,
+    "characters": 1818
+  }
+]

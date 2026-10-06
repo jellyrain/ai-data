@@ -1,0 +1,45 @@
+{
+  "started_at": "2026-10-03 11:24:37",
+  "environment": "isolated",
+  "business_database": "ai_bi_demo",
+  "checks": [
+    {
+      "name": "信任关闭时返回脱敏证书错误",
+      "passed": true
+    },
+    {
+      "name": "真实 Web 保存、回读与凭据级覆盖旧文件设置",
+      "passed": true
+    },
+    {
+      "name": "连接参数亮暗主题与三种宽度检查",
+      "passed": true
+    },
+    {
+      "name": "浏览器目标库发现恢复，目标包含 ai_bi_demo",
+      "passed": true
+    },
+    {
+      "name": "对象发现使用已保存业务连接参数",
+      "passed": true,
+      "object_count": 24
+    },
+    {
+      "name": "DAS 重启后参数持久化，业务只读查询与数据库基准一致",
+      "passed": true
+    },
+    {
+      "name": "DAS 元数据库连接保持独立，项目运行配置保持原值",
+      "passed": true
+    }
+  ],
+  "queries": [
+    {
+      "name": "全库住院人次",
+      "expected": 4000,
+      "actual": 4000
+    }
+  ],
+  "status": "cleanup_failed",
+  "failure": "业务断言通过；首次清理临时目录遇到 Windows EBUSY，后续单独清理并复验。"
+}

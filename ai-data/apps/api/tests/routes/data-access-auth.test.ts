@@ -25,7 +25,17 @@ async function setup() {
   const execute = vi.fn(async () => ({ source_id: "source" }));
   const app = await createApp({
     ...dependencies,
-    dataAccess: { ...dependencies.dataAccess, registry, managementClient: { execute } },
+    dataAccess: {
+      ...dependencies.dataAccess,
+      registry,
+      managementClient: {
+        sqlServerTransport: vi.fn(async () => {
+          throw new Error("未配置连接参数测试");
+        }),
+        execute,
+        read: dependencies.dataAccess.managementClient.read,
+      },
+    },
   });
   app.log.level = "silent";
   return { app, dependencies, registry, raw, execute };

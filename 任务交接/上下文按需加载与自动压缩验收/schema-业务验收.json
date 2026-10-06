@@ -1,0 +1,417 @@
+{
+  "kind": "schema",
+  "prompt": "查询 clinical-demo 的 charge_categories，返回全部费用分类名称和分类编码。请先查看目录详情、按需读取 query_dataset 的参数定义，再通过 query_dataset 查询并给出结果。",
+  "agent_id": "context-acceptance",
+  "agent_version": 1,
+  "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+  "run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+  "state": {
+    "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+    "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+    "organization_id": "organization-001",
+    "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+    "agent_id": "context-acceptance",
+    "agent_version": 1,
+    "status": "completed",
+    "created_at": "2026-09-27 22:59:02",
+    "updated_at": "2026-09-27 23:00:31",
+    "lease_epoch": 1,
+    "lease": null,
+    "sequence": 17,
+    "clarification": null,
+    "evidence_ids": ["6c3d48e8-507d-47ff-9d49-788a6705dbc8"],
+    "error": null
+  },
+  "events": [
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 1,
+      "lease_epoch": 1,
+      "type": "run_started"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 2,
+      "lease_epoch": 1,
+      "type": "tool_call",
+      "tool_call_id": "bf672c62ce5ca2509a5922053d24534de41e0a4bb9621da33943af91a16d3e74",
+      "tool_name": "list_sources",
+      "input_summary": "执行已校验的业务条件"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 3,
+      "lease_epoch": 1,
+      "type": "tool_result",
+      "tool_call_id": "bf672c62ce5ca2509a5922053d24534de41e0a4bb9621da33943af91a16d3e74",
+      "tool_name": "list_sources",
+      "success": true,
+      "output_summary": "工具执行完成"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 4,
+      "lease_epoch": 1,
+      "type": "tool_call",
+      "tool_call_id": "f03d3dd57ac2b8e457a52e287e4c0d6ccc193bf6f65cb5f095af3fcb81f6953d",
+      "tool_name": "get_tool_schema",
+      "input_summary": "执行已校验的业务条件"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 5,
+      "lease_epoch": 1,
+      "type": "tool_result",
+      "tool_call_id": "f03d3dd57ac2b8e457a52e287e4c0d6ccc193bf6f65cb5f095af3fcb81f6953d",
+      "tool_name": "get_tool_schema",
+      "success": true,
+      "output_summary": "工具执行完成"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 6,
+      "lease_epoch": 1,
+      "type": "tool_call",
+      "tool_call_id": "c00037204c16ab907bf8f07b4e71ee4bdcdc9ea67dd6739c0eabce7d3a22af10",
+      "tool_name": "search_catalog",
+      "input_summary": "执行已校验的业务条件"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 7,
+      "lease_epoch": 1,
+      "type": "tool_result",
+      "tool_call_id": "c00037204c16ab907bf8f07b4e71ee4bdcdc9ea67dd6739c0eabce7d3a22af10",
+      "tool_name": "search_catalog",
+      "success": true,
+      "output_summary": "工具执行完成"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 8,
+      "lease_epoch": 1,
+      "type": "tool_call",
+      "tool_call_id": "a7c804e7255f4e58e573fe66a9bd485f863054c2f6ed3c4a6c07864a4549bff2",
+      "tool_name": "describe_dataset",
+      "input_summary": "执行已校验的业务条件"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 9,
+      "lease_epoch": 1,
+      "type": "tool_result",
+      "tool_call_id": "a7c804e7255f4e58e573fe66a9bd485f863054c2f6ed3c4a6c07864a4549bff2",
+      "tool_name": "describe_dataset",
+      "success": true,
+      "output_summary": "工具执行完成"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 10,
+      "lease_epoch": 1,
+      "type": "tool_call",
+      "tool_call_id": "c160b7e60a285858b772334d0fe733c773eba80531eaafe2aa1c2aa31f09bbdc",
+      "tool_name": "query_dataset",
+      "input_summary": "执行已校验的业务条件"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 11,
+      "lease_epoch": 1,
+      "type": "tool_result",
+      "tool_call_id": "c160b7e60a285858b772334d0fe733c773eba80531eaafe2aa1c2aa31f09bbdc",
+      "tool_name": "query_dataset",
+      "success": false,
+      "output_summary": "INVALID_INPUT"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 12,
+      "lease_epoch": 1,
+      "type": "tool_call",
+      "tool_call_id": "a918534a6e3800ef883b9eb232bce5f202c62010c8121c4b90f60474d90bdb6b",
+      "tool_name": "query_dataset",
+      "input_summary": "执行已校验的业务条件"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 13,
+      "lease_epoch": 1,
+      "type": "tool_result",
+      "tool_call_id": "f55682d4283364587dad49ea7262a836adfc76fec60bef1f91acbee3f0b684b9",
+      "tool_name": "query_dataset",
+      "success": true,
+      "output_summary": "返回 10 行"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 14,
+      "lease_epoch": 1,
+      "type": "table",
+      "evidence_id": "6c3d48e8-507d-47ff-9d49-788a6705dbc8",
+      "columns": [
+        {
+          "name": "category_name",
+          "data_type": "string"
+        },
+        {
+          "name": "category_code",
+          "data_type": "integer"
+        }
+      ],
+      "rows": [
+        {
+          "category_name": "药品",
+          "category_code": 1
+        },
+        {
+          "category_name": "检查",
+          "category_code": 2
+        },
+        {
+          "category_name": "检验",
+          "category_code": 3
+        },
+        {
+          "category_name": "治疗",
+          "category_code": 4
+        },
+        {
+          "category_name": "手术",
+          "category_code": 5
+        },
+        {
+          "category_name": "护理",
+          "category_code": 6
+        },
+        {
+          "category_name": "床位",
+          "category_code": 7
+        },
+        {
+          "category_name": "材料",
+          "category_code": 8
+        },
+        {
+          "category_name": "诊察",
+          "category_code": 9
+        },
+        {
+          "category_name": "其他",
+          "category_code": 10
+        }
+      ],
+      "result_row_count": 10,
+      "result_truncated": false,
+      "sampled": false
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 15,
+      "lease_epoch": 1,
+      "type": "tool_result",
+      "tool_call_id": "a918534a6e3800ef883b9eb232bce5f202c62010c8121c4b90f60474d90bdb6b",
+      "tool_name": "query_dataset",
+      "success": true,
+      "output_summary": "工具执行完成"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 16,
+      "lease_epoch": 1,
+      "type": "final_answer",
+      "content": "查询完成，`clinical-demo` 的 `charge_categories`（费用分类表）共返回 **10 条**，结果完整、无截断、非采样。\n\n## 费用分类全量清单\n\n| 分类编码 | 费用分类名称 |\n| ---: | --- |\n| 1 | 药品 |\n| 2 | 检查 |\n| 3 | 检验 |\n| 4 | 治疗 |\n| 5 | 手术 |\n| 6 | 护理 |\n| 7 | 床位 |\n| 8 | 材料 |\n| 9 | 诊察 |\n| 10 | 其他 |\n\n## 说明\n\n- **数据源/对象**：`clinical-demo` 的 `table.dbo.charge_categories`（费用分类表），粒度为每行一个费用分类，按 `category_id`（分类编码）升序排列。\n- **字段口径**：`name` = 费用分类名称（字符串，非空）；`category_id` = 费用分类编号（整数，非空，唯一键）。\n- **数据时效**：演示数据截至 2026-09-27，即当前日期，无需时间过滤。\n- **完整性**：共 10 行，工具确认 `truncated: false`、`sampled: false`，已返回全部分类。\n- **证据标识**：`6c3d48e8-507d-47ff-9d49-788a6705dbc8`。\n\n该表还有一条已批准关联 `rel_charge_items_category_id_reverse`（一对多关联到收费项目 `charge_items`），如后续需要按分类统计收费金额或人次，可在此基础上继续查询。"
+    },
+    {
+      "conversation_id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "sequence": 17,
+      "lease_epoch": 1,
+      "type": "run_completed"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "6c3d48e8-507d-47ff-9d49-788a6705dbc8",
+      "tool_call_id": "f55682d4283364587dad49ea7262a836adfc76fec60bef1f91acbee3f0b684b9",
+      "analysis_run_id": "c62a0410-d54f-49ec-957d-061ec8551365",
+      "organization_id": "organization-001",
+      "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+      "created_at": "2026-09-27 23:00:10",
+      "requested_query": {
+        "type": "relational_query",
+        "source_id": "clinical-demo",
+        "from": {
+          "object_id": "table.dbo.charge_categories",
+          "alias": "cc"
+        },
+        "joins": [],
+        "select": [
+          {
+            "field": "cc.name",
+            "as": "category_name"
+          },
+          {
+            "field": "cc.category_id",
+            "as": "category_code"
+          }
+        ],
+        "filters": {
+          "logic": "and",
+          "items": []
+        },
+        "group_by": [],
+        "order_by": [
+          {
+            "field": "cc.category_id",
+            "direction": "asc"
+          }
+        ],
+        "limit": 1000
+      },
+      "authorized_query": {
+        "type": "relational_query",
+        "source_id": "clinical-demo",
+        "from": {
+          "object_id": "table.dbo.charge_categories",
+          "alias": "cc"
+        },
+        "joins": [],
+        "select": [
+          {
+            "field": "cc.name",
+            "as": "category_name"
+          },
+          {
+            "field": "cc.category_id",
+            "as": "category_code"
+          }
+        ],
+        "filters": {
+          "logic": "and",
+          "items": []
+        },
+        "group_by": [],
+        "order_by": [
+          {
+            "field": "cc.category_id",
+            "direction": "asc"
+          }
+        ],
+        "limit": 1000
+      },
+      "output_masks": [],
+      "result": {
+        "columns": [
+          {
+            "name": "category_name",
+            "data_type": "string"
+          },
+          {
+            "name": "category_code",
+            "data_type": "integer"
+          }
+        ],
+        "rows": [
+          {
+            "category_name": "药品",
+            "category_code": 1
+          },
+          {
+            "category_name": "检查",
+            "category_code": 2
+          },
+          {
+            "category_name": "检验",
+            "category_code": 3
+          },
+          {
+            "category_name": "治疗",
+            "category_code": 4
+          },
+          {
+            "category_name": "手术",
+            "category_code": 5
+          },
+          {
+            "category_name": "护理",
+            "category_code": 6
+          },
+          {
+            "category_name": "床位",
+            "category_code": 7
+          },
+          {
+            "category_name": "材料",
+            "category_code": 8
+          },
+          {
+            "category_name": "诊察",
+            "category_code": 9
+          },
+          {
+            "category_name": "其他",
+            "category_code": 10
+          }
+        ],
+        "row_count": 10,
+        "truncated": false,
+        "delivery": {
+          "status": "complete",
+          "total_row_count": 10
+        }
+      }
+    }
+  ],
+  "detail": {
+    "conversation": {
+      "id": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+      "organizationId": "organization-001",
+      "userId": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+      "title": "上下文验收-schema",
+      "status": "active",
+      "createdAt": "2026-09-27T14:59:02.560Z",
+      "updatedAt": "2026-09-27T15:00:31.668Z",
+      "agentId": "context-acceptance",
+      "agentVersion": 1
+    },
+    "messages": [
+      {
+        "id": "301c03a0-93dc-4ec4-a663-9cc175d323bb",
+        "conversationId": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+        "role": "user",
+        "analysisRunId": "c62a0410-d54f-49ec-957d-061ec8551365",
+        "content": "查询 clinical-demo 的 charge_categories，返回全部费用分类名称和分类编码。请先查看目录详情、按需读取 query_dataset 的参数定义，再通过 query_dataset 查询并给出结果。",
+        "sequence": 0,
+        "createdAt": "2026-09-27T14:59:02.620Z"
+      },
+      {
+        "id": "97c783a4-8ae9-469a-b0d9-326af401babd",
+        "conversationId": "53c94c6a-3353-4e1c-8f9e-0f4f0339c51b",
+        "role": "assistant",
+        "analysisRunId": "c62a0410-d54f-49ec-957d-061ec8551365",
+        "content": "查询完成，`clinical-demo` 的 `charge_categories`（费用分类表）共返回 **10 条**，结果完整、无截断、非采样。\n\n## 费用分类全量清单\n\n| 分类编码 | 费用分类名称 |\n| ---: | --- |\n| 1 | 药品 |\n| 2 | 检查 |\n| 3 | 检验 |\n| 4 | 治疗 |\n| 5 | 手术 |\n| 6 | 护理 |\n| 7 | 床位 |\n| 8 | 材料 |\n| 9 | 诊察 |\n| 10 | 其他 |\n\n## 说明\n\n- **数据源/对象**：`clinical-demo` 的 `table.dbo.charge_categories`（费用分类表），粒度为每行一个费用分类，按 `category_id`（分类编码）升序排列。\n- **字段口径**：`name` = 费用分类名称（字符串，非空）；`category_id` = 费用分类编号（整数，非空，唯一键）。\n- **数据时效**：演示数据截至 2026-09-27，即当前日期，无需时间过滤。\n- **完整性**：共 10 行，工具确认 `truncated: false`、`sampled: false`，已返回全部分类。\n- **证据标识**：`6c3d48e8-507d-47ff-9d49-788a6705dbc8`。\n\n该表还有一条已批准关联 `rel_charge_items_category_id_reverse`（一对多关联到收费项目 `charge_items`），如后续需要按分类统计收费金额或人次，可在此基础上继续查询。",
+        "sequence": 1,
+        "createdAt": "2026-09-27T15:00:31.668Z"
+      }
+    ]
+  },
+  "elapsed_ms": 94505,
+  "passed": true
+}

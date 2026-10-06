@@ -1,5 +1,9 @@
 import type { z } from "zod";
 import type {
+  KnowledgeManagementRecord,
+  KnowledgeOwnerOption,
+  KnowledgeOwnerOptionsInput,
+  ReportDefinitionVersion,
   KnowledgeCandidate,
   KnowledgeContent,
   MemorySource,
@@ -22,6 +26,16 @@ type KnowledgeReviewRecord = z.infer<typeof knowledgeReviewRecordSchema>;
 type KnowledgeOperation = z.infer<typeof knowledgeOperationSchema>;
 /** 候选和发布的事务仓储；传入执行器时参与调用方现有事务。 */
 interface KnowledgeRepository {
+  listManagement(
+    organizationId: string,
+    now: string,
+    ownerId?: string,
+    id?: string,
+  ): Promise<KnowledgeManagementRecord[]>;
+  ownerOptions(
+    organizationId: string,
+    input: KnowledgeOwnerOptionsInput,
+  ): Promise<KnowledgeOwnerOption[]>;
   transaction<T>(
     organizationId: string,
     operation: (executor: MetadataQueryExecutor) => Promise<T>,
@@ -111,6 +125,11 @@ interface KnowledgeRepository {
 interface KnowledgeDependencies {
   /** 模板候选引用固定定义；提交检查维护权，读取与审核检查完整查询范围。 */
   templates?: {
+    preview(
+      context: AuthContext,
+      content: Extract<KnowledgeContent, { type: "report_template" }>,
+      executor?: MetadataQueryExecutor,
+    ): Promise<ReportDefinitionVersion>;
     validate(
       context: AuthContext,
       content: Extract<KnowledgeContent, { type: "report_template" }>,

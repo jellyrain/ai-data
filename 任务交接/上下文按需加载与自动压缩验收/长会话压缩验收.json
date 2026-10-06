@@ -1,0 +1,38 @@
+{
+  "capability": {
+    "status": "available",
+    "contextWindow": 32768,
+    "source": "models+props"
+  },
+  "budget": {
+    "contextWindow": 32768,
+    "autoCompactTokenLimit": 24576,
+    "contextWindowSource": "service"
+  },
+  "calls": [1, 2, 3, 4, 5, 6, 7, 8],
+  "compactions": [
+    {
+      "itemId": "01a0e34f-8c01-74b1-9d30-3f833a428f65",
+      "status": "started"
+    },
+    {
+      "itemId": "01a0e34f-8c01-74b1-9d30-3f833a428f65",
+      "status": "completed"
+    }
+  ],
+  "thread_id": "01a0e34e-d9b4-7ca0-9824-c50f54b84b7d",
+  "first": {
+    "status": "completed",
+    "content": "已完成第 1–8 页全部读取与核对，结果如下：\n\n- **完整条数**：1200\n- **合计值**：720600\n- **日期**：2026-09-27\n- **校验码**：RH-4826\n\n核对说明：8 页页码逐页递增、无重复读取，各页 `count` 均为 150（合计 1200），各页 `page_total` 累加为 720600，与序号 1–1200 的求和结果一致，核对通过。"
+  },
+  "followup": {
+    "status": "completed",
+    "content": "核对结果重述：\n\n- **完整条数**：1200\n- **合计值**：720600\n- **日期**：2026-09-27\n- **校验码**：RH-4826\n\n以上为第 1–8 页全部读取后的累计结果，核对通过。"
+  },
+  "expected": {
+    "count": 1200,
+    "total": 720600,
+    "check": "RH-4826"
+  },
+  "status": "completed"
+}

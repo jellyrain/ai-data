@@ -11,6 +11,36 @@ import type { DataSourceSecretResolver } from "../../src/secrets/secret-resolver
 
 // 按场景替换写入、发现和运行时依赖，检查管理服务传递的数据及失效请求。
 describe("数据源管理服务", () => {
+  it("带修订基准保存白名单时保留逻辑 ID、禁用查询和已有能力", async () => {
+    const stored = {
+      sourceId: "clinical",
+      objectId: "visits",
+      objectKind: "table",
+      nativeSchemaName: "dbo",
+      nativeObjectName: "visits",
+      isDiscoverable: true,
+      isQueryable: false,
+      queryCapabilities: { sortable_fields: [] },
+    };
+    const saved: unknown[] = [];
+    const service = createService({
+      administration: {
+        objects: async () => ({ items: [stored], revision: "a".repeat(64) }),
+        saveObjects: async (...values: unknown[]) => {
+          saved.push(values);
+        },
+      },
+      runtime: createRuntime([
+        { kind: "table", native_schema_name: "dbo", native_object_name: "visits", columns: [] },
+      ]),
+    });
+    await service.replaceSourceObjects({
+      source_id: "clinical",
+      expected_revision: "a".repeat(64),
+      objects: [{ object_id: "visits", discovered_object_id: "table.dbo.visits" }],
+    });
+    expect(saved).toEqual([["clinical", [stored], "a".repeat(64)]]);
+  });
   it("保存过程完整定义并使未配置定义的过程保持仅可发现", async () => {
     const saved: ExposedSourceObject[][] = [];
     const service = createService({
@@ -288,8 +318,15 @@ describe("数据源管理服务", () => {
 /** 创建管理服务的最小依赖替身，可按场景覆盖单个依赖。 */
 function createService(overrides: Record<string, unknown> = {}): DataSourceManagementService {
   return new DataSourceManagementService(
-    (overrides.secretWriter ?? { async upsert() {} }) as {
-      upsert(secret: never): Promise<void>;
+    {
+      findBySecretRef: async () => undefined,
+      replace: async (secret) => {
+        await (
+          overrides.secretWriter as
+            { upsert(secret: EncryptedDataSourceSecret): Promise<void> } | undefined
+        )?.upsert(secret);
+        return true;
+      },
     },
     (overrides.configWriter ?? { async upsert() {} }) as {
       upsert(config: never, isEnabled: boolean): Promise<void>;
@@ -302,6 +339,7 @@ function createService(overrides: Record<string, unknown> = {}): DataSourceManag
     new Aes256GcmSecretCipher(),
     (overrides.targetDiscovery ?? createTargetDiscovery()) as DatabaseTargetDiscovery,
     (overrides.runtime ?? createRuntime()) as never,
+    (overrides.administration ?? {}) as never,
   );
 }
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sqlServerTransportSchema } from "@ai-data/contracts";
 
 import type { DataSourceConfig } from "../data-sources/data-source-types";
 import type { EncryptedDataSourceSecret } from "./secret-types";
@@ -27,6 +28,8 @@ const resolvedDataSourceSecretSchema = z.discriminatedUnion("connectorKind", [
       /** 凭据只能交给 SQL Server 连接器。 */
       connectorKind: z.literal("sqlserver"),
       ...databaseSecretFields,
+      /** 旧凭据允许省略，由业务连接的兼容配置提供选项。 */
+      sqlserver_transport: sqlServerTransportSchema.optional(),
     })
     .strict(),
   z
@@ -135,5 +138,5 @@ function parseSecretJson(plaintext: Buffer): ResolvedDataSourceSecret {
   return result.data;
 }
 
-export { SecretResolver };
+export { SecretResolver, parseSecretJson };
 export type { DataSourceSecretLookup, DataSourceSecretResolver, ResolvedDataSourceSecret };

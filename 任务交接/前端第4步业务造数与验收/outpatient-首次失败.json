@@ -1,0 +1,1300 @@
+{
+  "kind": "outpatient",
+  "prompt": "请查询 clinical-demo 数据源，统计 2026年9月1日00:00:00 至2026年9月27日23:59:59，按就诊时间口径，各科室的门诊就诊人次和去重患者人数。只统计 completed 就诊，显示科室名称，给出表格和总计。请直接根据目录与真实查询回答。",
+  "runs": [
+    {
+      "id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+      "state": {
+        "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+        "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+        "organization_id": "organization-001",
+        "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+        "agent_id": "default",
+        "agent_version": 1,
+        "status": "failed",
+        "created_at": "2026-09-27 18:20:53",
+        "updated_at": "2026-09-27 18:29:47",
+        "lease_epoch": 1,
+        "lease": null,
+        "sequence": 68,
+        "clarification": null,
+        "evidence_ids": [
+          "169ae199-40b4-4b60-ab7e-3b18eb08ecf1",
+          "6a7437e6-f243-4563-bc89-1450ac6a6e22",
+          "fc90acbc-d712-4ede-b8c4-ab42d615c8af"
+        ],
+        "error": {
+          "code": "QUERY_LIMIT_EXCEEDED",
+          "message": "分析执行失败"
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "169ae199-40b4-4b60-ab7e-3b18eb08ecf1",
+          "tool_call_id": "dc5f771bfecb09644b6331c3e804315d714717ffb8f324ba15aae6a84877bfd7",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "organization_id": "organization-001",
+          "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+          "created_at": "2026-09-27 18:24:36",
+          "requested_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.visits",
+              "alias": "v"
+            },
+            "joins": [],
+            "select": [
+              {
+                "field": "v.visit_id",
+                "aggregation": "count",
+                "as": "visit_count"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 5000
+          },
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.visits",
+              "alias": "v"
+            },
+            "joins": [],
+            "select": [
+              {
+                "field": "v.visit_id",
+                "aggregation": "count",
+                "as": "visit_count"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 5000
+          },
+          "output_masks": [],
+          "result": {
+            "columns": [
+              {
+                "name": "visit_count",
+                "data_type": "integer"
+              }
+            ],
+            "rows": [
+              {
+                "visit_count": 24000
+              }
+            ],
+            "row_count": 1,
+            "truncated": false,
+            "delivery": {
+              "status": "complete",
+              "total_row_count": 1
+            }
+          }
+        },
+        {
+          "evidence_id": "6a7437e6-f243-4563-bc89-1450ac6a6e22",
+          "tool_call_id": "f62d1c1d8c8c06da8baa1c4bcc22d2cce5aafcc8f1ea3a7c3304b74069abdc53",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "organization_id": "organization-001",
+          "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+          "created_at": "2026-09-27 18:28:31",
+          "requested_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.visits",
+              "alias": "v"
+            },
+            "joins": [],
+            "select": [
+              {
+                "field": "v.visit_id",
+                "aggregation": "count",
+                "as": "visit_count"
+              },
+              {
+                "field": "v.patient_id",
+                "aggregation": "count_distinct",
+                "as": "patient_count"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": [
+                {
+                  "field": "v.status",
+                  "op": "eq",
+                  "data_type": "string",
+                  "value": "completed"
+                },
+                {
+                  "field": "v.visited_at",
+                  "op": "between",
+                  "data_type": "datetime",
+                  "value": [
+                    "2026-09-01 00:00:00",
+                    "2026-09-27 23:59:59"
+                  ]
+                }
+              ]
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 5000
+          },
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.visits",
+              "alias": "v"
+            },
+            "joins": [],
+            "select": [
+              {
+                "field": "v.visit_id",
+                "aggregation": "count",
+                "as": "visit_count"
+              },
+              {
+                "field": "v.patient_id",
+                "aggregation": "count_distinct",
+                "as": "patient_count"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": [
+                {
+                  "field": "v.status",
+                  "op": "eq",
+                  "data_type": "string",
+                  "value": "completed"
+                },
+                {
+                  "field": "v.visited_at",
+                  "op": "between",
+                  "data_type": "datetime",
+                  "value": [
+                    "2026-09-01 00:00:00",
+                    "2026-09-27 23:59:59"
+                  ]
+                }
+              ]
+            },
+            "group_by": [],
+            "order_by": [],
+            "limit": 5000
+          },
+          "output_masks": [],
+          "result": {
+            "columns": [
+              {
+                "name": "visit_count",
+                "data_type": "integer"
+              },
+              {
+                "name": "patient_count",
+                "data_type": "integer"
+              }
+            ],
+            "rows": [
+              {
+                "visit_count": 763,
+                "patient_count": 763
+              }
+            ],
+            "row_count": 1,
+            "truncated": false,
+            "delivery": {
+              "status": "complete",
+              "total_row_count": 1
+            }
+          }
+        },
+        {
+          "evidence_id": "fc90acbc-d712-4ede-b8c4-ab42d615c8af",
+          "tool_call_id": "73de5ab265fcbc5c693cd213014219a09f439a46cb8f6b4b624da2e3f900d6dc",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "organization_id": "organization-001",
+          "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+          "created_at": "2026-09-27 18:29:11",
+          "requested_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.visits",
+              "alias": "v"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.departments",
+                "alias": "d",
+                "relation_id": "rel_visits_department_id",
+                "on": [
+                  {
+                    "left": "v.department_id",
+                    "op": "eq",
+                    "right": "d.department_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "d.name",
+                "as": "department_name"
+              },
+              {
+                "field": "v.visit_id",
+                "aggregation": "count",
+                "as": "visit_count"
+              },
+              {
+                "field": "v.patient_id",
+                "aggregation": "count_distinct",
+                "as": "patient_count"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [
+              "d.name"
+            ],
+            "order_by": [
+              {
+                "field": "visit_count",
+                "direction": "desc"
+              }
+            ],
+            "limit": 200
+          },
+          "authorized_query": {
+            "type": "relational_query",
+            "source_id": "clinical-demo",
+            "from": {
+              "object_id": "table.dbo.visits",
+              "alias": "v"
+            },
+            "joins": [
+              {
+                "type": "inner",
+                "object_id": "table.dbo.departments",
+                "alias": "d",
+                "relation_id": "rel_visits_department_id",
+                "on": [
+                  {
+                    "left": "v.department_id",
+                    "op": "eq",
+                    "right": "d.department_id"
+                  }
+                ]
+              }
+            ],
+            "select": [
+              {
+                "field": "d.name",
+                "as": "department_name"
+              },
+              {
+                "field": "v.visit_id",
+                "aggregation": "count",
+                "as": "visit_count"
+              },
+              {
+                "field": "v.patient_id",
+                "aggregation": "count_distinct",
+                "as": "patient_count"
+              }
+            ],
+            "filters": {
+              "logic": "and",
+              "items": []
+            },
+            "group_by": [
+              "d.name"
+            ],
+            "order_by": [
+              {
+                "field": "visit_count",
+                "direction": "desc"
+              }
+            ],
+            "limit": 200
+          },
+          "output_masks": [],
+          "result": {
+            "columns": [
+              {
+                "name": "department_name",
+                "data_type": "string"
+              },
+              {
+                "name": "visit_count",
+                "data_type": "integer"
+              },
+              {
+                "name": "patient_count",
+                "data_type": "integer"
+              }
+            ],
+            "rows": [
+              {
+                "department_name": "内科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "皮肤科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "神经内科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "外科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "消化科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "心内科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "眼科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "儿科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "耳鼻喉科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "妇科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "骨科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "康复科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "口腔科",
+                "visit_count": 1412,
+                "patient_count": 1412
+              },
+              {
+                "department_name": "泌尿科",
+                "visit_count": 1411,
+                "patient_count": 1411
+              },
+              {
+                "department_name": "产科",
+                "visit_count": 1411,
+                "patient_count": 1411
+              },
+              {
+                "department_name": "呼吸科",
+                "visit_count": 1411,
+                "patient_count": 1411
+              },
+              {
+                "department_name": "中医科",
+                "visit_count": 1411,
+                "patient_count": 1411
+              }
+            ],
+            "row_count": 17,
+            "truncated": false,
+            "delivery": {
+              "status": "complete",
+              "total_row_count": 17
+            }
+          }
+        }
+      ],
+      "events": [
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 1,
+          "lease_epoch": 1,
+          "type": "run_started"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 2,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "9442a45c83cb755e91335720b3ec9d40f6799aa44fe468e27925032e9f0b817e",
+          "tool_name": "list_sources",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 3,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "9442a45c83cb755e91335720b3ec9d40f6799aa44fe468e27925032e9f0b817e",
+          "tool_name": "list_sources",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 4,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "f2f89413584eeb73ee58bc49ef69d21c519ce895e9ccfce866eff3d9dbd55ca0",
+          "tool_name": "list_metrics",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 5,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "f2f89413584eeb73ee58bc49ef69d21c519ce895e9ccfce866eff3d9dbd55ca0",
+          "tool_name": "list_metrics",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 6,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "0323f86e09d5878e430731ecef93f3398b84058ed4662f7207af9e1e6e0b271d",
+          "tool_name": "search_catalog",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 7,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "0323f86e09d5878e430731ecef93f3398b84058ed4662f7207af9e1e6e0b271d",
+          "tool_name": "search_catalog",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 8,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "da22aa8b887313d2bca663970d4e3036d05484a85f3c96f89e27e95fd2ffb2a9",
+          "tool_name": "search_catalog",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 9,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "da22aa8b887313d2bca663970d4e3036d05484a85f3c96f89e27e95fd2ffb2a9",
+          "tool_name": "search_catalog",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 10,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "b42e029d805b9dff32639a8433558f3fa75b110086c166a2e4e4983892f759f6",
+          "tool_name": "describe_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 11,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "b42e029d805b9dff32639a8433558f3fa75b110086c166a2e4e4983892f759f6",
+          "tool_name": "describe_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 12,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "e42bef3da05a9c5c47e807a6ac1c04f945198a109b87953eb30573daf55eefa9",
+          "tool_name": "read_skill_reference",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 13,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "e42bef3da05a9c5c47e807a6ac1c04f945198a109b87953eb30573daf55eefa9",
+          "tool_name": "read_skill_reference",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 14,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "2edd5be512486f74e49ce6c13ce64c3ad52b12c4860ba621cb3bd9c63255d59e",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 15,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "2edd5be512486f74e49ce6c13ce64c3ad52b12c4860ba621cb3bd9c63255d59e",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 16,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "67167060d6461f8e7305533129796065447f9394232c485266ebfc20fbb82c8a",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 17,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "67167060d6461f8e7305533129796065447f9394232c485266ebfc20fbb82c8a",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 18,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "089844808699550cfb7a884da96f9f188884b755ba535481cf5cd9f66ff77002",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 19,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "089844808699550cfb7a884da96f9f188884b755ba535481cf5cd9f66ff77002",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 20,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "01962813e92b7c546576a65d86b65bc257640c51458f62b7fa38df223cae7e68",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 21,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "01962813e92b7c546576a65d86b65bc257640c51458f62b7fa38df223cae7e68",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 22,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "14ebb1171f0de49194cd4111ef6c3fd2c2d4d17e73fca13869951a9152dda625",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 23,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "14ebb1171f0de49194cd4111ef6c3fd2c2d4d17e73fca13869951a9152dda625",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 24,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "4f89b2057d9e87845615503698ff24d8873eb8fdcab73a8f0472c318e1c09342",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 25,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "4f89b2057d9e87845615503698ff24d8873eb8fdcab73a8f0472c318e1c09342",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 26,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "938b98d8284acbb754e65fd76f3be7a53d0c29445fd8052d53fede7b280b0481",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 27,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "938b98d8284acbb754e65fd76f3be7a53d0c29445fd8052d53fede7b280b0481",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 28,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "7f3dbc714560e462465dab95db107ba621bbde44de9cee7b1016356df2b38fca",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 29,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "7f3dbc714560e462465dab95db107ba621bbde44de9cee7b1016356df2b38fca",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 30,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "d7ed38393e3327dc3c48ef3ddadcd14922b8f7e9729e8918a2d24caccf8b330a",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 31,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "d7ed38393e3327dc3c48ef3ddadcd14922b8f7e9729e8918a2d24caccf8b330a",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 32,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "45982fd0eccdcb9ca65f093922f7286e4282e44fb74bb1702918c1f11034da11",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 33,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "dc5f771bfecb09644b6331c3e804315d714717ffb8f324ba15aae6a84877bfd7",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "返回 1 行"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 34,
+          "lease_epoch": 1,
+          "type": "table",
+          "evidence_id": "169ae199-40b4-4b60-ab7e-3b18eb08ecf1",
+          "columns": [
+            {
+              "name": "visit_count",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "visit_count": 24000
+            }
+          ],
+          "result_row_count": 1,
+          "result_truncated": false,
+          "sampled": false
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 35,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "45982fd0eccdcb9ca65f093922f7286e4282e44fb74bb1702918c1f11034da11",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 36,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "071858bc90d7f4d6128e4ff5827638bcb5c6b2e32a896c08a7ca82fa7cb85cab",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 37,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "071858bc90d7f4d6128e4ff5827638bcb5c6b2e32a896c08a7ca82fa7cb85cab",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 38,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "567a95d52de1c12c206b244a2ee1502867c7f6517fcdbbea9bb0e202699f4e23",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 39,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "567a95d52de1c12c206b244a2ee1502867c7f6517fcdbbea9bb0e202699f4e23",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 40,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "6c9184f0b10e75306cc4a9bbcdc5d7304862f13b47d85ed518457ac5f07d9a5c",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 41,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "6c9184f0b10e75306cc4a9bbcdc5d7304862f13b47d85ed518457ac5f07d9a5c",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 42,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "1bb5aaeb5bc05f03c46ebf8882c64c1efe880cc83ef6ea3c5137e4b3d5cb5a55",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 43,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "1bb5aaeb5bc05f03c46ebf8882c64c1efe880cc83ef6ea3c5137e4b3d5cb5a55",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 44,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "3c05959321de9d70ea4dcbff8f3b72512e0ad5d3fec4adda0a7cff467bb3a600",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 45,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "3c05959321de9d70ea4dcbff8f3b72512e0ad5d3fec4adda0a7cff467bb3a600",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 46,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "f4a12a4c69fc0a67070a2973949b93e0df8818f6cb29ca9daff6261a2c6f5d17",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 47,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "f4a12a4c69fc0a67070a2973949b93e0df8818f6cb29ca9daff6261a2c6f5d17",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 48,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "11359f011e31d82e5f92feed314853eb466067dbe746cf0564aa5f0cf9bd1124",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 49,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "11359f011e31d82e5f92feed314853eb466067dbe746cf0564aa5f0cf9bd1124",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 50,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "2d0f66545380a47d0bf605085b1e2098d21fce8bb75dbf95be0a39b0cc640fee",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 51,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "2d0f66545380a47d0bf605085b1e2098d21fce8bb75dbf95be0a39b0cc640fee",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 52,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "7b1c6610f12dad3ef9f16e435cb34738efe013a6d2450bb06046a4fdb34e8c8f",
+          "tool_name": "read_skill_reference",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 53,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "7b1c6610f12dad3ef9f16e435cb34738efe013a6d2450bb06046a4fdb34e8c8f",
+          "tool_name": "read_skill_reference",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 54,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "361814bcd34dd817e9a9a2a12426e2f15a29faecd95558cd88d27092280ec941",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 55,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "361814bcd34dd817e9a9a2a12426e2f15a29faecd95558cd88d27092280ec941",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 56,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "cac94c9b85aa78e557a3654265b8e15b821d9d291593e484bfbc031630dc9eb1",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 57,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "f62d1c1d8c8c06da8baa1c4bcc22d2cce5aafcc8f1ea3a7c3304b74069abdc53",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "返回 1 行"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 58,
+          "lease_epoch": 1,
+          "type": "table",
+          "evidence_id": "6a7437e6-f243-4563-bc89-1450ac6a6e22",
+          "columns": [
+            {
+              "name": "visit_count",
+              "data_type": "integer"
+            },
+            {
+              "name": "patient_count",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "visit_count": 763,
+              "patient_count": 763
+            }
+          ],
+          "result_row_count": 1,
+          "result_truncated": false,
+          "sampled": false
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 59,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "cac94c9b85aa78e557a3654265b8e15b821d9d291593e484bfbc031630dc9eb1",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 60,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "d15031b88ea35bb05b8c341a3cdfd942d030be95831756cfc793a67c5135984d",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 61,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "d15031b88ea35bb05b8c341a3cdfd942d030be95831756cfc793a67c5135984d",
+          "tool_name": "query_dataset",
+          "success": false,
+          "output_summary": "INVALID_INPUT"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 62,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "d2d8a8d1fcdb8a1ed6288a8527bdabb13c693e587272308ebb339e0326664369",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 63,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "73de5ab265fcbc5c693cd213014219a09f439a46cb8f6b4b624da2e3f900d6dc",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "返回 17 行"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 64,
+          "lease_epoch": 1,
+          "type": "table",
+          "evidence_id": "fc90acbc-d712-4ede-b8c4-ab42d615c8af",
+          "columns": [
+            {
+              "name": "department_name",
+              "data_type": "string"
+            },
+            {
+              "name": "visit_count",
+              "data_type": "integer"
+            },
+            {
+              "name": "patient_count",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "department_name": "内科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "皮肤科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "神经内科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "外科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "消化科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "心内科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "眼科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "儿科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "耳鼻喉科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "妇科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "骨科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "康复科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "口腔科",
+              "visit_count": 1412,
+              "patient_count": 1412
+            },
+            {
+              "department_name": "泌尿科",
+              "visit_count": 1411,
+              "patient_count": 1411
+            },
+            {
+              "department_name": "产科",
+              "visit_count": 1411,
+              "patient_count": 1411
+            },
+            {
+              "department_name": "呼吸科",
+              "visit_count": 1411,
+              "patient_count": 1411
+            },
+            {
+              "department_name": "中医科",
+              "visit_count": 1411,
+              "patient_count": 1411
+            }
+          ],
+          "result_row_count": 17,
+          "result_truncated": false,
+          "sampled": false
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 65,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "d2d8a8d1fcdb8a1ed6288a8527bdabb13c693e587272308ebb339e0326664369",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 66,
+          "lease_epoch": 1,
+          "type": "tool_call",
+          "tool_call_id": "362872d78547e62f01cc9f9cedaffc1cfb6c5231a6135316f8af33f989245d95",
+          "tool_name": "query_dataset",
+          "input_summary": "执行已校验的业务条件"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 67,
+          "lease_epoch": 1,
+          "type": "tool_result",
+          "tool_call_id": "362872d78547e62f01cc9f9cedaffc1cfb6c5231a6135316f8af33f989245d95",
+          "tool_name": "query_dataset",
+          "success": true,
+          "output_summary": "工具执行完成"
+        },
+        {
+          "conversation_id": "0467ae03-a22b-4e34-9c00-255b97b3cfae",
+          "analysis_run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+          "sequence": 68,
+          "lease_epoch": 1,
+          "type": "run_failed",
+          "code": "QUERY_LIMIT_EXCEEDED",
+          "message": "分析执行失败"
+        }
+      ]
+    }
+  ],
+  "page_errors": [],
+  "sse": [
+    200
+  ]
+}

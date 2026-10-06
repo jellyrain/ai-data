@@ -1,0 +1,25 @@
+{
+  "scope": "本地生成器容量，不调用 API 或模型",
+  "checks": [
+    {
+      "cancelled": true,
+      "created": 1,
+      "terminated": 1,
+      "ticks": 40,
+      "maxGap": 73.29999995231628,
+      "duration": 690.2999999523163
+    },
+    {
+      "cancelled": false,
+      "created": 1,
+      "terminated": 1,
+      "ticks": 295,
+      "maxGap": 93,
+      "duration": 4830.899999976158,
+      "rows": 100000,
+      "tables": 20,
+      "file_bytes": 2253448
+    }
+  ],
+  "errors": []
+}

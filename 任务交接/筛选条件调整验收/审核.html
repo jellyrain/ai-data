@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>报表筛选条件 · 改前改后</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f5f6f2;
+        color: #252b24;
+        font:
+          15px/1.7 "Microsoft YaHei",
+          system-ui,
+          sans-serif;
+      }
+      header,
+      main,
+      footer {
+        max-width: 1560px;
+        padding: 24px;
+        margin: auto;
+      }
+      h1 {
+        font-size: 28px;
+        margin: 8px 0;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 0;
+      }
+      p {
+        color: #596256;
+      }
+      section {
+        margin: 0 0 32px;
+      }
+      nav {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      button,
+      a {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        padding: 8px 20px;
+        border: 1px solid #d5dbc9;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+      }
+      button[aria-pressed="true"] {
+        background: #697034;
+        color: white;
+        border-color: #697034;
+      }
+      figure {
+        margin: 0;
+        border: 1px solid #d5dbc9;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      figcaption {
+        padding: 12px 18px;
+        color: #596256;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 3px solid #697034;
+        outline-offset: 3px;
+      }
+      .switch {
+        display: flex;
+        gap: 8px;
+      }
+      @media (max-width: 600px) {
+        header,
+        main,
+        footer {
+          padding: 16px;
+        }
+        nav {
+          align-items: flex-start;
+          gap: 12px;
+          flex-direction: column;
+        }
+        h1 {
+          font-size: 23px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>筛选条件 · 改前改后</h1>
+      <p>
+        实际页面截图 · 桌面 1920 × 1080 ·
+        隔离验收数据。切换查看改前，点击图片打开原图。
+      </p>
+    </header>
+    <main>
+      <section data-title="01-筛选条件编辑">
+        <nav>
+          <h2>筛选条件编辑</h2>
+          <div class="switch">
+            <button data-version="改后" aria-pressed="true">改后</button
+            ><button data-version="改前" aria-pressed="false">改前</button>
+          </div>
+        </nav>
+        <figure>
+          <a href="01-筛选条件编辑-改后.png" target="_blank" rel="noopener"
+            ><img src="01-筛选条件编辑-改后.png" alt="筛选条件编辑 · 改后"
+          /></a>
+          <figcaption>改后 · 点击查看原图</figcaption>
+        </figure>
+      </section>
+      <section data-title="02-详情筛选栏">
+        <nav>
+          <h2>详情筛选栏</h2>
+          <div class="switch">
+            <button data-version="改后" aria-pressed="true">改后</button
+            ><button data-version="改前" aria-pressed="false">改前</button>
+          </div>
+        </nav>
+        <figure>
+          <a href="02-详情筛选栏-改后.png" target="_blank" rel="noopener"
+            ><img src="02-详情筛选栏-改后.png" alt="详情筛选栏 · 改后"
+          /></a>
+          <figcaption>改后 · 点击查看原图</figcaption>
+        </figure>
+      </section>
+    </main>
+    <footer>
+      <a href="../报表筛选条件调整交付说明.md">交付说明与流程图</a> ·
+      <a href="03-筛选条件编辑-暗色.png">暗色截图</a> ·
+      <a href="04-筛选条件编辑-手机.png">手机截图</a>
+    </footer>
+    <script>
+      document.querySelectorAll("section").forEach((section) =>
+        section.querySelectorAll("button").forEach((button) =>
+          button.addEventListener("click", () => {
+            section
+              .querySelectorAll("button")
+              .forEach((b) =>
+                b.setAttribute("aria-pressed", String(b === button)),
+              );
+            const file =
+              section.dataset.title + "-" + button.dataset.version + ".png";
+            section.querySelector("img").src = file;
+            section.querySelector("img").alt =
+              section.dataset.title + " · " + button.dataset.version;
+            section.querySelector("a").href = file;
+            section.querySelector("figcaption").textContent =
+              button.dataset.version + " · 点击查看原图";
+          }),
+        ),
+      );
+    </script>
+  </body>
+</html>

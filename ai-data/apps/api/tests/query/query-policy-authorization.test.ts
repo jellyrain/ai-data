@@ -515,6 +515,83 @@ describe("关系查询的对象行授权", () => {
     });
   });
 
+  it.each(["in", "not_in"] as const)(
+    "整数部门字段的 %s 条件使用完整、无损转换后的范围",
+    async (op) => {
+      const ids = ["0", "1", "-2", "9007199254740991", "-9007199254740991"];
+      const query = await authorize(
+        [policy({ field: "id", op, value_from: "permission_context.department_ids" })],
+        baseQuery,
+        { ...context, permissionContext: { department_ids: ids } },
+      );
+      expect(query.from).toMatchObject({
+        filters: {
+          items: [
+            {
+              field: "v.id",
+              op,
+              data_type: "integer",
+              value: [0, 1, -2, Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
+            },
+          ],
+        },
+      });
+      expect(ids).toEqual(["0", "1", "-2", "9007199254740991", "-9007199254740991"]);
+    },
+  );
+
+  it.each([
+    "",
+    " ",
+    " 1",
+    "1 ",
+    "1e2",
+    "1.0",
+    "1.5",
+    "0x10",
+    "NaN",
+    "Infinity",
+    "01",
+    "+1",
+    "-0",
+    "1x",
+    "9007199254740992",
+    "-9007199254740992",
+  ])("整数部门范围含非法 ID %j 时整体拒绝", async (invalid) => {
+    const { service } = setup([
+      policy({ field: "id", op: "in", value_from: "permission_context.department_ids" }),
+    ]);
+    await expect(
+      service.authorize(baseQuery, {
+        ...context,
+        permissionContext: { department_ids: ["1", invalid] },
+      }),
+    ).rejects.toMatchObject({ code: "POLICY_REJECTED" });
+  });
+
+  it("字符串部门 ID 保留前导零，固定值及其他上下文不自动转换", async () => {
+    const query = await authorize(
+      [policy({ field: "dept", op: "in", value_from: "permission_context.department_ids" })],
+      baseQuery,
+      { ...context, permissionContext: { department_ids: ["001", "A02"] } },
+    );
+    expect(query.from).toMatchObject({
+      filters: { items: [{ data_type: "string", value: ["001", "A02"] }] },
+    });
+    for (const condition of [
+      { field: "id", op: "eq" as const, value: "1" },
+      { field: "id", op: "eq" as const, value_from: "permission_context.user_id" },
+      { field: "id", op: "eq" as const, value_from: "permission_context.organization_id" },
+    ])
+      await expect(
+        setup([policy(condition)]).service.authorize(baseQuery, {
+          ...context,
+          userId: "1",
+          organizationId: "1",
+        }),
+      ).rejects.toMatchObject({ code: "POLICY_REJECTED" });
+  });
+
   it("部门上下文为空时拒绝签发", async () => {
     const { service } = setup([
       policy({ field: "dept", op: "in", value_from: "permission_context.department_ids" }),

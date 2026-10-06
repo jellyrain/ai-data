@@ -1,0 +1,362 @@
+{
+  "runtime_version": "0.154.0",
+  "model": "rj-model-v1",
+  "effective_context_window": 258400,
+  "observed_auto_compact_threshold": 244800,
+  "initial_input_tokens": 11365,
+  "byte_measurement": "UTF-8 字节；工具按独立 JSON 序列化计算。这些值不是各部分的 token 数。",
+  "tool_definitions": [
+    {
+      "name": "save_report_definition",
+      "bytes": 12294,
+      "schema_bytes": 12044
+    },
+    {
+      "name": "create_knowledge_candidate",
+      "bytes": 7272,
+      "schema_bytes": 7050
+    },
+    {
+      "name": "query_dataset",
+      "bytes": 6132,
+      "schema_bytes": 5996
+    },
+    {
+      "name": "save_user_preference",
+      "bytes": 4977,
+      "schema_bytes": 4675
+    },
+    {
+      "name": "save_report",
+      "bytes": 1546,
+      "schema_bytes": 1411
+    },
+    {
+      "name": "request_clarification",
+      "bytes": 754,
+      "schema_bytes": 603
+    },
+    {
+      "name": "query_metric",
+      "bytes": 675,
+      "schema_bytes": 533
+    },
+    {
+      "name": "read_skill_reference",
+      "bytes": 549,
+      "schema_bytes": 284
+    },
+    {
+      "name": "get_published_knowledge",
+      "bytes": 444,
+      "schema_bytes": 258
+    },
+    {
+      "name": "search_catalog",
+      "bytes": 433,
+      "schema_bytes": 301
+    },
+    {
+      "name": "list_datasets",
+      "bytes": 417,
+      "schema_bytes": 280
+    },
+    {
+      "name": "describe_metric",
+      "bytes": 406,
+      "schema_bytes": 264
+    },
+    {
+      "name": "get_report_execution",
+      "bytes": 404,
+      "schema_bytes": 209
+    },
+    {
+      "name": "get_report_definition",
+      "bytes": 400,
+      "schema_bytes": 178
+    },
+    {
+      "name": "describe_dataset",
+      "bytes": 383,
+      "schema_bytes": 243
+    },
+    {
+      "name": "get_user_preferences",
+      "bytes": 347,
+      "schema_bytes": 119
+    },
+    {
+      "name": "list_metrics",
+      "bytes": 249,
+      "schema_bytes": 119
+    },
+    {
+      "name": "list_sources",
+      "bytes": 243,
+      "schema_bytes": 119
+    }
+  ],
+  "initial_business": {
+    "question_bytes": 297,
+    "memory_bytes": 9511,
+    "knowledge_bytes": 8968,
+    "knowledge_count": 6,
+    "knowledge_ids": [
+      "demo-admissions",
+      "demo-discharges",
+      "demo-inpatient-fees",
+      "demo-outpatient-fees",
+      "demo-outpatient-patients",
+      "demo-outpatient-visits"
+    ]
+  },
+  "skills": [
+    {
+      "name": "query-analysis",
+      "bytes": 2308
+    },
+    {
+      "name": "query-dsl",
+      "bytes": 2916
+    }
+  ],
+  "tool_return_totals": [
+    {
+      "rollout_file": "rollout-2026-09-27T19-25-57-01a0e29d-57be-7b33-b6f0-ec307d24d00d.jsonl",
+      "total_bytes": 68646,
+      "generated_tokens": 10571,
+      "by_tool": [
+        {
+          "name": "list_metrics",
+          "count": 1,
+          "output_bytes": 5846,
+          "errors": 0
+        },
+        {
+          "name": "describe_metric",
+          "count": 1,
+          "output_bytes": 1002,
+          "errors": 0
+        },
+        {
+          "name": "describe_dataset",
+          "count": 2,
+          "output_bytes": 6002,
+          "errors": 0
+        },
+        {
+          "name": "read_skill_reference",
+          "count": 2,
+          "output_bytes": 2809,
+          "errors": 0
+        },
+        {
+          "name": "search_catalog",
+          "count": 7,
+          "output_bytes": 27034,
+          "errors": 0
+        },
+        {
+          "name": "list_datasets",
+          "count": 1,
+          "output_bytes": 24570,
+          "errors": 0
+        },
+        {
+          "name": "query_dataset",
+          "count": 12,
+          "output_bytes": 852,
+          "errors": 12
+        },
+        {
+          "name": "query_metric",
+          "count": 2,
+          "output_bytes": 531,
+          "errors": 1
+        }
+      ]
+    },
+    {
+      "rollout_file": "rollout-2026-09-27T20-44-17-01a0e2e5-0bc8-77d2-9f21-82f0498e52f0.jsonl",
+      "total_bytes": 36184,
+      "generated_tokens": 6004,
+      "by_tool": [
+        {
+          "name": "list_metrics",
+          "count": 1,
+          "output_bytes": 6430,
+          "errors": 0
+        },
+        {
+          "name": "describe_metric",
+          "count": 1,
+          "output_bytes": 1294,
+          "errors": 0
+        },
+        {
+          "name": "query_metric",
+          "count": 2,
+          "output_bytes": 1120,
+          "errors": 1
+        },
+        {
+          "name": "search_catalog",
+          "count": 1,
+          "output_bytes": 12,
+          "errors": 0
+        },
+        {
+          "name": "list_datasets",
+          "count": 2,
+          "output_bytes": 24600,
+          "errors": 0
+        },
+        {
+          "name": "describe_dataset",
+          "count": 1,
+          "output_bytes": 2728,
+          "errors": 0
+        }
+      ]
+    }
+  ],
+  "compaction_logs_for_selected_threads": 0,
+  "runtime_log_evidence": [
+    {
+      "log_id": 37041,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "Unknown model rj-model-v1 is used. This will use fallback model metadata."
+    },
+    {
+      "log_id": 37292,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=17012 auto_compact_scope_tokens=17012 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 37413,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=20918 auto_compact_scope_tokens=20918 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 37646,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=21935 auto_compact_scope_tokens=21935 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 37687,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=22145 auto_compact_scope_tokens=22145 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 37746,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=22614 auto_compact_scope_tokens=22614 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 37784,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=22807 auto_compact_scope_tokens=22807 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 37850,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=23351 auto_compact_scope_tokens=23351 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 37912,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=23739 auto_compact_scope_tokens=23739 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 37965,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=24106 auto_compact_scope_tokens=24106 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 38039,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=24711 auto_compact_scope_tokens=24711 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 38101,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=25177 auto_compact_scope_tokens=25177 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 38166,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=25630 auto_compact_scope_tokens=25630 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 38216,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=25934 auto_compact_scope_tokens=25934 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 38287,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=26489 auto_compact_scope_tokens=26489 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 38340,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=26805 auto_compact_scope_tokens=26805 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 38384,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=27147 auto_compact_scope_tokens=27147 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 38632,
+      "thread_id": "01a0e29d-57be-7b33-b6f0-ec307d24d00d",
+      "message": "post sampling token usage turn_id=01a0e29d-58f3-79b2-b630-c0492f23b1bb total_usage_tokens=36408 auto_compact_scope_tokens=36408 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 48031,
+      "thread_id": "01a0e2e5-0bc8-77d2-9f21-82f0498e52f0",
+      "message": "Unknown model rj-model-v1 is used. This will use fallback model metadata."
+    },
+    {
+      "log_id": 48161,
+      "thread_id": "01a0e2e5-0bc8-77d2-9f21-82f0498e52f0",
+      "message": "post sampling token usage turn_id=01a0e2e5-0e31-7412-9699-f2e409bb6418 total_usage_tokens=13954 auto_compact_scope_tokens=13954 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 48271,
+      "thread_id": "01a0e2e5-0bc8-77d2-9f21-82f0498e52f0",
+      "message": "post sampling token usage turn_id=01a0e2e5-0e31-7412-9699-f2e409bb6418 total_usage_tokens=14421 auto_compact_scope_tokens=14421 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 48348,
+      "thread_id": "01a0e2e5-0bc8-77d2-9f21-82f0498e52f0",
+      "message": "post sampling token usage turn_id=01a0e2e5-0e31-7412-9699-f2e409bb6418 total_usage_tokens=15045 auto_compact_scope_tokens=15045 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 48446,
+      "thread_id": "01a0e2e5-0bc8-77d2-9f21-82f0498e52f0",
+      "message": "post sampling token usage turn_id=01a0e2e5-0e31-7412-9699-f2e409bb6418 total_usage_tokens=16061 auto_compact_scope_tokens=16061 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 48475,
+      "thread_id": "01a0e2e5-0bc8-77d2-9f21-82f0498e52f0",
+      "message": "post sampling token usage turn_id=01a0e2e5-0e31-7412-9699-f2e409bb6418 total_usage_tokens=19505 auto_compact_scope_tokens=19505 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 48537,
+      "thread_id": "01a0e2e5-0bc8-77d2-9f21-82f0498e52f0",
+      "message": "post sampling token usage turn_id=01a0e2e5-0e31-7412-9699-f2e409bb6418 total_usage_tokens=20039 auto_compact_scope_tokens=20039 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 48599,
+      "thread_id": "01a0e2e5-0bc8-77d2-9f21-82f0498e52f0",
+      "message": "post sampling token usage turn_id=01a0e2e5-0e31-7412-9699-f2e409bb6418 total_usage_tokens=20974 auto_compact_scope_tokens=20974 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=true has_pending_input=false needs_follow_up=true"
+    },
+    {
+      "log_id": 49900,
+      "thread_id": "01a0e2e5-0bc8-77d2-9f21-82f0498e52f0",
+      "message": "post sampling token usage turn_id=01a0e2e5-0e31-7412-9699-f2e409bb6418 total_usage_tokens=23954 auto_compact_scope_tokens=23954 auto_compact_scope_limit=Some(244800) auto_compact_limit_scope=Total auto_compact_window_prefill_tokens=None full_context_window_limit=Some(258400) full_context_window_limit_reached=false token_limit_reached=false model_needs_follow_up=false has_pending_input=false needs_follow_up=false"
+    }
+  ]
+}

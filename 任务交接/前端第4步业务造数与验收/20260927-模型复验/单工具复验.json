@@ -1,0 +1,100 @@
+{
+  "prompt": "请调用一次 list_sources，只根据返回结果回答当前可用的数据源名称和数量。",
+  "conversation_id": "e0f93fac-4bba-4a56-96f5-8f165c93d188",
+  "run_id": "357fbae4-560a-4443-8d82-0c3ce05f2658",
+  "state": {
+    "analysis_run_id": "357fbae4-560a-4443-8d82-0c3ce05f2658",
+    "conversation_id": "e0f93fac-4bba-4a56-96f5-8f165c93d188",
+    "organization_id": "organization-001",
+    "user_id": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+    "agent_id": "default",
+    "agent_version": 1,
+    "status": "completed",
+    "created_at": "2026-09-27 20:49:22",
+    "updated_at": "2026-09-27 20:49:39",
+    "lease_epoch": 1,
+    "lease": null,
+    "sequence": 5,
+    "clarification": null,
+    "evidence_ids": [],
+    "error": null
+  },
+  "events": [
+    {
+      "conversation_id": "e0f93fac-4bba-4a56-96f5-8f165c93d188",
+      "analysis_run_id": "357fbae4-560a-4443-8d82-0c3ce05f2658",
+      "sequence": 1,
+      "lease_epoch": 1,
+      "type": "run_started"
+    },
+    {
+      "conversation_id": "e0f93fac-4bba-4a56-96f5-8f165c93d188",
+      "analysis_run_id": "357fbae4-560a-4443-8d82-0c3ce05f2658",
+      "sequence": 2,
+      "lease_epoch": 1,
+      "type": "tool_call",
+      "tool_call_id": "5a6d4cec3b05b001628a56d268912ec4310cb31ef8ea37333c8af2bfd72d7a14",
+      "tool_name": "list_sources",
+      "input_summary": "执行已校验的业务条件"
+    },
+    {
+      "conversation_id": "e0f93fac-4bba-4a56-96f5-8f165c93d188",
+      "analysis_run_id": "357fbae4-560a-4443-8d82-0c3ce05f2658",
+      "sequence": 3,
+      "lease_epoch": 1,
+      "type": "tool_result",
+      "tool_call_id": "5a6d4cec3b05b001628a56d268912ec4310cb31ef8ea37333c8af2bfd72d7a14",
+      "tool_name": "list_sources",
+      "success": true,
+      "output_summary": "工具执行完成"
+    },
+    {
+      "conversation_id": "e0f93fac-4bba-4a56-96f5-8f165c93d188",
+      "analysis_run_id": "357fbae4-560a-4443-8d82-0c3ce05f2658",
+      "sequence": 4,
+      "lease_epoch": 1,
+      "type": "final_answer",
+      "content": "当前可用的数据源共 **1** 个：\n\n1. **clinical-demo**"
+    },
+    {
+      "conversation_id": "e0f93fac-4bba-4a56-96f5-8f165c93d188",
+      "analysis_run_id": "357fbae4-560a-4443-8d82-0c3ce05f2658",
+      "sequence": 5,
+      "lease_epoch": 1,
+      "type": "run_completed"
+    }
+  ],
+  "detail": {
+    "conversation": {
+      "id": "e0f93fac-4bba-4a56-96f5-8f165c93d188",
+      "organizationId": "organization-001",
+      "userId": "12d5d50c-4a21-4893-8ea8-9d0936695cc2",
+      "title": "单次工具调用复验",
+      "status": "active",
+      "createdAt": "2026-09-27T12:49:22.059Z",
+      "updatedAt": "2026-09-27T12:49:39.145Z",
+      "agentId": "default",
+      "agentVersion": 1
+    },
+    "messages": [
+      {
+        "id": "24d08a48-7e47-4ed5-87f0-bd2b2b6a4835",
+        "conversationId": "e0f93fac-4bba-4a56-96f5-8f165c93d188",
+        "role": "user",
+        "analysisRunId": "357fbae4-560a-4443-8d82-0c3ce05f2658",
+        "content": "请调用一次 list_sources，只根据返回结果回答当前可用的数据源名称和数量。",
+        "sequence": 0,
+        "createdAt": "2026-09-27T12:49:22.100Z"
+      },
+      {
+        "id": "7c904181-cdad-42ba-b1bc-a98700b384e6",
+        "conversationId": "e0f93fac-4bba-4a56-96f5-8f165c93d188",
+        "role": "assistant",
+        "analysisRunId": "357fbae4-560a-4443-8d82-0c3ce05f2658",
+        "content": "当前可用的数据源共 **1** 个：\n\n1. **clinical-demo**",
+        "sequence": 1,
+        "createdAt": "2026-09-27T12:49:39.145Z"
+      }
+    ]
+  }
+}

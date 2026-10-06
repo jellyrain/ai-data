@@ -388,6 +388,7 @@ export {
   reportDefinitionVersionSchema,
   reusableReportBlockSchema,
   reportRevisionInputSchema,
+  reportRevisionBindingSchema,
 } from "./reports/report-definition";
 export type {
   ReportParameter,
@@ -398,6 +399,7 @@ export type {
   ReportDefinitionVersion,
   ReusableReportBlock,
   ReportRevisionInput,
+  ReportRevisionBinding,
 } from "./reports/report-definition-types";
 export {
   reportExecutionInputSchema,
@@ -433,3 +435,129 @@ export type {
   ConversationExportContent,
   ReportVersionList,
 } from "./reports/report-management-types";
+export { sourceListInputSchema, sourceListSchema } from "./catalog/source-list";
+export {
+  reportShareCandidateSchema,
+  reportShareMemberSchema,
+  reportSharingSchema,
+  reportShareCandidatesInputSchema,
+  reportShareCandidatesSchema,
+} from "./reports/report-sharing";
+export type {
+  ReportShareCandidate,
+  ReportShareMember,
+  ReportSharing,
+  ReportShareCandidatesInput,
+  ReportShareCandidates,
+} from "./reports/report-sharing-types";
+export type { SourceListInput, SourceList } from "./catalog/source-list-types";
+export {
+  createManagedUserSchema,
+  managedDepartmentsInputSchema,
+  managedUserSchema,
+  managedRoleSchema,
+  managedDataScopeSchema,
+  userAssignmentOptionsSchema,
+  managedUserAuthorizationSchema,
+} from "./admin/user-management";
+export type {
+  CreateManagedUser,
+  ManagedDepartmentsInput,
+  ManagedUser,
+  ManagedRole,
+  ManagedDataScope,
+  UserAssignmentOptions,
+  ManagedUserAuthorization,
+} from "./admin/user-management-types";
+
+export {
+  currentPolicyStateSchema,
+  adminDatasetDetailSchema,
+  columnPermissionInputSchema,
+  objectPermissionInputSchema,
+  policyChangeSchema,
+  policyListQuerySchema,
+  policyParamsSchema,
+  policySnapshotSchema,
+  policyVersionParamsSchema,
+  policyVersionSchema,
+  policyVersionSummarySchema,
+  queryPreviewInputSchema,
+  rowPolicyInputSchema,
+} from "./admin/catalog-management";
+
+export {
+  procedureDefinitionSchema,
+  procedureOutputParameterSchema,
+  postgresqlParameterTypeSchema,
+} from "./data-access/procedure-definition";
+export {
+  managementRevisionSchema,
+  dataSourceManagementConfigSchema,
+  databaseTargetDiscoveryRequestSchema,
+  sharedDatabaseCredentialsSchema,
+  sourceObjectDiscoveryRequestSchema,
+  sourceObjectSelectionRequestSchema,
+  managedDataSourceSchema,
+  managedDataSourceDetailSchema,
+  managedSourceObjectSchema,
+  managedSourceObjectsSchema,
+  managedSecretReferenceSchema,
+  manageableSourceObjectSchema,
+} from "./data-access/data-source-management";
+export type {
+  DataSourceManagementConfig,
+  ManagedDataSource,
+  ManagedDataSourceDetail,
+  ManagedSourceObject,
+  ManagedSourceObjects,
+  ManagedSecretReference,
+  ManageableSourceObject,
+} from "./data-access/data-source-management-types";
+
+export {
+  managedDataAccessServiceSchema,
+  databaseTargetSchema,
+} from "./data-access/management-responses";
+export type {
+  ManagedDataAccessService,
+  DatabaseTarget,
+} from "./data-access/management-responses-types";
+
+export type {
+  AdminDatasetDetail,
+  CurrentPolicyState,
+  PolicyVersion,
+  PolicyVersionSummary,
+} from "./admin/catalog-management-types";
+export {
+  sqlServerTransportSchema,
+  managedSqlServerTransportSchema,
+  sqlServerTransportUpdateSchema,
+} from "./data-access/sqlserver-transport";
+export type {
+  SqlServerTransport,
+  ManagedSqlServerTransport,
+  SqlServerTransportUpdate,
+} from "./data-access/sqlserver-transport-types";
+
+export {
+  updateKnowledgeSchema,
+  rollbackKnowledgeSchema,
+  knowledgeSourceRecordSchema,
+  knowledgeReviewRecordSchema,
+  knowledgeManagementRecordSchema,
+  knowledgeOwnerOptionsInputSchema,
+  knowledgeOwnerOptionSchema,
+} from "./knowledge/knowledge-management";
+export type {
+  UpdateKnowledge,
+  RollbackKnowledge,
+  KnowledgeSourceRecord,
+  KnowledgeReviewRecord,
+  KnowledgeManagementRecord,
+  KnowledgeOwnerOptionsInput,
+  KnowledgeOwnerOption,
+} from "./knowledge/knowledge-management-types";
+export { preferenceEditStateSchema } from "./memory/preference-management";
+export type { PreferenceEditState } from "./memory/preference-management-types";

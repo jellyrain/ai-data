@@ -1,0 +1,135 @@
+{
+  "database": "ai_bi_demo",
+  "marker": "clinical-demo-20260927-v1",
+  "table_count": 24,
+  "row_count": 475793,
+  "permissions": {
+    "can_read": 1,
+    "can_insert": 0,
+    "can_update": 0,
+    "can_delete": 0
+  },
+  "tables": [
+    {
+      "name": "campuses",
+      "label": "院区",
+      "rows": 3
+    },
+    {
+      "name": "departments",
+      "label": "科室",
+      "rows": 18
+    },
+    {
+      "name": "doctors",
+      "label": "医生",
+      "rows": 90
+    },
+    {
+      "name": "patients",
+      "label": "合成患者",
+      "rows": 15000
+    },
+    {
+      "name": "diagnoses",
+      "label": "诊断字典",
+      "rows": 200
+    },
+    {
+      "name": "charge_categories",
+      "label": "费用分类",
+      "rows": 10
+    },
+    {
+      "name": "charge_items",
+      "label": "收费项目",
+      "rows": 300
+    },
+    {
+      "name": "registrations",
+      "label": "门诊挂号",
+      "rows": 30000
+    },
+    {
+      "name": "visits",
+      "label": "门诊就诊",
+      "rows": 24000
+    },
+    {
+      "name": "visit_diagnoses",
+      "label": "门诊诊断明细",
+      "rows": 36000
+    },
+    {
+      "name": "wards",
+      "label": "病区",
+      "rows": 12
+    },
+    {
+      "name": "beds",
+      "label": "床位",
+      "rows": 360
+    },
+    {
+      "name": "admissions",
+      "label": "住院记录",
+      "rows": 4000
+    },
+    {
+      "name": "inpatient_stays",
+      "label": "住院科室床位轨迹",
+      "rows": 6500
+    },
+    {
+      "name": "inpatient_diagnoses",
+      "label": "住院诊断明细",
+      "rows": 10000
+    },
+    {
+      "name": "outpatient_settlements",
+      "label": "门诊结算单",
+      "rows": 22000
+    },
+    {
+      "name": "outpatient_charge_details",
+      "label": "门诊费用明细",
+      "rows": 96000
+    },
+    {
+      "name": "outpatient_payments",
+      "label": "门诊支付流水",
+      "rows": 30000
+    },
+    {
+      "name": "outpatient_refunds",
+      "label": "门诊退款流水",
+      "rows": 2000
+    },
+    {
+      "name": "inpatient_settlements",
+      "label": "住院结算单",
+      "rows": 4200
+    },
+    {
+      "name": "inpatient_charge_details",
+      "label": "住院费用明细",
+      "rows": 180000
+    },
+    {
+      "name": "inpatient_payments",
+      "label": "住院支付流水",
+      "rows": 4500
+    },
+    {
+      "name": "inpatient_refunds",
+      "label": "住院退款流水",
+      "rows": 600
+    },
+    {
+      "name": "inpatient_deposit_transactions",
+      "label": "住院预交金台账",
+      "rows": 10000
+    }
+  ],
+  "validated": "独立读取数据库后的外键、对账及床位区间通过"
+}

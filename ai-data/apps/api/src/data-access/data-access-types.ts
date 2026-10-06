@@ -20,6 +20,8 @@ type DataAccessServiceRegistration = {
 
 /** API 心跳路由和 DAS 客户端所需的实例注册与发现能力。 */
 interface DataAccessServiceRegistry {
+  /** 包含失联实例的已注册记录；过期按仓储的实际心跳窗口计算。 */
+  listRegisteredServices(): Promise<Array<DataAccessServiceRegistration & { isExpired: boolean }>>;
   /** 以最新心跳和 API 从连接地址推导的服务地址替换一个 DAS 实例及其数据源状态。 */
   registerHeartbeat(
     heartbeat: DataAccessHeartbeat,

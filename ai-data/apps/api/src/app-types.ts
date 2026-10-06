@@ -24,12 +24,15 @@ import type { SqlMemoryEventRepository } from "./memory/sql-memory-event-reposit
 import type { MemoryDispatcher } from "./memory/memory-dispatcher";
 import type { ReportDefinitionService } from "./reports/report-definition-service";
 import type { ReportManagementService } from "./reports/report-management-service";
+import type { ReportSharingService } from "./reports/report-sharing-service";
 import type { ReportExecutionService } from "./reports/report-execution-service";
 import type { ReportRevisionService } from "./reports/report-revision-service";
 import type { CatalogRelationService } from "./catalog/catalog-relation-service";
+import type { SqlUserAdminReader } from "./auth/sql-user-admin-reader";
 
 /** 全部编辑入口共享报表定义与结果服务。 */
 type ApiReportServices = {
+  sharing: Pick<ReportSharingService, "get" | "candidates">;
   definitions: Pick<
     ReportDefinitionService,
     | "get"
@@ -47,18 +50,22 @@ type ApiReportServices = {
     "list" | "versions" | "share" | "exportReport" | "exportConversation" | "artifacts"
   >;
   executions: Pick<ReportExecutionService, "execute" | "get" | "exportContent">;
-  revisions: Pick<ReportRevisionService, "revise" | "narrate" | "narratives">;
+  revisions: Pick<ReportRevisionService, "revise" | "narrate" | "narratives" | "binding">;
 };
 
 type ApiMemoryServices = {
   preferences: Pick<
     PreferenceService,
-    "list" | "get" | "save" | "delete" | "setAutoApply" | "listPendingConfirmations"
+    "list" | "get" | "editState" | "save" | "delete" | "setAutoApply" | "listPendingConfirmations"
   >;
   knowledge: Pick<
     KnowledgeService,
     | "submit"
     | "submitMetric"
+    | "listManagement"
+    | "getManagement"
+    | "ownerOptions"
+    | "templateDefinition"
     | "getCandidate"
     | "listCandidates"
     | "listSources"
@@ -91,7 +98,8 @@ type ApiAnalysisServices = {
   runs: Pick<
     AnalysisRunService,
     "get" | "events" | "evidence" | "steps" | "answer" | "cancel" | "execute"
-  >;
+  > &
+    Partial<Pick<AnalysisRunService, "subscribeEvents">>;
   metrics: Pick<MetricService, "list" | "get" | "execute">;
   reports: Pick<ReportService, "save" | "get">;
 };
@@ -124,6 +132,8 @@ type ApiCatalogService = Pick<
   | "getAuthorizedConfig"
   | "saveConfig"
   | "getConfigVersion"
+  | "listManaged"
+  | "managedDetail"
 >;
 /** 查询路由依次调用授权服务和 DAS 客户端。 */
 type ApiQueryAuthorization = Pick<QueryAuthorizationService, "authorize">;
@@ -138,6 +148,9 @@ type ApiDependencies = {
   metadataDatabase: MetadataDatabaseHealthChecker;
   /** 登录、身份加载及用户管理服务。 */
   auth: ApiAuthService;
+  /** 管理选项及当前用户授权公开读取。 */
+  userAdmin: Pick<SqlUserAdminReader, "options" | "roles" | "authorization">;
+  /** 管理选项及当前用户授权公开读取。 */
   /** 会话、消息和分析运行服务。 */
   conversations: ApiConversationService;
   analysis: ApiAnalysisServices;
@@ -148,10 +161,14 @@ type ApiDependencies = {
   dataAccess: {
     registry: Pick<
       DataAccessSessionService,
-      "register" | "heartbeat" | "issueCredential" | "listHealthyServices"
+      | "register"
+      | "heartbeat"
+      | "issueCredential"
+      | "listHealthyServices"
+      | "listRegisteredServices"
     >;
     catalogClient: DataAccessCatalogClient;
-    managementClient: Pick<DataAccessManagementClient, "execute">;
+    managementClient: Pick<DataAccessManagementClient, "execute" | "read" | "sqlServerTransport">;
   };
   /** 业务目录服务及角色权限持久化。 */
   catalog: {
@@ -166,6 +183,7 @@ type ApiDependencies = {
       | "listVersions"
       | "getVersion"
       | "previewQuery"
+      | "currentState"
     >;
   };
   /** 启用模型分析时必须装配调度器及审计读取能力。 */

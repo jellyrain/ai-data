@@ -90,9 +90,25 @@ class DataAccessSessionService {
     });
   }
 
-  /** 持久化的健康记录只有对应有效会话仍存在时才参与调度。 */
-  async listHealthyServices() {
-    const services = await this.registry.listHealthyServices();
+  /** 事务可提供自己的健康读取器；调度仍由本实例的有效注册会话约束。 */
+  async listRegisteredServices() {
+    const services = await this.registry.listRegisteredServices();
+    return services.map(({ isExpired, ...service }) => ({
+      ...service,
+      connectionStatus:
+        isExpired || this.activeSession(service.serviceId)?.serviceUrl !== service.serviceUrl
+          ? ("offline" as const)
+          : service.status === "unhealthy"
+            ? ("unhealthy" as const)
+            : ("online" as const),
+    }));
+  }
+
+  /** 事务可提供自己的健康读取器；调度仍由本实例的有效注册会话约束。 */
+  async listHealthyServices(
+    registry: Pick<DataAccessServiceRegistry, "listHealthyServices"> = this.registry,
+  ) {
+    const services = await registry.listHealthyServices();
     return services.filter(
       (service) => this.activeSession(service.serviceId)?.serviceUrl === service.serviceUrl,
     );

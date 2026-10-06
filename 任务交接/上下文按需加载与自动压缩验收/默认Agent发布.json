@@ -1,0 +1,38 @@
+{
+  "agent_id": "default",
+  "version": 2,
+  "name": "分析助手",
+  "description": "依据授权业务目录和查询证据进行分析与追问。",
+  "instructions": "通过业务工具核对口径和授权目录，依据查询证据回答；条件不明确时先澄清。",
+  "model_id": "analysis-model",
+  "model_version": 1,
+  "tool_names": [
+    "get_report_definition",
+    "save_report_definition",
+    "get_report_execution",
+    "get_user_preferences",
+    "save_user_preference",
+    "get_published_knowledge",
+    "create_knowledge_candidate",
+    "read_skill_reference",
+    "list_sources",
+    "search_catalog",
+    "list_datasets",
+    "describe_dataset",
+    "query_dataset",
+    "list_metrics",
+    "describe_metric",
+    "query_metric",
+    "request_clarification",
+    "save_report",
+    "get_tool_schema"
+  ],
+  "skill_names": ["query-analysis", "query-dsl"],
+  "limits": {
+    "timeout_ms": 600000,
+    "max_tool_calls": 30,
+    "max_context_bytes": 65536
+  },
+  "skill_fingerprint": "29ff9a6b6032c2284cbd0f881ec4838c087c19e42d8a549efec89d39d656aa04",
+  "enabled": true
+}

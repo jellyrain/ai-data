@@ -68,7 +68,7 @@ describe("可信部门权限范围", () => {
     } as unknown as ConstructorParameters<typeof AuthService>[0]);
     await expect(service.updateManagedUserDepartments("user", "org", ["A"])).resolves.toBe(true);
     expect(cache.get(context.sessionId)).toBeNull();
-    expect(repository.updateUserDepartments).toHaveBeenCalledWith("user", "org", ["A"]);
+    expect(repository.updateUserDepartments).toHaveBeenCalledWith("user", "org", ["A"], undefined);
   });
 
   it.each([
@@ -91,7 +91,8 @@ describe("可信部门权限范围", () => {
         payload: { department_ids: departments },
       });
       expect(response.statusCode).toBe(status);
-      if (status === 204) expect(update).toHaveBeenCalledWith("member", "org", departments);
+      if (status === 204)
+        expect(update).toHaveBeenCalledWith("member", "org", departments, undefined);
       else expect(update).not.toHaveBeenCalled();
     } finally {
       await app.close();

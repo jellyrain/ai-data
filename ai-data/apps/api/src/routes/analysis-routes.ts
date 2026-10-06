@@ -1,5 +1,4 @@
 import { Readable } from "node:stream";
-import { setTimeout } from "node:timers/promises";
 import { z } from "zod";
 import { clarificationAnswerSchema, queryDslSchema } from "@ai-data/contracts";
 import type { FastifyInstance } from "fastify";
@@ -76,8 +75,18 @@ function registerAnalysisRoutes(
     const close = () => controller.abort();
     reply.raw.once("close", close);
     async function* stream() {
+      let wake: (() => void) | undefined;
+      let changed: boolean;
+      let timer: NodeJS.Timeout | undefined;
+      const unsubscribe = runs.subscribeEvents?.(id, () => {
+        changed = true;
+        wake?.();
+      });
+      const aborted = () => wake?.();
+      controller.signal.addEventListener("abort", aborted);
       try {
         while (!controller.signal.aborted) {
+          changed = false;
           const context = await auth.loadContext(token);
           const state = await runs.get(context, id);
           const events = await runs.events(context, id, after);
@@ -93,11 +102,21 @@ function registerAnalysisRoutes(
             return;
           if (events.length === 200) continue;
           if (!events.length) yield ": keep-alive\n\n";
-          await setTimeout(1000, undefined, { signal: controller.signal });
+          // 订阅先于读取，读取期间提交的事件不会错过唤醒；跨实例保留一秒回放。
+          if (!changed && !controller.signal.aborted)
+            await new Promise<void>((resolve) => {
+              wake = resolve;
+              timer = setTimeout(resolve, 1000);
+            });
+          clearTimeout(timer);
+          wake = undefined;
         }
       } catch (error) {
         if (!controller.signal.aborted) throw error;
       } finally {
+        clearTimeout(timer);
+        unsubscribe?.();
+        controller.signal.removeEventListener("abort", aborted);
         reply.raw.removeListener("close", close);
       }
     }

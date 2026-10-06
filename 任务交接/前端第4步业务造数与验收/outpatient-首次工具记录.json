@@ -1,0 +1,2061 @@
+{
+  "run_id": "d2d3fd3f-b61d-4d49-87a2-ba4f046d6c55",
+  "calls": [
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "d.name",
+            "as": "department_name"
+          },
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "d.name"
+        ],
+        "joins": [
+          {
+            "alias": "d",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "v.department_id",
+                "op": "eq",
+                "right": "d.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "d.name",
+            "as": "department_name"
+          },
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "d.name"
+        ],
+        "joins": [
+          {
+            "alias": "d",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "v.department_id",
+                "op": "eq",
+                "right": "d.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query"
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "d.name",
+            "as": "department_name"
+          },
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "d.name"
+        ],
+        "joins": [
+          {
+            "alias": "d",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "v.department_id",
+                "op": "eq",
+                "right": "d.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query"
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "d.name",
+            "as": "department_name"
+          },
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "d.name"
+        ],
+        "joins": [
+          {
+            "alias": "d",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "v.department_id",
+                "op": "eq",
+                "right": "d.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "d.name",
+            "as": "department_name"
+          },
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "d.name"
+        ],
+        "joins": [
+          {
+            "alias": "d",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "v.department_id",
+                "op": "eq",
+                "right": "d.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "d.name",
+            "as": "department_name"
+          },
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "d.name"
+        ],
+        "joins": [
+          {
+            "alias": "d",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "v.department_id",
+                "op": "eq",
+                "right": "d.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query"
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits"
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query"
+      },
+      "result": {
+        "columns": [
+          {
+            "name": "visit_count",
+            "data_type": "integer"
+          }
+        ],
+        "rows": [
+          {
+            "visit_count": 24000
+          }
+        ],
+        "row_count": 1,
+        "truncated": false,
+        "delivery": {
+          "status": "complete",
+          "total_row_count": 1
+        },
+        "sampled": false,
+        "evidence_id": "169ae199-40b4-4b60-ab7e-3b18eb08ecf1"
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "d.name",
+            "as": "department_name"
+          },
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "d.name"
+        ],
+        "joins": [
+          {
+            "alias": "d",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "v.department_id",
+                "op": "eq",
+                "right": "d.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query"
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "vis",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "vis.department_id"
+            ],
+            "select": [
+              {
+                "as": "uniq_patients",
+                "field": "vis.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "total_visits",
+                "field": "vis.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "dep.name",
+            "as": "department_name"
+          },
+          {
+            "field": "vis.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "vis.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "dep.name"
+        ],
+        "joins": [
+          {
+            "alias": "dep",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "vis.department_id",
+                "op": "eq",
+                "right": "dep.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query"
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query"
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query"
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query"
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query"
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query"
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits"
+        },
+        "select": [
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "filters": {
+          "logic": "and",
+          "items": [
+            {
+              "data_type": "string",
+              "field": "v.status",
+              "op": "eq",
+              "value": "completed"
+            },
+            {
+              "data_type": "datetime",
+              "field": "v.visited_at",
+              "op": "between",
+              "value": [
+                "2026-09-01 00:00:00",
+                "2026-09-27 23:59:59"
+              ]
+            }
+          ]
+        }
+      },
+      "result": {
+        "columns": [
+          {
+            "name": "visit_count",
+            "data_type": "integer"
+          },
+          {
+            "name": "patient_count",
+            "data_type": "integer"
+          }
+        ],
+        "rows": [
+          {
+            "visit_count": 763,
+            "patient_count": 763
+          }
+        ],
+        "row_count": 1,
+        "truncated": false,
+        "delivery": {
+          "status": "complete",
+          "total_row_count": 1
+        },
+        "sampled": false,
+        "evidence_id": "6a7437e6-f243-4563-bc89-1450ac6a6e22"
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits",
+          "filters": {
+            "logic": "and",
+            "items": [
+              {
+                "data_type": "string",
+                "field": "status",
+                "op": "eq",
+                "value": "completed"
+              },
+              {
+                "data_type": "datetime",
+                "field": "visited_at",
+                "op": "between",
+                "value": [
+                  "2026-09-01 00:00:00",
+                  "2026-09-27 23:59:59"
+                ]
+              }
+            ]
+          },
+          "pre_aggregate": {
+            "group_by": [
+              "v.department_id"
+            ],
+            "select": [
+              {
+                "as": "patient_count",
+                "field": "v.patient_id",
+                "aggregation": "count_distinct"
+              },
+              {
+                "as": "visit_count",
+                "field": "v.visit_id",
+                "aggregation": "count"
+              }
+            ]
+          }
+        },
+        "select": [
+          {
+            "field": "d.name",
+            "as": "department_name"
+          },
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "d.name"
+        ],
+        "joins": [
+          {
+            "alias": "d",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "v.department_id",
+                "op": "eq",
+                "right": "d.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "code": "INVALID_INPUT",
+        "message": "工具调用失败，请检查业务条件",
+        "issues": [
+          {
+            "path": "query.from.pre_aggregate.group_by.0",
+            "message": "分组字段必须作为非聚合输出列"
+          }
+        ]
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits"
+        },
+        "select": [
+          {
+            "field": "d.name",
+            "as": "department_name"
+          },
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "d.name"
+        ],
+        "joins": [
+          {
+            "alias": "d",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "v.department_id",
+                "op": "eq",
+                "right": "d.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "columns": [
+          {
+            "name": "department_name",
+            "data_type": "string"
+          },
+          {
+            "name": "visit_count",
+            "data_type": "integer"
+          },
+          {
+            "name": "patient_count",
+            "data_type": "integer"
+          }
+        ],
+        "rows": [
+          {
+            "department_name": "内科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "皮肤科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "神经内科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "外科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "消化科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "心内科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "眼科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "儿科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "耳鼻喉科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "妇科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "骨科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "康复科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "口腔科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "泌尿科",
+            "visit_count": 1411,
+            "patient_count": 1411
+          },
+          {
+            "department_name": "产科",
+            "visit_count": 1411,
+            "patient_count": 1411
+          },
+          {
+            "department_name": "呼吸科",
+            "visit_count": 1411,
+            "patient_count": 1411
+          },
+          {
+            "department_name": "中医科",
+            "visit_count": 1411,
+            "patient_count": 1411
+          }
+        ],
+        "row_count": 17,
+        "truncated": false,
+        "delivery": {
+          "status": "complete",
+          "total_row_count": 17
+        },
+        "sampled": false,
+        "evidence_id": "fc90acbc-d712-4ede-b8c4-ab42d615c8af"
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits"
+        },
+        "select": [
+          {
+            "field": "d.name",
+            "as": "department_name"
+          },
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "d.name"
+        ],
+        "joins": [
+          {
+            "alias": "d",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "v.department_id",
+                "op": "eq",
+                "right": "d.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "columns": [
+          {
+            "name": "department_name",
+            "data_type": "string"
+          },
+          {
+            "name": "visit_count",
+            "data_type": "integer"
+          },
+          {
+            "name": "patient_count",
+            "data_type": "integer"
+          }
+        ],
+        "rows": [
+          {
+            "department_name": "内科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "皮肤科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "神经内科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "外科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "消化科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "心内科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "眼科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "儿科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "耳鼻喉科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "妇科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "骨科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "康复科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "口腔科",
+            "visit_count": 1412,
+            "patient_count": 1412
+          },
+          {
+            "department_name": "泌尿科",
+            "visit_count": 1411,
+            "patient_count": 1411
+          },
+          {
+            "department_name": "产科",
+            "visit_count": 1411,
+            "patient_count": 1411
+          },
+          {
+            "department_name": "呼吸科",
+            "visit_count": 1411,
+            "patient_count": 1411
+          },
+          {
+            "department_name": "中医科",
+            "visit_count": 1411,
+            "patient_count": 1411
+          }
+        ],
+        "row_count": 17,
+        "truncated": false,
+        "delivery": {
+          "status": "complete",
+          "total_row_count": 17
+        },
+        "sampled": false,
+        "evidence_id": "fc90acbc-d712-4ede-b8c4-ab42d615c8af"
+      }
+    },
+    {
+      "query": {
+        "from": {
+          "alias": "v",
+          "object_id": "table.dbo.visits"
+        },
+        "select": [
+          {
+            "field": "d.name",
+            "as": "department_name"
+          },
+          {
+            "field": "v.visit_id",
+            "aggregation": "count",
+            "as": "visit_count"
+          },
+          {
+            "field": "v.patient_id",
+            "aggregation": "count_distinct",
+            "as": "patient_count"
+          }
+        ],
+        "source_id": "clinical-demo",
+        "type": "relational_query",
+        "group_by": [
+          "d.name"
+        ],
+        "joins": [
+          {
+            "alias": "d",
+            "object_id": "table.dbo.departments",
+            "on": [
+              {
+                "left": "v.department_id",
+                "op": "eq",
+                "right": "d.department_id"
+              }
+            ],
+            "type": "inner",
+            "relation_id": "rel_visits_department_id"
+          }
+        ],
+        "limit": 200,
+        "order_by": [
+          {
+            "direction": "desc",
+            "field": "visit_count"
+          }
+        ]
+      },
+      "result": {
+        "terminal_message": "aborted by user after 0.1s"
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+$ prettier --check .
+Checking formatting...
+[warn] apps/api/tests/support/web-editor-catalog-fixture.ts
+[warn] pnpm-lock.yaml
+[warn] Code style issues found in 2 files. Run Prettier with --write to fix.
+[ELIFECYCLE] Command failed with exit code 1.

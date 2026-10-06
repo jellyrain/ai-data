@@ -37,7 +37,7 @@
     "mssql": "catalog:",
     "mysql2": "^3.24.2",
     "oracledb": "^7.0.1",
-    "p-limit": "catalog:",
+    "p-limit": "^7.3.1",
     "pg": "^8.23.0",
     "pino": "catalog:",
     "zod": "catalog:"

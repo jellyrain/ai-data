@@ -1,0 +1,189 @@
+{
+  "checks": [
+    {
+      "report": "门诊",
+      "report_id": "6590692f-afe6-44aa-abe9-b3c6519708c1",
+      "execution_id": "2cd5d4a0-af78-4cfa-9858-c896734523fb",
+      "format": "Excel",
+      "bytes": 8133,
+      "rows": 17,
+      "passed": true
+    },
+    {
+      "report": "门诊",
+      "report_id": "6590692f-afe6-44aa-abe9-b3c6519708c1",
+      "execution_id": "2cd5d4a0-af78-4cfa-9858-c896734523fb",
+      "format": "Word",
+      "bytes": 33878,
+      "rows": 17,
+      "passed": true
+    },
+    {
+      "report": "门诊",
+      "format": "PDF",
+      "pages": 2,
+      "text_verified": true
+    },
+    {
+      "report": "门诊",
+      "report_id": "6590692f-afe6-44aa-abe9-b3c6519708c1",
+      "execution_id": "2cd5d4a0-af78-4cfa-9858-c896734523fb",
+      "format": "PDF",
+      "bytes": 133121,
+      "rows": 17,
+      "passed": true
+    },
+    {
+      "report": "住院",
+      "report_id": "4be90771-90a6-4598-9454-077cffed9762",
+      "execution_id": "a4bd7c97-f621-48aa-a7d0-e7375982f292",
+      "format": "Excel",
+      "bytes": 9211,
+      "rows": 24,
+      "passed": true
+    },
+    {
+      "report": "住院",
+      "report_id": "4be90771-90a6-4598-9454-077cffed9762",
+      "execution_id": "a4bd7c97-f621-48aa-a7d0-e7375982f292",
+      "format": "Word",
+      "bytes": 11552,
+      "rows": 24,
+      "passed": true
+    },
+    {
+      "report": "住院",
+      "format": "PDF",
+      "pages": 2,
+      "text_verified": true
+    },
+    {
+      "report": "住院",
+      "report_id": "4be90771-90a6-4598-9454-077cffed9762",
+      "execution_id": "a4bd7c97-f621-48aa-a7d0-e7375982f292",
+      "format": "PDF",
+      "bytes": 114474,
+      "rows": 24,
+      "passed": true
+    },
+    {
+      "report": "费用",
+      "report_id": "47dfa9e0-8e34-4999-b9be-475732e75dc2",
+      "execution_id": "a502321b-f847-4d17-a080-8fde6af3b256",
+      "format": "Excel",
+      "bytes": 9515,
+      "rows": 29,
+      "passed": true
+    },
+    {
+      "report": "费用",
+      "report_id": "47dfa9e0-8e34-4999-b9be-475732e75dc2",
+      "execution_id": "a502321b-f847-4d17-a080-8fde6af3b256",
+      "format": "Word",
+      "bytes": 11826,
+      "rows": 29,
+      "passed": true
+    },
+    {
+      "report": "费用",
+      "format": "PDF",
+      "pages": 2,
+      "text_verified": true
+    },
+    {
+      "report": "费用",
+      "report_id": "47dfa9e0-8e34-4999-b9be-475732e75dc2",
+      "execution_id": "a502321b-f847-4d17-a080-8fde6af3b256",
+      "format": "PDF",
+      "bytes": 118416,
+      "rows": 29,
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "writes": [],
+  "before": [
+    {
+      "table_name": "report_templates",
+      "total": "3"
+    },
+    {
+      "table_name": "report_template_versions",
+      "total": "4"
+    },
+    {
+      "table_name": "saved_reports",
+      "total": "5"
+    },
+    {
+      "table_name": "report_executions",
+      "total": "5"
+    },
+    {
+      "table_name": "report_narratives",
+      "total": "0"
+    },
+    {
+      "table_name": "analysis_runs",
+      "total": "25"
+    },
+    {
+      "table_name": "analysis_evidence",
+      "total": "34"
+    },
+    {
+      "table_name": "analysis_tool_audits",
+      "total": "147"
+    },
+    {
+      "table_name": "analysis_run_events",
+      "total": "431"
+    },
+    {
+      "table_name": "model_configuration_versions",
+      "total": "1"
+    }
+  ],
+  "after": [
+    {
+      "table_name": "report_templates",
+      "total": "3"
+    },
+    {
+      "table_name": "report_template_versions",
+      "total": "4"
+    },
+    {
+      "table_name": "saved_reports",
+      "total": "5"
+    },
+    {
+      "table_name": "report_executions",
+      "total": "5"
+    },
+    {
+      "table_name": "report_narratives",
+      "total": "0"
+    },
+    {
+      "table_name": "analysis_runs",
+      "total": "25"
+    },
+    {
+      "table_name": "analysis_evidence",
+      "total": "34"
+    },
+    {
+      "table_name": "analysis_tool_audits",
+      "total": "147"
+    },
+    {
+      "table_name": "analysis_run_events",
+      "total": "431"
+    },
+    {
+      "table_name": "model_configuration_versions",
+      "total": "1"
+    }
+  ]
+}

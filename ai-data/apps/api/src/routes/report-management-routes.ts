@@ -1,21 +1,28 @@
 import { z } from "zod";
-import { reportListInputSchema, saveReportDefinitionInputSchema } from "@ai-data/contracts";
+import {
+  reportListInputSchema,
+  saveReportDefinitionInputSchema,
+  reportShareCandidatesInputSchema,
+} from "@ai-data/contracts";
 import type { FastifyInstance } from "fastify";
 import type { ApiAuthService } from "../app-types";
 import type { ReportDefinitionService } from "../reports/report-definition-service";
 import type { ReportManagementService } from "../reports/report-management-service";
+import type { ReportSharingService } from "../reports/report-sharing-service";
 import { bearerToken } from "./auth-routes";
 
 const paramsSchema = z.object({ id: z.string().min(1).max(128) }).strict();
 const versionSchema = z.object({ version: z.coerce.number().int().positive().optional() }).strict();
+const emptyQuerySchema = z.object({}).strict();
 const updateSchema = saveReportDefinitionInputSchema.extend({
   expected_version: z.number().int().positive(),
 });
 /** 表单、画布及对话读取相同定义；公共修改只能更新已存在的正版本。 */
 function registerReportManagementRoutes(
   app: FastifyInstance,
-  auth: Pick<ApiAuthService, "loadContext">,
+  auth: Pick<ApiAuthService, "loadContext" | "refreshContext">,
   services: {
+    sharing: Pick<ReportSharingService, "get" | "candidates">;
     definitions: Pick<
       ReportDefinitionService,
       "save" | "get" | "saveBlock" | "getBlock" | "listBlocks" | "listTemplates"
@@ -58,20 +65,36 @@ function registerReportManagementRoutes(
       paramsSchema.parse(request.params).id,
     ),
   );
+  app.get("/reports/:id/sharing", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
+    emptyQuerySchema.parse(request.query);
+    return services.sharing.get(context, paramsSchema.parse(request.params).id);
+  });
+  app.get("/reports/:id/share-candidates", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
+    return services.sharing.candidates(
+      context,
+      paramsSchema.parse(request.params).id,
+      reportShareCandidatesInputSchema.parse(request.query),
+    );
+  });
   app.put("/reports/:id/sharing", async (request) =>
     services.management.share(
-      await auth.loadContext(bearerToken(request)),
+      await auth.refreshContext(await auth.loadContext(bearerToken(request))),
       paramsSchema.parse(request.params).id,
       request.body,
     ),
   );
-  app.get("/reports/:id/export-content", async (request) =>
-    services.management.exportReport(
-      await auth.loadContext(bearerToken(request)),
+  app.get("/reports/:id/export-content", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    return services.management.exportReport(
+      await auth.refreshContext(await auth.loadContext(bearerToken(request))),
       paramsSchema.parse(request.params).id,
       versionSchema.parse(request.query).version,
-    ),
-  );
+    );
+  });
   app.get("/report-blocks", async (request) =>
     services.definitions.listBlocks(
       await auth.loadContext(bearerToken(request)),
@@ -104,20 +127,23 @@ function registerReportManagementRoutes(
       expected_version,
     );
   });
-  app.get("/report-templates", async (request) => ({
-    items: await services.definitions.listTemplates(await auth.loadContext(bearerToken(request))),
-  }));
+  app.get("/report-templates", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
+    emptyQuerySchema.parse(request.query);
+    return { items: await services.definitions.listTemplates(context) };
+  });
   app.get("/analysis-runs/:id/artifacts", async (request) => ({
     items: await services.management.artifacts(
       await auth.loadContext(bearerToken(request)),
       paramsSchema.parse(request.params).id,
     ),
   }));
-  app.get("/conversations/:id/export-content", async (request) =>
-    services.management.exportConversation(
-      await auth.loadContext(bearerToken(request)),
-      paramsSchema.parse(request.params).id,
-    ),
-  );
+  app.get("/conversations/:id/export-content", async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
+    emptyQuerySchema.parse(request.query);
+    return services.management.exportConversation(context, paramsSchema.parse(request.params).id);
+  });
 }
 export { registerReportManagementRoutes };

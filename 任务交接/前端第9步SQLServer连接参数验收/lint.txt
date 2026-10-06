@@ -1,0 +1,12 @@
+$ eslint eslint.config.mjs scripts && pnpm -r lint
+Scope: 5 of 6 workspace projects
+packages/contracts lint$ eslint .
+packages/metadata lint$ eslint .
+packages/metadata lint: Done
+packages/contracts lint: Done
+apps/data-access lint$ eslint .
+apps/api lint$ eslint .
+apps/web lint$ eslint .
+apps/data-access lint: Done
+apps/web lint: Done
+apps/api lint: Done

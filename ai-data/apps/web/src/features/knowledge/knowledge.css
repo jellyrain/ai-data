@@ -1,0 +1,111 @@
+.knowledge-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  border-bottom: 1px solid var(--app-border);
+  margin-bottom: 24px;
+}
+.knowledge-tabs .el-button + .el-button {
+  margin-left: 0;
+}
+.knowledge-fieldset {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.knowledge-page .management-detail label,
+.knowledge-fieldset label {
+  display: block;
+  line-height: 1.8;
+  margin-bottom: 14px;
+}
+.knowledge-page .management-detail details {
+  margin: 16px 0;
+}
+.knowledge-page .management-detail summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.knowledge-page .management-detail pre {
+  max-width: 100%;
+  max-height: 480px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--app-surface);
+  padding: 16px;
+  border-radius: var(--app-radius);
+}
+.knowledge-page .management-toolbar > .el-input {
+  max-width: 250px;
+}
+.knowledge-page .management-footer {
+  position: static;
+}
+.knowledge-details {
+  display: grid;
+  grid-template-columns: minmax(80px, auto) minmax(0, 1fr);
+  gap: 10px 20px;
+}
+.knowledge-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.knowledge-review,
+.knowledge-confirmation,
+.knowledge-source {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--app-border);
+  overflow-wrap: anywhere;
+}
+.knowledge-task-list {
+  min-width: 0;
+  overflow-x: auto;
+}
+.knowledge-task-list table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.knowledge-task-list th {
+  font-weight: 500;
+  font-size: 12px;
+  background: var(--app-surface);
+  color: var(--app-muted);
+}
+.knowledge-task-list td,
+.knowledge-task-list th {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--app-border);
+  vertical-align: top;
+}
+.knowledge-task-list td {
+  overflow-wrap: anywhere;
+}
+.knowledge-task-list td small {
+  display: block;
+  color: var(--app-muted);
+  margin-top: 6px;
+}
+@media (max-width: 600px) {
+  .knowledge-task-list th:nth-child(3),
+  .knowledge-task-list td:nth-child(3),
+  .knowledge-task-list th:nth-child(4),
+  .knowledge-task-list td:nth-child(4) {
+    display: none;
+  }
+  .knowledge-task-list td:first-child {
+    max-width: 180px;
+  }
+  .knowledge-page .management-toolbar > .el-input {
+    max-width: 100%;
+  }
+}
+
+.knowledge-task-list tbody tr:hover {
+  background: var(--app-hover);
+}
+.knowledge-details dt {
+  color: var(--app-muted);
+}

@@ -15,7 +15,7 @@ const graphParamsSchema = sourceParamsSchema
 /** 管理发布和用户图读取共享关系服务，用户图不包含隐藏对象或连接字段。 */
 function registerCatalogRelationRoutes(
   app: FastifyInstance,
-  auth: Pick<ApiAuthService, "loadContext">,
+  auth: Pick<ApiAuthService, "loadContext" | "refreshContext">,
   service: Pick<CatalogRelationService, "graph" | "publish">,
 ): void {
   for (const [path, admin] of [
@@ -23,13 +23,15 @@ function registerCatalogRelationRoutes(
     ["/catalog/:sourceId/objects/:objectId/relations", false],
   ] as const) {
     app.get(path, async (request, reply) => {
-      const context = await auth.loadContext(bearerToken(request));
+      reply.header("cache-control", "no-store");
+      const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
       const { sourceId, objectId } = graphParamsSchema.parse(request.params);
       return reply.send(await service.graph(context, sourceId, objectId, admin));
     });
   }
   app.post("/admin/catalog/:sourceId/relations/publish", async (request, reply) => {
-    const context = await auth.loadContext(bearerToken(request));
+    reply.header("cache-control", "no-store");
+    const context = await auth.refreshContext(await auth.loadContext(bearerToken(request)));
     const { sourceId } = sourceParamsSchema.parse(request.params);
     return reply.send({
       items: await service.publish(

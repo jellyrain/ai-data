@@ -1,7 +1,13 @@
 import { createHash } from "node:crypto";
 import dayjs from "dayjs";
 import { z } from "zod";
-import { stableStringify, type RunLease } from "@ai-data/contracts";
+import {
+  stableStringify,
+  type RunLease,
+  type MemoryScope,
+  type PublishedKnowledge,
+  type QueryDsl,
+} from "@ai-data/contracts";
 import type { ApiCatalogService } from "../app-types";
 import type { AuthContext } from "../auth/auth-types";
 import type { AnalysisRunService } from "../analysis-runs/analysis-run-service";
@@ -12,9 +18,15 @@ import type { ReportExecutionService } from "../reports/report-execution-service
 import type { HarnessTool, HarnessToolResult } from "../harness/harness-types";
 import type { SkillResources } from "../skills/skill-resources";
 import { ApplicationError } from "../errors/application-error";
-import { toolDescriptions, toolInputs } from "./tool-contracts";
+import {
+  toolDescriptions,
+  toolInputs,
+  toolArgumentsSchema,
+  schemaOnDemandTools,
+} from "./tool-contracts";
 import { modelQueryResult } from "./model-query-result";
 import { modelToolSchema } from "./model-tool-schema";
+import { datasetSummary, metricSummary, discoveryPage } from "./model-discovery-result";
 import type { MemoryRuntime } from "../memory/memory-runtime";
 import { saveUserPreferenceResultSchema } from "@ai-data/contracts";
 
@@ -34,7 +46,14 @@ type ToolDependencies = {
   skills?: Pick<SkillResources, "readReference">;
   memory?: Pick<
     MemoryRuntime,
-    "snapshot" | "save" | "knowledge" | "stageCandidate" | "capture" | "captureMetric"
+    | "preferences"
+    | "save"
+    | "knowledge"
+    | "stageCandidate"
+    | "capture"
+    | "captureMetric"
+    | "businessRules"
+    | "recordKnowledge"
   >;
   runs: Pick<AnalysisRunService, "assertCurrent" | "recordTool" | "query" | "clarify">;
   catalog: ApiCatalogService;
@@ -45,10 +64,21 @@ type ToolDependencies = {
 };
 
 class AnalysisTools {
+  private readonly readRules = new Set<string>();
   constructor(private readonly dependencies: ToolDependencies) {}
+
+  private usesJsonArguments(name: string): boolean {
+    return (
+      this.dependencies.allowedNames?.includes("get_tool_schema") === true &&
+      schemaOnDemandTools.has(name)
+    );
+  }
 
   definitions(): HarnessTool[] {
     return Object.entries(toolInputs)
+      .filter(
+        ([name]) => name !== "get_tool_schema" || this.dependencies.allowedNames?.includes(name),
+      )
       .filter(
         ([name]) =>
           !["get_report_definition", "save_report_definition"].includes(name) ||
@@ -64,8 +94,16 @@ class AnalysisTools {
       )
       .map(([name, schema]) => ({
         name,
-        description: toolDescriptions[name as keyof typeof toolInputs],
-        inputSchema: modelToolSchema(z.toJSONSchema(schema, { io: "input" })),
+        description:
+          toolDescriptions[name as keyof typeof toolInputs] +
+          (this.usesJsonArguments(name)
+            ? ` 先调用 get_tool_schema(tool_name="${name}") 读取完整参数，将业务参数对象序列化为 arguments_json 后调用本工具。`
+            : ""),
+        inputSchema: modelToolSchema(
+          z.toJSONSchema(this.usesJsonArguments(name) ? toolArgumentsSchema : schema, {
+            io: "input",
+          }),
+        ),
       }));
   }
 
@@ -94,6 +132,16 @@ class AnalysisTools {
         throw new ApplicationError("UNAUTHORIZED", "Agent 未启用该工具");
       const schema = toolInputs[name as keyof typeof toolInputs];
       if (!schema) throw new ApplicationError("INVALID_INPUT", "工具不存在");
+      if (this.usesJsonArguments(name)) {
+        const { arguments_json } = toolArgumentsSchema.parse(input);
+        if (Buffer.byteLength(arguments_json, "utf8") > 65536)
+          throw new ApplicationError("INVALID_INPUT", "arguments_json 超出 65536 字节上限");
+        try {
+          input = JSON.parse(arguments_json);
+        } catch {
+          throw new ApplicationError("INVALID_INPUT", "arguments_json 不是有效的 JSON 对象");
+        }
+      }
       const parsed = schema.parse(input);
       const reportTarget = await this.dependencies.reportEditing?.target(context, runId);
       if (reportTarget?.mode === "narrative") {
@@ -148,6 +196,21 @@ class AnalysisTools {
       await this.dependencies.runs.assertCurrent(context, runId, lease);
       if (Buffer.byteLength(JSON.stringify(output), "utf8") > 65536)
         throw new ApplicationError("QUERY_LIMIT_EXCEEDED", "工具返回内容超出分析容量");
+      // 只有通过容量与租约检查的正文才能记为已读取；失败返回不能放行下一次查询。
+      if (output && typeof output === "object") {
+        if (name === "get_published_knowledge" && "knowledge_id" in output)
+          await this.rememberKnowledge(context, runId, lease, [output as PublishedKnowledge]);
+        else if (
+          ["describe_dataset", "describe_metric", "query_dataset", "query_metric"].includes(name) &&
+          "business_rules" in output
+        )
+          await this.rememberKnowledge(
+            context,
+            runId,
+            lease,
+            output.business_rules as PublishedKnowledge[],
+          );
+      }
       await this.dependencies.runs.recordTool(context, runId, lease, {
         ...base,
         status: "completed",
@@ -201,6 +264,17 @@ class AnalysisTools {
     key: string,
   ): Promise<unknown> {
     switch (name) {
+      case "get_tool_schema": {
+        const { tool_name } = toolInputs.get_tool_schema.parse(input);
+        if (!this.definitions().some((tool) => tool.name === tool_name))
+          throw new ApplicationError("UNAUTHORIZED", "当前 Agent 不可读取该工具定义");
+        const name = tool_name as keyof typeof toolInputs;
+        return {
+          name,
+          description: toolDescriptions[name],
+          input_schema: z.toJSONSchema(toolInputs[name], { io: "input" }),
+        };
+      }
       case "get_report_definition": {
         if (!this.dependencies.reportEditing)
           throw new ApplicationError("NOT_FOUND", "报表编辑未启用");
@@ -240,12 +314,18 @@ class AnalysisTools {
       case "create_knowledge_candidate": {
         const memory = this.dependencies.memory;
         if (!memory) throw new ApplicationError("NOT_FOUND", "当前运行未启用记忆服务");
-        if (name === "get_user_preferences") return memory.snapshot(context);
+        if (name === "get_user_preferences") return memory.preferences(context);
         if (name === "save_user_preference") return memory.save(context, runId, lease, input, key);
         if (name === "create_knowledge_candidate")
           return memory.stageCandidate(context, runId, lease, input, key);
         const request = toolInputs.get_published_knowledge.parse(input);
-        return memory.knowledge(context, request.knowledge_id, request.version);
+        const knowledge = await memory.knowledge(
+          context,
+          request.knowledge_id,
+          request.version,
+          request,
+        );
+        return knowledge;
       }
       case "read_skill_reference": {
         const request = toolInputs.read_skill_reference.parse(input);
@@ -270,7 +350,7 @@ class AnalysisTools {
           request.query,
           request.limit,
         );
-        return { items: items.map((item) => item.dataset) };
+        return { items: items.map((item) => datasetSummary(item.dataset)) };
       }
       case "list_datasets": {
         const request = toolInputs.list_datasets.parse(input);
@@ -287,7 +367,7 @@ class AnalysisTools {
           .map((item) => item.dataset)
           .sort((a, b) => a.object_id.localeCompare(b.object_id));
         return {
-          items: items.slice(offset, offset + request.limit),
+          items: items.slice(offset, offset + request.limit).map(datasetSummary),
           ...(offset + request.limit < items.length
             ? { next_cursor: String(offset + request.limit) }
             : {}),
@@ -331,21 +411,54 @@ class AnalysisTools {
             key.every((field) => columns.has(field)),
           ),
           approved_relations: relations,
+          business_rules: await this.rules(context, [
+            { source_id: request.source_id, object_id: request.object_id },
+          ]),
         };
       }
-      case "list_metrics":
-        return { items: await this.dependencies.metrics.list(context) };
+      case "list_metrics": {
+        const request = toolInputs.list_metrics.parse(input);
+        const items = (await this.dependencies.metrics.list(context)).filter(
+          (item) => !request.source_id || item.query.source_id === request.source_id,
+        );
+        const page = discoveryPage(
+          items,
+          request,
+          (item) => item.metric_id,
+          (item) => `${item.name} ${item.description} ${item.aliases.join(" ")}`,
+        );
+        return { ...page, items: page.items.map(metricSummary) };
+      }
       case "describe_metric": {
         const request = toolInputs.describe_metric.parse(input);
-        return this.dependencies.metrics.get(context, request.metric_id, request.version);
+        const metric = await this.dependencies.metrics.get(
+          context,
+          request.metric_id,
+          request.version,
+        );
+        return {
+          ...metric,
+          business_rules: await this.rules(
+            context,
+            queryScopes(metric.query).map((scope) => ({ ...scope, metric_id: metric.metric_id })),
+          ),
+        };
       }
       case "query_dataset": {
+        const query = toolInputs.query_dataset.parse(input).query;
+        const unread = await this.unreadRules(context, runId, lease, queryScopes(query));
+        if (unread.length)
+          return {
+            status: "rules_required",
+            business_rules: unread,
+            message: "请按上述正式规则确认或修正查询条件，再提交查询。",
+          };
         const evidence = await this.dependencies.runs.query(
           context,
           runId,
           lease,
           key,
-          toolInputs.query_dataset.parse(input).query,
+          query,
           undefined,
           { managed: true },
         );
@@ -354,6 +467,21 @@ class AnalysisTools {
       }
       case "query_metric": {
         const { metric_id, ...request } = toolInputs.query_metric.parse(input);
+        if (this.dependencies.memory) {
+          const metric = await this.dependencies.metrics.get(context, metric_id, request.version);
+          const unread = await this.unreadRules(
+            context,
+            runId,
+            lease,
+            queryScopes(metric.query).map((scope) => ({ ...scope, metric_id })),
+          );
+          if (unread.length)
+            return {
+              status: "rules_required",
+              business_rules: unread,
+              message: "请按上述正式规则确认指标和查询条件，再提交查询。",
+            };
+        }
         const result = await this.dependencies.metrics.query(
           context,
           metric_id,
@@ -379,6 +507,42 @@ class AnalysisTools {
         throw new ApplicationError("INVALID_INPUT", "工具不存在");
     }
   }
+  private ruleKey(runId: string, lease: RunLease, item: PublishedKnowledge) {
+    return `${runId}:${lease.epoch}:${item.knowledge_id}:${item.version}`;
+  }
+  private async rememberKnowledge(
+    context: AuthContext,
+    runId: string,
+    lease: RunLease,
+    knowledge: PublishedKnowledge[],
+  ) {
+    if (!knowledge.length) return;
+    await this.dependencies.memory?.recordKnowledge(context, runId, lease, knowledge);
+    for (const item of knowledge) this.readRules.add(this.ruleKey(runId, lease, item));
+  }
+  private async rules(context: AuthContext, scopes: MemoryScope[]) {
+    return (await this.dependencies.memory?.businessRules(context, scopes)) ?? [];
+  }
+  private async unreadRules(
+    context: AuthContext,
+    runId: string,
+    lease: RunLease,
+    scopes: MemoryScope[],
+  ) {
+    const rules = ((await this.dependencies.memory?.businessRules(context, scopes)) ?? []).filter(
+      (item) => !this.readRules.has(this.ruleKey(runId, lease, item)),
+    );
+    return rules;
+  }
+}
+/** 查询涉及的对象范围用于补充适用业务规则，授权仍由查询服务执行。 */
+function queryScopes(query: QueryDsl): MemoryScope[] {
+  return [
+    { source_id: query.source_id, object_id: query.from.object_id },
+    ...(query.type === "relational_query"
+      ? query.joins.map((join) => ({ source_id: query.source_id, object_id: join.object_id }))
+      : []),
+  ];
 }
 /** 查询工具直接返回证据标识，目录和报告工具返回空集合。 */
 function evidenceIds(output: unknown): string[] {

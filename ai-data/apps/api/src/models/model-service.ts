@@ -5,6 +5,7 @@ import type { CodexModelProviderConfig } from "../harness/harness-types";
 import { ApplicationError } from "../errors/application-error";
 import type { ModelRepository } from "./model-types";
 import type { ModelCredentialCipher } from "./model-credential-cipher";
+import type { ModelCapabilities } from "./model-capabilities";
 
 /** 模型定义按组织和版本固定；实际认证仅在服务端运行装配时读取。 */
 class ModelService {
@@ -12,6 +13,7 @@ class ModelService {
     private readonly dependencies: {
       repository: ModelRepository;
       credentials: Pick<ModelCredentialCipher, "encrypt" | "decrypt">;
+      capabilities: Pick<ModelCapabilities, "probe">;
     },
   ) {}
   private assertManager(context: AuthContext) {
@@ -69,6 +71,10 @@ class ModelService {
       headers: credentials.headers,
       contextWindow: config.context_window,
     };
+  }
+  /** 配置校验和发布不访问上游；运行装配在数据库事务结束后调用此方法。 */
+  probe(provider: CodexModelProviderConfig) {
+    return this.dependencies.capabilities.probe(provider);
   }
 }
 

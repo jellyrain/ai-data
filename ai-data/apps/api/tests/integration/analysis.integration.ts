@@ -90,6 +90,58 @@ describe("SQL Server：部门授权与分析运行", () => {
       client: { execute: async () => ({ columns: [], rows: [], row_count: 0, truncated: false }) },
     } as unknown as ConstructorParameters<typeof AnalysisRunService>[0]);
   }
+  it("流式文字跨仓储恢复连续序号，最终事务失败不发布完成或唤醒", async () => {
+    const { submitted } = await submit();
+    const id = submitted.analysisRun.id;
+    const runs = runService();
+    const lease = await runs.claim(context, id, "stream-worker");
+    await runs.recordMessage(context, id, lease, {
+      itemId: "message",
+      status: "started",
+      content: "",
+    });
+    await runs.recordMessage(context, id, lease, {
+      itemId: "message",
+      status: "delta",
+      content: "已查询",
+    });
+    const persisted = await new SqlAnalysisRunRepository(database).listEvents(context, id, 2);
+    expect(persisted).toEqual([
+      expect.objectContaining({
+        sequence: 3,
+        lease_epoch: 1,
+        type: "assistant_message",
+        message_id: "message",
+        content: "已查询",
+      }),
+    ]);
+    let wakes = 0;
+    const unsubscribe = runs.subscribeEvents(id, () => {
+      wakes++;
+    });
+    await expect(
+      runs.complete(
+        context,
+        id,
+        lease,
+        "完成",
+        async () => {
+          throw new Error("提交失败");
+        },
+        "message",
+      ),
+    ).rejects.toThrow("提交失败");
+    expect(wakes).toBe(0);
+    expect((await runs.get(context, id)).status).toBe("running");
+    expect(await runs.events(context, id, 3)).toEqual([]);
+    await runs.complete(context, id, lease, "完成", undefined, "message");
+    expect((await runs.events(context, id, 3)).map((event) => event.type)).toEqual([
+      "final_answer",
+      "run_completed",
+    ]);
+    expect(wakes).toBe(1);
+    unsubscribe();
+  });
   it("官方会话映射跨仓储实例恢复，授权或工具版本变化时重建上下文", async () => {
     const { submitted } = await submit();
     const id = submitted.analysisRun.id;

@@ -1,0 +1,32 @@
+[
+  {
+    "metric_id": "demo-outpatient-visits",
+    "version": 1,
+    "name": "门诊就诊人次（就诊时间）"
+  },
+  {
+    "metric_id": "demo-outpatient-patients",
+    "version": 1,
+    "name": "门诊患者人数（就诊时间）"
+  },
+  {
+    "metric_id": "demo-admissions",
+    "version": 1,
+    "name": "入院人次（入院时间）"
+  },
+  {
+    "metric_id": "demo-discharges",
+    "version": 1,
+    "name": "出院人次（出院时间）"
+  },
+  {
+    "metric_id": "demo-outpatient-fees",
+    "version": 2,
+    "name": "门诊有效费用（费用发生时间）"
+  },
+  {
+    "metric_id": "demo-inpatient-fees",
+    "version": 2,
+    "name": "住院有效费用（费用发生时间）"
+  }
+]

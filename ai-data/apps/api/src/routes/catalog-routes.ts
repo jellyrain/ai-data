@@ -35,7 +35,7 @@ async function currentContext(
   request: FastifyRequest,
   authService: ApiAuthService,
 ): Promise<AuthContext> {
-  return authService.loadContext(bearerToken(request));
+  return authService.refreshContext(await authService.loadContext(bearerToken(request)));
 }
 
 /** 注册面向当前用户的业务目录读取和管理员目录配置接口。 */
@@ -51,6 +51,7 @@ function registerCatalogRoutes(
   >,
 ): void {
   app.get("/catalog/datasets/:sourceId", async (request, reply) => {
+    reply.header("cache-control", "no-store");
     const { sourceId } = sourceParamsSchema.parse(request.params);
     const items = await catalogService.listAuthorized(
       await currentContext(request, authService),
@@ -59,6 +60,7 @@ function registerCatalogRoutes(
     return reply.send({ items: items.map((item) => item.dataset) });
   });
   app.get("/catalog/datasets/:sourceId/search", async (request, reply) => {
+    reply.header("cache-control", "no-store");
     const { sourceId } = sourceParamsSchema.parse(request.params);
     const query = searchQuerySchema.parse(request.query);
     const items = await catalogService.searchAuthorized(
@@ -70,6 +72,7 @@ function registerCatalogRoutes(
     return reply.send({ items: items.map((item) => item.dataset) });
   });
   app.get("/catalog/datasets/:sourceId/:objectId", async (request, reply) => {
+    reply.header("cache-control", "no-store");
     const { sourceId, objectId } = datasetParamsSchema.parse(request.params);
     const detail = await catalogService.getAuthorized(
       await currentContext(request, authService),
@@ -81,6 +84,7 @@ function registerCatalogRoutes(
   });
   /** 返回画布和业务目录需要的批准关联关系及字段策略配置。 */
   app.get("/catalog/datasets/:sourceId/:objectId/business-config", async (request, reply) => {
+    reply.header("cache-control", "no-store");
     const { sourceId, objectId } = datasetParamsSchema.parse(request.params);
     const context = await currentContext(request, authService);
     const version = await catalogService.getConfigVersion(sourceId, objectId);
@@ -92,6 +96,7 @@ function registerCatalogRoutes(
     return reply.send(config);
   });
   app.put("/admin/catalog/datasets", async (request, reply) => {
+    reply.header("cache-control", "no-store");
     requireCatalogAdmin(await currentContext(request, authService));
     const { expected_version, ...config } = configInputSchema.parse(request.body);
     const version =
@@ -102,6 +107,7 @@ function registerCatalogRoutes(
     return reply.code(204).send();
   });
   app.put("/admin/catalog/object-permissions", async (request, reply) => {
+    reply.header("cache-control", "no-store");
     const context = await currentContext(request, authService);
     requireCatalogAdmin(context);
     const { source_id, expected_version, ...input } = objectPermissionInputSchema.parse(
@@ -119,6 +125,7 @@ function registerCatalogRoutes(
     return reply.code(204).send();
   });
   app.put("/admin/catalog/column-permissions", async (request, reply) => {
+    reply.header("cache-control", "no-store");
     const context = await currentContext(request, authService);
     requireCatalogAdmin(context);
     const { source_id, expected_version, ...input } = columnPermissionInputSchema.parse(
@@ -136,6 +143,7 @@ function registerCatalogRoutes(
     return reply.code(204).send();
   });
   app.put("/admin/catalog/row-policies", async (request, reply) => {
+    reply.header("cache-control", "no-store");
     const context = await currentContext(request, authService);
     requireCatalogAdmin(context);
     const { source_id, expected_version, ...input } = rowPolicyInputSchema.parse(request.body);

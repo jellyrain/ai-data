@@ -37,6 +37,7 @@ const saveReportInputSchema = z
   .object({
     analysis_run_id: id,
     title: z.string().min(1).max(512),
+    description: z.string().max(1000).optional(),
     sections: z
       .array(reportSectionSchema)
       .min(1)

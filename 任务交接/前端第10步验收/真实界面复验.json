@@ -1,0 +1,54 @@
+{
+  "started_at": "2026-10-03 13:48:31",
+  "environment": "isolated",
+  "business_database": "ai_bi_demo",
+  "checks": [
+    {
+      "name": "数据库目标发现",
+      "passed": true
+    },
+    {
+      "name": "真实 DAS 注册、凭据引用与完整白名单",
+      "passed": true,
+      "objects": 3
+    },
+    {
+      "name": "正式规则审核发布、未来生效管理读取和负责人选项",
+      "passed": true
+    },
+    {
+      "name": "模板固定 v1 预览、原定义更新后保持内容、新建执行与 SQL 一致",
+      "passed": true
+    },
+    {
+      "name": "浏览器读取真实 API 持久化的个人偏好与待生效知识",
+      "passed": true
+    }
+  ],
+  "queries": [
+    {
+      "name": "本年住院基准",
+      "rows": [
+        {
+          "admissions": 124
+        }
+      ]
+    }
+  ],
+  "models": [],
+  "policy_mode": "department_context",
+  "databases": [
+    "ai_data_management_live_874b9bcbd6df4bc9889f4777b0fb4d55_api",
+    "ai_data_management_live_874b9bcbd6df4bc9889f4777b0fb4d55_das"
+  ],
+  "root": "C:\\Users\\rain\\AppData\\Local\\Temp\\ai-data-management-live-bHapm9",
+  "processes": [
+    15204,
+    29504,
+    15236,
+    26804
+  ],
+  "status": "passed",
+  "cleaned_up": true,
+  "finished_at": "2026-10-03 13:48:46"
+}

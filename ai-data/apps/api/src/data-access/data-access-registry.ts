@@ -29,6 +29,15 @@ class InMemoryDataAccessServiceRegistry implements DataAccessServiceRegistry {
   }
 
   /** 过滤服务级状态和心跳过期的 DAS 实例。 */
+  async listRegisteredServices() {
+    const cutoff = dayjs().subtract(this.heartbeatTtlMilliseconds, "millisecond");
+    return [...this.services.values()].map((service) => ({
+      ...service,
+      isExpired: !dayjs(service.lastHeartbeatAt).isAfter(cutoff),
+    }));
+  }
+
+  /** 过滤服务级状态和心跳过期的 DAS 实例。 */
   async listHealthyServices(): Promise<DataAccessServiceRegistration[]> {
     const cutoff = dayjs().subtract(this.heartbeatTtlMilliseconds, "millisecond");
     return [...this.services.values()].filter(

@@ -3,6 +3,11 @@ import { reportDefinitionSchema, reportDefinitionVersionSchema } from "@ai-data/
 import { ReportRevisionService } from "../../src/reports/report-revision-service";
 import { context } from "../support/api-fixtures";
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
+import type {
+  ReportRevisionDependencies,
+  ReportEditContext,
+} from "../../src/reports/report-revision-types";
+import { ApplicationError } from "../../src/errors/application-error";
 
 const definition = reportDefinitionSchema.parse({
   title: "报表",
@@ -32,6 +37,80 @@ const version = reportDefinitionVersionSchema.parse({
   organization_id: "org",
   user_id: "user",
   created_at: "2026-09-21 08:00:00",
+});
+
+function bindingFixture() {
+  const target: ReportEditContext = {
+    mode: "revision",
+    report_id: "report",
+    expected_version: 1,
+    definition,
+  };
+  const get = vi.fn<ReportRevisionDependencies["repository"]["get"]>(async (identity) =>
+    identity.userId === context.userId && identity.organizationId === context.organizationId
+      ? target
+      : null,
+  );
+  const save = vi.fn(),
+    create = vi.fn(),
+    execute = vi.fn();
+  const definitions = { get: vi.fn(async () => version), save };
+  const service = new ReportRevisionService({
+    repository: { get, create },
+    definitions,
+    executions: { get: execute },
+  } as unknown as ReportRevisionDependencies);
+  return { service, get, save, create, execute, definitions };
+}
+
+describe("只读修订绑定", () => {
+  it("核对作者和基准后只返回绑定，不写入或执行业务", async () => {
+    const h = bindingFixture();
+    expect(await h.service.binding(context, "report", "run")).toEqual({
+      report_id: "report",
+      analysis_run_id: "run",
+      expected_version: 1,
+    });
+    expect(h.get).toHaveBeenCalledWith(context, "run");
+    expect(h.definitions.get).toHaveBeenCalledWith(context, "report", 1);
+    expect(h.save).not.toHaveBeenCalled();
+    expect(h.create).not.toHaveBeenCalled();
+    expect(h.execute).not.toHaveBeenCalled();
+  });
+  it.each([
+    null,
+    { mode: "revision", report_id: "other", expected_version: 1 },
+    { mode: "narrative", report_id: "report", expected_version: 1, execution_id: "execution" },
+    { mode: "revision", report_id: "report", expected_version: 0 },
+  ] as const)("拒绝缺失、串报表、说明或未建版本的任务 %j", async (target) => {
+    const h = bindingFixture();
+    h.get.mockResolvedValueOnce(target);
+    await expect(h.service.binding(context, "report", "run")).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    expect(h.definitions.get).not.toHaveBeenCalled();
+  });
+  it.each([
+    { ...context, userId: "other" },
+    { ...context, organizationId: "other" },
+  ])("按当前身份读取上下文 %j", async (identity) => {
+    const h = bindingFixture();
+    await expect(h.service.binding(identity, "report", "run")).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    expect(h.get).toHaveBeenCalledWith(identity, "run");
+  });
+  it("当前非作者或权限已失效不能恢复", async () => {
+    const h = bindingFixture();
+    h.definitions.get.mockResolvedValueOnce({ ...version, user_id: "other" });
+    await expect(h.service.binding(context, "report", "run")).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+    h.definitions.get.mockRejectedValueOnce(new ApplicationError("NOT_FOUND", "定义不可见"));
+    await expect(h.service.binding(context, "report", "run")).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
 });
 describe("对话报表修改提交", () => {
   it("工具暂存定义，只有成功终态才调用相同保存服务", async () => {

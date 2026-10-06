@@ -1,0 +1,34 @@
+{
+  "checks": [
+    {
+      "font_failure": "字体读取失败：NotoSansSC-Regular.otf，请检查部署字体资源"
+    },
+    {
+      "name": "空文档",
+      "format": "pdf",
+      "passed": true,
+      "pages": 1,
+      "bytes": 90095
+    },
+    {
+      "name": "空文档",
+      "format": "docx",
+      "passed": true,
+      "bytes": 10489
+    },
+    {
+      "name": "长标题200行宽表",
+      "format": "pdf",
+      "passed": true,
+      "pages": 20,
+      "bytes": 206236
+    },
+    {
+      "name": "长标题200行宽表",
+      "format": "docx",
+      "passed": true,
+      "bytes": 68987
+    }
+  ],
+  "errors": []
+}

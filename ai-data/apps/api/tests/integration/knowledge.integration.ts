@@ -303,4 +303,33 @@ describe("SQL Server：企业知识审核、发布与指标有效版本", () => 
     expect(result).toEqual([]);
     expect(await service.listCandidates(administrator, true)).not.toContainEqual(candidate);
   });
+
+  it("管理读取跨服务重建保留未来与停用状态，负责人选项严格按组织和有效账号", async () => {
+    const candidate = await submitRule("管理页未来版本");
+    await approve(candidate);
+    const record = await service.publish(owner, candidate.candidate_id, {
+      expected_version: 1,
+      effective_at: "2027-01-01 00:00:00",
+    });
+    expect(await service.getManagement(manager, record.knowledge_id)).toMatchObject({
+      enabled: true,
+      latest: { version: 1 },
+      current: null,
+    });
+    await service.setEnabled(owner, record.knowledge_id, false);
+    const reloaded = new SqlKnowledgeRepository(database);
+    expect(
+      await reloaded.listManagement("org", "2026-09-20 10:00:00", "owner", record.knowledge_id),
+    ).toMatchObject([{ enabled: false, latest: { version: 1 }, current: null }]);
+    expect(await reloaded.listManagement("other", "2026-09-20 10:00:00")).toEqual([]);
+    expect(
+      await reloaded.listManagement("org", "2026-09-20 10:00:00", "author", record.knowledge_id),
+    ).toEqual([]);
+    const owners = await service.ownerOptions(manager, { keyword: "负责人", limit: 10 });
+    expect(owners).toEqual([{ user_id: "owner", username: "owner", display_name: "负责人" }]);
+    expect(
+      (await service.ownerOptions(manager, {})).some((item) => item.user_id === "disabled"),
+    ).toBe(false);
+    expect(await service.ownerOptions(manager, { keyword: "%_[]'", limit: 10 })).toEqual([]);
+  });
 });

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>结果组件容量验收</title>
+  </head>
+  <body>
+    <main style="max-width: 1200px; margin: 32px auto; padding: 16px">
+      <h1>结果组件容量验收</h1>
+      <p>本页只加载内存合成数据，用于检查共享结果组件。</p>
+      <div id="result"></div>
+    </main>
+    <script type="module">
+      import { createApp, h, shallowRef, nextTick } from "vue";
+      import { ElConfigProvider } from "element-plus";
+      import zhCn from "element-plus/es/locale/lang/zh-cn";
+      import ResultTable from "/src/shared/results/result-table.vue";
+      import "element-plus/dist/index.css";
+      import "element-plus/theme-chalk/dark/css-vars.css";
+      import "/src/styles/theme.css";
+      import "/src/styles/app.css";
+      import "/src/styles/analysis.css";
+      const table = shallowRef({ columns: [], rows: [] });
+      const entries = [];
+      const observer = new PerformanceObserver((list) =>
+        entries.push(
+          ...list
+            .getEntries()
+            .map((entry) => ({ start: entry.startTime, duration: entry.duration })),
+        ),
+      );
+      observer.observe({ type: "longtask", buffered: true });
+      const app = createApp({
+        setup: () => () =>
+          h(ElConfigProvider, { locale: zhCn }, () => h(ResultTable, { table: table.value })),
+      });
+      app.mount("#result");
+      window.capacityProbe = {
+        async render(count, wide = false) {
+          const heapBefore = performance.memory?.usedJSHeapSize ?? null;
+          const columns = [
+            { name: "序号", data_type: "integer" },
+            { name: "科室", data_type: "string" },
+            { name: "人次", data_type: "integer" },
+          ];
+          if (wide)
+            for (let index = 0; index < 24; index++)
+              columns.push({ name: `扩展列${index + 1}`, data_type: "string" });
+          const rows = Array.from({ length: count }, (_, index) =>
+            Object.fromEntries(
+              columns.map((column, position) => [
+                column.name,
+                position === 0
+                  ? index + 1
+                  : position === 1
+                    ? `科室 ${index + 1}`
+                    : position === 2
+                      ? index % 100
+                      : `第${index + 1}行内容`,
+              ]),
+            ),
+          );
+          const bytes = new TextEncoder().encode(JSON.stringify({ columns, rows })).length;
+          const started = performance.now();
+          table.value = { columns, rows };
+          await nextTick();
+          await new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          );
+          return {
+            count,
+            columns: columns.length,
+            bytes,
+            renderMilliseconds: performance.now() - started,
+            renderedRows: document.querySelectorAll(".el-table-v2__row").length,
+            heapBefore,
+            heapAfter: performance.memory?.usedJSHeapSize ?? null,
+            longTasks: entries.filter((entry) => entry.start >= started),
+          };
+        },
+        release() {
+          app.unmount();
+          table.value = { columns: [], rows: [] };
+          observer.disconnect();
+          return document.querySelectorAll(".el-table-v2__row").length;
+        },
+      };
+    </script>
+  </body>
+</html>

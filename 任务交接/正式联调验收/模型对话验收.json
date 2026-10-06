@@ -1,0 +1,80 @@
+{
+  "first": "AI\n分析助手\n分析完成\n分析过程 · 1 条工具记录\n\n您当前没有任何可查询的数据源（list_sources 返回为空）。\n\n查看分析依据",
+  "conversation_url": "http://127.0.0.1:5173/analysis/19d2ce74-909f-4718-be05-b13b74ddafd6",
+  "refresh_recovered": true,
+  "followup": "AI\n分析助手\n分析完成\n\n根据上一轮 list_sources 的返回结果，可用数据源数量为 0（items 列表为空）。\n\n查看分析依据",
+  "result": "passed",
+  "run_ids": [
+    "21b416dc-d28a-4a49-a5f0-fd7ab2649890",
+    "ed32fd35-fb35-47b1-aa4c-bfb954dfea4f"
+  ],
+  "page_errors": [],
+  "sse": [
+    {
+      "path": "/api/analysis-runs/21b416dc-d28a-4a49-a5f0-fd7ab2649890/events",
+      "status": 200,
+      "content_type": "text/event-stream; charset=utf-8"
+    },
+    {
+      "path": "/api/analysis-runs/21b416dc-d28a-4a49-a5f0-fd7ab2649890/events",
+      "status": 200,
+      "content_type": "text/event-stream; charset=utf-8"
+    },
+    {
+      "path": "/api/analysis-runs/ed32fd35-fb35-47b1-aa4c-bfb954dfea4f/events",
+      "status": 200,
+      "content_type": "text/event-stream; charset=utf-8"
+    }
+  ],
+  "logout": true,
+  "model_storage": [
+    {
+      "model_id": "analysis-model",
+      "version": 1,
+      "encrypted_credentials_present": 1,
+      "definition_omits_api_key": 1
+    }
+  ],
+  "backend_runs": [
+    {
+      "run_id": "21b416dc-d28a-4a49-a5f0-fd7ab2649890",
+      "status": "completed",
+      "agent_id": "default",
+      "agent_version": 1,
+      "sequence": 5,
+      "evidence_count": 0,
+      "event_types": [
+        "run_started",
+        "tool_call",
+        "tool_result",
+        "final_answer",
+        "run_completed"
+      ],
+      "tools": [
+        {
+          "type": "tool_call",
+          "name": "list_sources",
+          "input": "执行已校验的业务条件"
+        },
+        {
+          "type": "tool_result",
+          "name": "list_sources",
+          "success": true,
+          "output": "工具执行完成"
+        }
+      ],
+      "final_answer_count": 1
+    },
+    {
+      "run_id": "ed32fd35-fb35-47b1-aa4c-bfb954dfea4f",
+      "status": "completed",
+      "agent_id": "default",
+      "agent_version": 1,
+      "sequence": 3,
+      "evidence_count": 0,
+      "event_types": ["run_started", "final_answer", "run_completed"],
+      "tools": [],
+      "final_answer_count": 1
+    }
+  ]
+}

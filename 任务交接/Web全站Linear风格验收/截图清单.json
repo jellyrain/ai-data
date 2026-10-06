@@ -1,0 +1,245 @@
+{
+  "source": "实际 Web + 隔离验收数据",
+  "desktop": 30,
+  "responsive": 4,
+  "items": [
+    {
+      "name": "01-登录-暗色.png",
+      "title": "01-登录-暗色",
+      "width": 1920,
+      "height": 1080,
+      "group": "登录与分析"
+    },
+    {
+      "name": "02-登录-亮色.png",
+      "title": "02-登录-亮色",
+      "width": 1920,
+      "height": 1080,
+      "group": "登录与分析"
+    },
+    {
+      "name": "03-分析工作台.png",
+      "title": "03-分析工作台",
+      "width": 1920,
+      "height": 1080,
+      "group": "登录与分析"
+    },
+    {
+      "name": "04-分析完成.png",
+      "title": "04-分析完成",
+      "width": 1920,
+      "height": 1080,
+      "group": "登录与分析"
+    },
+    {
+      "name": "05-展开分析过程.png",
+      "title": "05-展开分析过程",
+      "width": 1920,
+      "height": 1080,
+      "group": "登录与分析"
+    },
+    {
+      "name": "06-报表中心.png",
+      "title": "06-报表中心",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "07-报表图表.png",
+      "title": "07-报表图表",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "08-报表图表-亮色.png",
+      "title": "08-报表图表-亮色",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "09-报表明细.png",
+      "title": "09-报表明细",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "10-分享设置.png",
+      "title": "10-分享设置",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "11-导出文件.png",
+      "title": "11-导出文件",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "12-结果历史.png",
+      "title": "12-结果历史",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "13-提交模板.png",
+      "title": "13-提交模板",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "14-数据与展示.png",
+      "title": "14-数据与展示",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "15-筛选条件.png",
+      "title": "15-筛选条件",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "16-筛选条件-亮色.png",
+      "title": "16-筛选条件-亮色",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "17-数据编排画布.png",
+      "title": "17-数据编排画布",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "18-画布属性.png",
+      "title": "18-画布属性",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "19-AI修改.png",
+      "title": "19-AI修改",
+      "width": 1920,
+      "height": 1080,
+      "group": "报表"
+    },
+    {
+      "name": "20-模型管理.png",
+      "title": "20-模型管理",
+      "width": 1920,
+      "height": 1080,
+      "group": "管理与知识"
+    },
+    {
+      "name": "21-Agent管理.png",
+      "title": "21-Agent管理",
+      "width": 1920,
+      "height": 1080,
+      "group": "管理与知识"
+    },
+    {
+      "name": "22-用户管理.png",
+      "title": "22-用户管理",
+      "width": 1920,
+      "height": 1080,
+      "group": "管理与知识"
+    },
+    {
+      "name": "23-角色与权限.png",
+      "title": "23-角色与权限",
+      "width": 1920,
+      "height": 1080,
+      "group": "管理与知识"
+    },
+    {
+      "name": "24-数据管理.png",
+      "title": "24-数据管理",
+      "width": 1920,
+      "height": 1080,
+      "group": "管理与知识"
+    },
+    {
+      "name": "25-业务目录.png",
+      "title": "25-业务目录",
+      "width": 1920,
+      "height": 1080,
+      "group": "管理与知识"
+    },
+    {
+      "name": "26-业务目录-亮色.png",
+      "title": "26-业务目录-亮色",
+      "width": 1920,
+      "height": 1080,
+      "group": "管理与知识"
+    },
+    {
+      "name": "27-知识审核.png",
+      "title": "27-知识审核",
+      "width": 1920,
+      "height": 1080,
+      "group": "管理与知识"
+    },
+    {
+      "name": "28-企业知识.png",
+      "title": "28-企业知识",
+      "width": 1920,
+      "height": 1080,
+      "group": "管理与知识"
+    },
+    {
+      "name": "29-个人偏好.png",
+      "title": "29-个人偏好",
+      "width": 1920,
+      "height": 1080,
+      "group": "管理与知识"
+    },
+    {
+      "name": "30-筛选条件-1024.png",
+      "title": "30-筛选条件-1024",
+      "width": 1024,
+      "height": 768,
+      "group": "适配"
+    },
+    {
+      "name": "30-筛选条件-390.png",
+      "title": "30-筛选条件-390",
+      "width": 390,
+      "height": 844,
+      "group": "适配"
+    },
+    {
+      "name": "31-数据管理-1024.png",
+      "title": "31-数据管理-1024",
+      "width": 1024,
+      "height": 768,
+      "group": "适配"
+    },
+    {
+      "name": "31-数据管理-390.png",
+      "title": "31-数据管理-390",
+      "width": 390,
+      "height": 844,
+      "group": "适配"
+    },
+    {
+      "name": "32-后台任务.png",
+      "title": "32-后台任务",
+      "width": 1920,
+      "height": 1080,
+      "group": "管理与知识"
+    }
+  ]
+}

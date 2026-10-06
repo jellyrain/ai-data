@@ -3,7 +3,11 @@ import { AnalysisTools } from "../../src/runtime/analysis-tools";
 import { context, createApiDependencies } from "../support/api-fixtures";
 
 /** 工具的身份与运行信息来自执行器，模型只传业务条件。 */
-function setup(withSkills = false, allowedNames?: string[]) {
+function setup(
+  withSkills = false,
+  allowedNames?: string[],
+  memory?: ConstructorParameters<typeof AnalysisTools>[0]["memory"],
+) {
   const api = createApiDependencies();
   const runs = {
     assertCurrent: vi.fn(async () => {}),
@@ -23,6 +27,7 @@ function setup(withSkills = false, allowedNames?: string[]) {
   };
   const service = new AnalysisTools({
     allowedNames,
+    memory,
     ...(withSkills ? { skills } : {}),
     listSourceIds: async () => ["visible", "hidden"],
     runs,
@@ -36,6 +41,189 @@ function setup(withSkills = false, allowedNames?: string[]) {
 }
 
 describe("运行绑定的查询工具", () => {
+  const queryInput = {
+    query: {
+      type: "relational_query",
+      source_id: "s",
+      from: { object_id: "payment", alias: "p" },
+      select: [{ field: "p.amount" }],
+    },
+  };
+  it("启用定义读取后只预加载简短入口，按需读取完整定义且保持旧 Agent 参数", async () => {
+    const h = setup(false, ["get_tool_schema", "query_dataset"]);
+    const definitions = h.service.definitions();
+    expect(definitions.map((item) => item.name)).toEqual(
+      expect.arrayContaining(["get_tool_schema", "query_dataset"]),
+    );
+    const entry = definitions.find((item) => item.name === "query_dataset")!;
+    expect(entry.inputSchema).toMatchObject({ properties: { arguments_json: { type: "string" } } });
+    expect(JSON.stringify(entry.inputSchema)).not.toContain("relational_query");
+    const detail = await h.service.execute(
+      context,
+      "run",
+      h.lease,
+      "get_tool_schema",
+      { tool_name: "query_dataset" },
+      "schema",
+    );
+    expect(detail).toMatchObject({ success: true, output: { name: "query_dataset" } });
+    expect(JSON.stringify(detail.output)).toContain("relational_query");
+    expect(JSON.stringify(setup(false, ["query_dataset"]).service.definitions())).toContain(
+      "relational_query",
+    );
+    expect(
+      setup()
+        .service.definitions()
+        .some((item) => item.name === "get_tool_schema"),
+    ).toBe(false);
+  });
+  it("定义读取拒绝未授权、不存在和未装配工具", async () => {
+    const h = setup(false, ["get_tool_schema", "query_dataset", "save_report_definition"]);
+    for (const name of ["list_sources", "missing", "save_report_definition"]) {
+      expect(
+        await h.service.execute(
+          context,
+          "run",
+          h.lease,
+          "get_tool_schema",
+          { tool_name: name },
+          name,
+        ),
+      ).toMatchObject({ success: false, output: { code: "UNAUTHORIZED" } });
+    }
+  });
+  it("JSON 参数复用原业务合同、幂等键和证据链", async () => {
+    const h = setup(false, ["get_tool_schema", "query_dataset"]);
+    for (const arguments_json of [
+      JSON.stringify(queryInput),
+      JSON.stringify(queryInput, null, 2),
+    ]) {
+      expect(
+        await h.service.execute(
+          context,
+          "run",
+          h.lease,
+          "query_dataset",
+          { arguments_json },
+          "query" + arguments_json.length,
+        ),
+      ).toMatchObject({ success: true, output: { evidence_id: "e" } });
+    }
+    expect(h.runs.query).toHaveBeenCalledTimes(2);
+    expect(h.runs.query.mock.calls[0]![3]).toBe(h.runs.query.mock.calls[1]![3]);
+  });
+  it("无效 JSON、非对象、未知字段和超字节上限在业务执行前拒绝", async () => {
+    const h = setup(false, ["get_tool_schema", "query_dataset"]);
+    for (const input of [
+      queryInput,
+      { arguments_json: "{" },
+      { arguments_json: "[]" },
+      { arguments_json: "null" },
+      { arguments_json: JSON.stringify({ ...queryInput, user_id: "other" }) },
+      { arguments_json: JSON.stringify(queryInput), extra: true },
+      { arguments_json: JSON.stringify({ text: "字".repeat(23000) }) },
+    ]) {
+      expect(
+        await h.service.execute(context, "run", h.lease, "query_dataset", input, "invalid"),
+      ).toMatchObject({ success: false, output: { code: "INVALID_INPUT" } });
+    }
+    expect(h.runs.query).not.toHaveBeenCalled();
+  });
+  it("规则超出交付容量时不能记为已读取并绕过查询前核对", async () => {
+    const memory = {
+      businessRules: vi.fn(async () => [
+        {
+          knowledge_id: "large",
+          version: 1,
+          content: { type: "business_rule", body: "字".repeat(23000) },
+          scope: { source_id: "s" },
+        },
+      ]),
+      recordKnowledge: vi.fn(),
+      capture: vi.fn(),
+    };
+    const h = setup(
+      false,
+      undefined,
+      memory as unknown as ConstructorParameters<typeof AnalysisTools>[0]["memory"],
+    );
+    for (const call of ["first", "retry"])
+      expect(
+        await h.service.execute(context, "run", h.lease, "query_dataset", queryInput, call),
+      ).toMatchObject({ success: false, output: { code: "QUERY_LIMIT_EXCEEDED" } });
+    expect(h.runs.query).not.toHaveBeenCalled();
+    expect(memory.recordKnowledge).not.toHaveBeenCalled();
+  });
+  it("发现工具只返回摘要，字段留给详情读取", async () => {
+    const h = setup();
+    h.api.catalog.service.listAuthorized.mockResolvedValue([
+      {
+        dataset: {
+          source_id: "s",
+          object_id: "payment",
+          name: "支付",
+          kind: "table",
+          columns: [{ name: "paid_at" }],
+          query_parameters: [],
+        },
+      },
+    ] as never);
+    const result = await h.service.execute(
+      context,
+      "run",
+      h.lease,
+      "list_datasets",
+      { source_id: "s" },
+      "list",
+    );
+    expect(result).toMatchObject({
+      success: true,
+      output: { items: [{ object_id: "payment", kind: "table" }] },
+    });
+    expect(JSON.stringify(result.output)).not.toContain("paid_at");
+  });
+  it("首次直接查询先交付适用规则，读取后可执行，新版本规则需要重新读取", async () => {
+    let version = 1;
+    const memory = {
+      businessRules: vi.fn(async () => [
+        {
+          knowledge_id: "rule",
+          version,
+          content: { type: "business_rule", title: "支付规则", body: "按支付时间" },
+          scope: { source_id: "s" },
+        },
+      ]),
+      recordKnowledge: vi.fn(async () => {}),
+      capture: vi.fn(async () => {}),
+    };
+    const h = setup(
+      false,
+      undefined,
+      memory as unknown as ConstructorParameters<typeof AnalysisTools>[0]["memory"],
+    );
+    const input = {
+      query: {
+        type: "relational_query",
+        source_id: "s",
+        from: { object_id: "payment", alias: "p" },
+        select: [{ field: "p.amount" }],
+      },
+    };
+    expect(
+      await h.service.execute(context, "run", h.lease, "query_dataset", input, "first"),
+    ).toMatchObject({ success: true, output: { status: "rules_required" } });
+    expect(h.runs.query).not.toHaveBeenCalled();
+    expect(memory.recordKnowledge).toHaveBeenCalledOnce();
+    expect(
+      await h.service.execute(context, "run", h.lease, "query_dataset", input, "confirmed"),
+    ).toMatchObject({ success: true, output: { evidence_id: "e" } });
+    expect(h.runs.query).toHaveBeenCalledOnce();
+    version = 2;
+    expect(
+      await h.service.execute(context, "run", h.lease, "query_dataset", input, "changed"),
+    ).toMatchObject({ output: { status: "rules_required" } });
+    expect(h.runs.query).toHaveBeenCalledOnce();
+  });
   it("Agent 工具选择同时限制发现和执行，未选工具记录拒绝且不访问业务服务", async () => {
     const h = setup(true, ["list_sources"]);
     expect(h.service.definitions().map((tool) => tool.name)).toEqual(["list_sources"]);

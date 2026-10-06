@@ -17,6 +17,9 @@ const reportSummarySchema = z
   .object({
     report_id: id,
     title: z.string().min(1).max(512),
+    description: z.string().max(1000).optional(),
+    display_type: z.enum(["table", "line", "bar", "pie", "legacy"]).optional(),
+    updated_at: dateTimeSchema.optional(),
     user_id: id,
     definition_version: z.number().int().positive().optional(),
     snapshot_version: z.number().int().positive().optional(),

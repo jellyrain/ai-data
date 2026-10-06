@@ -1,0 +1,93 @@
+{
+  "images": [
+    {
+      "number": "01",
+      "file": "01-报表中心-v2.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    },
+    {
+      "number": "02",
+      "file": "02-单图表报表.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    },
+    {
+      "number": "03",
+      "file": "03-明细表报表.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    },
+    {
+      "number": "04",
+      "file": "04-编辑-筛选条件.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    },
+    {
+      "number": "05",
+      "file": "05-编辑-数据与展示.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    },
+    {
+      "number": "06",
+      "file": "06-数据编排-画布与属性.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    },
+    {
+      "number": "07",
+      "file": "07-AI修改-侧栏.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    },
+    {
+      "number": "08",
+      "file": "08-分享设置.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    },
+    {
+      "number": "09",
+      "file": "09-导出文件.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    },
+    {
+      "number": "10",
+      "file": "10-结果历史与依据.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    },
+    {
+      "number": "11",
+      "file": "11-从对话保存报表.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    },
+    {
+      "number": "12",
+      "file": "12-提交组织模板.png",
+      "width": 1672,
+      "height": 941,
+      "approved": true
+    }
+  ],
+  "approved": 12,
+  "pending": 0,
+  "checked_links": 13,
+  "filters": "passed",
+  "errors": []
+}

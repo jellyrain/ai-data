@@ -37,6 +37,16 @@ class ReportTemplateService {
     const definition = await this.definition(context, content, executor);
     await this.dependencies.builder.validate(context, definition.definition, executor);
   }
+  /** 固定版本的摘要与完整查询范围通过校验后才允许预览。 */
+  async preview(
+    context: AuthContext,
+    content: Extract<KnowledgeContent, { type: "report_template" }>,
+    executor?: MetadataQueryExecutor,
+  ): Promise<ReportDefinitionVersion> {
+    const definition = await this.definition(context, content, executor);
+    await this.dependencies.builder.validate(context, definition.definition, executor);
+    return definition;
+  }
   async assertSubmit(
     context: AuthContext,
     content: Extract<KnowledgeContent, { type: "report_template" }>,

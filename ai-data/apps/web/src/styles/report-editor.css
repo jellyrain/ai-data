@@ -1,0 +1,1373 @@
+/* 表单与画布共用主题、草稿与操作入口。 */
+.report-editor-page {
+  min-width: 0;
+}
+.editor-topbar,
+.editor-title-group,
+.editor-save-actions,
+.editor-section-heading,
+.editor-record-heading,
+.editor-row,
+.editor-actions,
+.query-object-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.editor-topbar {
+  justify-content: space-between;
+  padding: 0 0 22px;
+  flex-wrap: wrap;
+}
+.editor-title-group {
+  flex: 1;
+  min-width: 280px;
+}
+.editor-title-group > .el-input {
+  max-width: 360px;
+  min-width: 150px;
+}
+.editor-title-group > .el-input .el-input__wrapper {
+  box-shadow: none;
+  background: transparent;
+  padding-left: 0;
+}
+.editor-title-group > .el-input input {
+  font-size: 18px;
+  font-weight: 600;
+}
+.editor-back {
+  display: grid;
+  place-items: center;
+  color: var(--app-muted);
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+.editor-mode {
+  display: flex;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  padding: 3px;
+  flex-shrink: 0;
+  background: var(--app-panel);
+}
+.editor-mode button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 5px;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--app-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.editor-mode button[aria-pressed="true"] {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+.editor-save-state {
+  color: var(--app-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.editor-form-layout {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 820px);
+  gap: 36px;
+  border-top: 1px solid var(--app-border);
+  padding-top: 24px;
+}
+.editor-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+.editor-sections > button:not(.el-button) {
+  border: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: transparent;
+  color: var(--app-muted);
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: left;
+}
+.editor-sections > button[aria-current] {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+.editor-sections > .el-button {
+  margin: 20px 0 0;
+}
+.editor-form-main,
+.canvas-inspector fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.editor-form-main:disabled,
+.canvas-inspector fieldset:disabled {
+  opacity: 0.65;
+  pointer-events: none;
+}
+.report-editor-page label,
+.dataset-picker label,
+.relation-picker label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  margin: 14px 0;
+  min-width: 0;
+}
+.report-editor-page h2 {
+  font-size: 18px;
+  margin: 0 0 10px;
+}
+.report-editor-page h3 {
+  font-size: 14px;
+  margin: 0;
+}
+.editor-section-heading,
+.editor-record-heading {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.editor-section-heading {
+  margin: 0 0 22px;
+}
+.editor-section-heading p {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+.editor-record {
+  border: 1px solid var(--app-border);
+  padding: 18px;
+  border-radius: 10px;
+  margin: 16px 0;
+  background: var(--app-panel);
+}
+.editor-subsection {
+  margin-top: 28px;
+}
+.editor-grid,
+.conflict-diff {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.editor-row > label {
+  flex: 1;
+}
+.query-object-selector > label {
+  flex: 1;
+  min-width: 160px;
+}
+.condition-group {
+  margin: 18px 0;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 0;
+}
+.condition-group legend {
+  color: var(--app-muted);
+  font-size: 12px;
+  padding: 0 5px;
+}
+.condition-item {
+  padding: 10px 0;
+}
+.value-items {
+  width: 100%;
+}
+.value-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 10px 0;
+}
+.value-item > .typed-value {
+  flex: 1;
+  min-width: 0;
+}
+.editor-row {
+  flex-wrap: wrap;
+}
+.editor-row > .el-select {
+  flex: 1;
+  min-width: 120px;
+}
+.editor-actions,
+.editor-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.report-editor-page details {
+  margin: 16px 0;
+}
+.report-editor-page summary {
+  font-size: 13px;
+  cursor: pointer;
+  padding: 5px 0;
+}
+.condition-editor {
+  border-left: 2px solid var(--app-border);
+  padding-left: 12px;
+  margin: 16px 0;
+}
+.condition-editor .condition-editor {
+  margin-left: 8px;
+}
+.condition-row,
+.binding-row,
+.typed-array-row {
+  border-bottom: 1px solid var(--app-border);
+  padding: 10px 0;
+}
+.typed-value {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.typed-value > .el-select {
+  width: 110px;
+}
+.typed-value > .el-input {
+  flex: 1;
+  min-width: 100px;
+}
+.typed-array {
+  width: 100%;
+}
+.presentation-block-editor {
+  border-top: 1px solid var(--app-border);
+  margin-top: 18px;
+  padding-top: 18px;
+}
+.preview-placeholder {
+  padding: 24px;
+  background: var(--app-surface);
+}
+.editor-start {
+  text-align: center;
+  padding: 85px 20px;
+}
+.editor-start h3 {
+  font-size: 21px;
+  font-weight: 500;
+}
+.dataset-options,
+.relation-options {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.dataset-option,
+.relation-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid var(--app-border);
+  padding: 16px;
+  background: var(--app-panel);
+  color: var(--app-text);
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.dataset-option > span {
+  flex: 1;
+  min-width: 0;
+}
+.dataset-option small,
+.relation-option small,
+.relation-option span {
+  display: block;
+  margin-top: 5px;
+  color: var(--app-muted);
+  overflow-wrap: anywhere;
+}
+.dataset-option:hover,
+.relation-option:hover,
+.relation-option.selected {
+  border-color: var(--app-primary);
+  background: var(--app-primary-soft);
+}
+.relation-option {
+  flex-direction: column;
+  gap: 3px;
+}
+.relation-connect {
+  width: 100%;
+}
+.editor-feedback {
+  margin: 0 0 16px;
+  border-left: 3px solid var(--app-primary);
+  padding: 10px 16px;
+  background: var(--app-surface);
+  max-height: 36vh;
+  overflow: auto;
+  font-size: 13px;
+}
+.editor-feedback pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 11px;
+}
+/* 画布展开后导航仍可通过页头入口访问。 */
+.canvas-layout {
+  --app-header-height: 48px;
+  grid-template-columns: minmax(0, 1fr);
+}
+.canvas-layout .desktop-sidebar {
+  display: none;
+}
+.canvas-layout .mobile-menu {
+  display: inline-flex;
+}
+.canvas-layout .app-header {
+  height: 48px;
+  min-height: 48px;
+  padding: 0 16px;
+}
+.canvas-layout .workspace-content {
+  padding: 0;
+  max-width: none;
+  overflow: hidden;
+}
+.report-editor-page.is-canvas {
+  height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+.is-canvas .editor-topbar {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--app-border);
+  gap: 8px;
+  background: var(--app-bg);
+  z-index: 6;
+}
+.is-canvas .editor-title-group > .el-input input {
+  font-size: 14px;
+}
+.is-canvas .editor-title-group > .el-input {
+  max-width: 240px;
+}
+.is-canvas .editor-feedback {
+  margin: 0;
+  flex-shrink: 0;
+  max-height: 25vh;
+}
+.editor-canvas-body {
+  position: relative;
+  min-height: 0;
+  flex: 1;
+}
+.report-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--app-bg);
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--app-muted) 28%, transparent) 0.7px,
+    transparent 0.9px
+  );
+}
+.report-canvas .vue-flow {
+  background: transparent;
+}
+.canvas-floating {
+  background: color-mix(in srgb, var(--app-panel) 96%, transparent);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 8px #0000000c;
+}
+.canvas-query-select {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  gap: 2px;
+}
+.canvas-query-select > .el-select {
+  width: 155px;
+}
+.canvas-query-select .el-input__wrapper,
+.canvas-query-select .el-select__wrapper {
+  box-shadow: none;
+  background: transparent;
+}
+.canvas-tools {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  gap: 4px;
+  padding: 7px;
+  align-items: center;
+}
+.canvas-tools button,
+.canvas-zoom button,
+.node-action {
+  border: 0;
+  background: transparent;
+  color: var(--app-muted);
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+}
+.canvas-tools button:hover,
+.canvas-tools button[aria-pressed="true"],
+.canvas-zoom button:hover,
+.node-action:hover {
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+}
+.canvas-tools button.canvas-add {
+  background: var(--app-text);
+  color: var(--app-bg);
+}
+.canvas-tools button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--app-border);
+  margin: 0 3px;
+}
+.canvas-zoom {
+  position: absolute;
+  bottom: 22px;
+  left: 16px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  padding: 3px;
+}
+.canvas-zoom button {
+  width: 28px;
+  height: 30px;
+}
+.canvas-zoom span {
+  min-width: 35px;
+  text-align: center;
+}
+.canvas-hint {
+  position: absolute;
+  right: 18px;
+  bottom: 38px;
+  font-size: 11px;
+  pointer-events: none;
+}
+.canvas-empty {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  width: 320px;
+  max-width: 90%;
+}
+.canvas-empty-symbol {
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--app-border);
+  border-radius: 18px;
+  color: var(--app-muted);
+  margin-bottom: 22px;
+}
+.canvas-empty h2 {
+  font-size: 22px;
+  font-weight: 500;
+}
+.canvas-empty p {
+  color: var(--app-muted);
+  font-size: 13px;
+  margin: 12px 0 24px;
+}
+.query-node {
+  width: 258px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-panel);
+  color: var(--app-text);
+  box-shadow: 0 2px 6px #00000008;
+}
+.query-node.is-selected {
+  border-color: var(--app-primary);
+  box-shadow: 0 0 0 2px var(--app-primary-soft);
+}
+.query-node-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--app-muted);
+  padding: 14px 16px 0;
+}
+.query-node-kicker code {
+  margin-left: auto;
+  border: 1px solid var(--app-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  max-width: 95px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.query-node h3 {
+  font-size: 14px;
+  padding: 10px 16px 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.query-node-fields {
+  padding: 0 16px 14px;
+  min-height: 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 11px;
+}
+.query-node-fields > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.query-node footer {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 10px 7px 16px;
+  border-top: 1px solid var(--app-border);
+  font-size: 10px;
+}
+.query-node footer > span {
+  flex: 1;
+}
+.query-node .node-action {
+  width: 28px;
+  height: 28px;
+}
+.query-node .vue-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: var(--app-panel);
+  border: 2px solid var(--app-muted);
+}
+.query-node .vue-flow__handle:hover {
+  background: var(--app-primary);
+  border-color: var(--app-primary);
+}
+.flowing-edge .relation-base {
+  stroke: color-mix(in srgb, var(--app-primary) 38%, var(--app-muted));
+  stroke-width: 1.3;
+}
+.flowing-edge.is-selected .relation-base {
+  stroke: var(--app-primary);
+  stroke-width: 1.8;
+}
+.relation-light {
+  fill: none;
+  stroke: var(--app-primary);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1.5 98.5;
+  animation: relation-flow 4.6s linear infinite;
+  pointer-events: none;
+  filter: drop-shadow(0 0 2px var(--app-primary));
+}
+.flowing-edge.paused .relation-light {
+  animation-play-state: paused;
+}
+.flowing-edge.is-selected .relation-light,
+.vue-flow__edge:hover .relation-light {
+  stroke-width: 3.2;
+}
+@keyframes relation-flow {
+  from {
+    stroke-dashoffset: calc(100 + var(--trail));
+  }
+  to {
+    stroke-dashoffset: var(--trail);
+  }
+}
+.relation-label {
+  position: absolute;
+  font-size: 9px;
+  color: var(--app-muted);
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--app-bg);
+  max-width: 210px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.relation-label.is-selected {
+  color: var(--app-primary);
+}
+.canvas-inspector {
+  position: absolute;
+  z-index: 8;
+  top: 14px;
+  right: 16px;
+  bottom: 86px;
+  width: min(420px, calc(100% - 32px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 18px 20px;
+}
+.canvas-inspector > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--app-panel);
+  padding: 12px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--app-border);
+}
+.canvas-inspector .editor-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.canvas-relation-menu {
+  position: absolute;
+  z-index: 10;
+  width: 330px;
+  max-width: calc(100% - 24px);
+  max-height: min(420px, calc(100% - 100px));
+  overflow-y: auto;
+  padding: 16px;
+  overscroll-behavior: contain;
+}
+.report-revision {
+  padding: 14px 18px;
+  margin-top: 24px;
+}
+.report-revision > header,
+.report-revision > header > span,
+.report-revision footer {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+.report-revision > header {
+  margin-bottom: 12px;
+}
+.report-revision > header > span {
+  justify-content: flex-start;
+  min-width: 0;
+}
+.report-revision small {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+.report-revision .el-textarea__inner {
+  box-shadow: none;
+  background: transparent;
+  padding: 4px 0;
+  resize: none;
+}
+.report-revision footer {
+  margin-top: 14px;
+}
+.report-revision footer > .el-select {
+  max-width: 180px;
+}
+.report-revision footer > span {
+  flex: 1;
+  font-size: 11px;
+}
+.revision-progress {
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.is-canvas .report-revision {
+  position: absolute;
+  z-index: 9;
+  width: min(660px, calc(100% - 32px));
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-height: 60dvh;
+  overflow: auto;
+  margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .relation-light {
+    animation: none;
+    display: none;
+  }
+  .flowing-edge .relation-base {
+    stroke: var(--app-primary);
+  }
+}
+@media (max-width: 1024px) {
+  .editor-form-layout {
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 20px;
+  }
+  .canvas-hint {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .editor-topbar {
+    gap: 12px;
+  }
+  .editor-title-group {
+    min-width: 100%;
+    gap: 6px;
+  }
+  .editor-title-group > .el-input {
+    min-width: 100px;
+  }
+  .editor-save-actions {
+    justify-content: flex-end;
+    width: 100%;
+    gap: 8px;
+  }
+  .editor-save-state {
+    margin-right: auto;
+  }
+  .editor-form-layout {
+    display: block;
+    padding-top: 12px;
+  }
+  .editor-sections {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 24px;
+  }
+  .editor-sections > button:not(.el-button) {
+    padding: 9px;
+    gap: 8px;
+  }
+  .editor-sections > .el-button {
+    margin: 0;
+  }
+  .editor-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .editor-record {
+    padding: 12px;
+  }
+  .editor-record-heading > div {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .canvas-tools {
+    bottom: 16px;
+  }
+  .canvas-zoom {
+    bottom: 77px;
+    left: 12px;
+  }
+  .canvas-query-select {
+    top: 10px;
+    left: 10px;
+    max-width: calc(100% - 20px);
+  }
+  .canvas-query-select > .el-select {
+    width: 120px;
+  }
+  .canvas-inspector {
+    inset: auto 8px 76px;
+    width: auto;
+    height: 62%;
+    max-height: 440px;
+    border-radius: 14px;
+  }
+  .canvas-relation-menu {
+    left: 12px !important;
+    top: auto !important;
+    bottom: 76px;
+    width: calc(100% - 24px);
+  }
+  .is-canvas .editor-topbar {
+    padding: 8px 12px;
+  }
+  .is-canvas .editor-title-group > .el-input {
+    flex: 1;
+  }
+}
+/* 三个业务编辑入口及独立 AI 辅助侧栏。 */
+.report-editor-tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--app-border);
+  margin-bottom: 24px;
+}
+.report-editor-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--app-muted);
+  padding: 14px 4px;
+  font: inherit;
+  cursor: pointer;
+}
+.report-editor-tabs button[aria-current] {
+  border-bottom-color: var(--app-primary);
+  color: var(--app-primary);
+  font-weight: 600;
+}
+.editor-form-layout {
+  display: block;
+  border-top: 0;
+  padding-top: 0;
+}
+.single-presentation {
+  display: grid;
+  grid-template-columns: minmax(250px, 330px) minmax(0, 1fr);
+  gap: 36px;
+}
+.presentation-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  border-right: 1px solid var(--app-border);
+  padding-right: 28px;
+}
+.presentation-settings label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.presentation-settings h2,
+.report-editor-preview h2,
+.parameter-preview h2 {
+  font-size: 18px;
+  margin: 0;
+}
+.presentation-settings > p {
+  margin: 0;
+  font-size: 13px;
+}
+.report-editor-preview {
+  min-width: 0;
+}
+.report-editor-preview > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.report-editor-preview .report-block {
+  margin-top: 28px;
+}
+.report-editor-preview .report-evidence {
+  display: none;
+}
+.parameter-edit-layout {
+  display: block;
+}
+.report-query-settings {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--app-border);
+}
+.report-query-settings summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-weight: 600;
+}
+.report-query-settings > .el-select {
+  max-width: 320px;
+}
+.report-editor-page {
+  position: relative;
+}
+.report-editor-page.has-ai-panel {
+  padding-right: 420px;
+}
+.report-editor-page .report-revision,
+.is-canvas .report-revision {
+  position: fixed;
+  top: var(--app-header-height);
+  bottom: 0;
+  right: 0;
+  left: auto;
+  width: 390px;
+  max-height: none;
+  margin: 0;
+  transform: none;
+  z-index: 12;
+  border-radius: 0;
+  border: 0;
+  border-left: 1px solid var(--app-border);
+  box-shadow: none;
+  background: var(--app-panel);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+.report-revision > header {
+  align-items: flex-start;
+}
+.report-revision > header > span {
+  flex-wrap: wrap;
+}
+.report-revision small {
+  white-space: normal;
+  width: 100%;
+}
+.revision-timeline {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 160px;
+  overflow-wrap: anywhere;
+  padding: 16px 0;
+}
+.revision-timeline details {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--app-border);
+  font-size: 13px;
+}
+.revision-timeline details summary {
+  cursor: pointer;
+}
+.report-revision form {
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.report-revision footer {
+  flex-wrap: wrap;
+}
+.report-revision footer > span {
+  flex-basis: 100%;
+}
+.is-canvas .report-editor-tabs {
+  background: var(--app-bg);
+  padding: 0 24px;
+  margin: 0;
+}
+@media (max-width: 1200px) {
+  .report-editor-page.has-ai-panel {
+    padding-right: 0;
+  }
+  .single-presentation {
+    gap: 20px;
+    grid-template-columns: 270px minmax(0, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .single-presentation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .presentation-settings {
+    border-right: 0;
+    padding-right: 0;
+  }
+  .report-editor-page .report-revision,
+  .is-canvas .report-revision {
+    width: min(390px, 100vw);
+    box-sizing: border-box;
+  }
+}
+
+.presentation-settings > label {
+  margin: 0;
+}
+.presentation-settings {
+  align-self: start;
+}
+.editor-record > summary {
+  cursor: pointer;
+  min-height: 30px;
+}
+
+/* 条件列表、属性面板和实际使用预览。 */
+.parameter-condition-editor .editor-section-heading {
+  margin-bottom: 24px;
+}
+.parameter-condition-editor .editor-section-heading h2 {
+  font-size: 16px;
+}
+.condition-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+.condition-layout.has-conditions {
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+.condition-workspace {
+  min-width: 0;
+}
+.condition-list {
+  display: grid;
+  gap: 8px;
+}
+.condition-record {
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  overflow: clip;
+}
+.condition-record.is-open {
+  border-color: var(--app-primary);
+}
+.condition-summary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  padding: 16px;
+  min-height: 62px;
+  background: var(--app-panel);
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.condition-summary:hover {
+  background: var(--app-hover);
+}
+.condition-summary:focus-visible {
+  outline: 2px solid var(--app-primary);
+  outline-offset: -3px;
+}
+.is-open .condition-summary {
+  background: var(--app-primary-soft);
+}
+.condition-icon {
+  color: var(--app-muted);
+}
+.is-open .condition-icon {
+  color: var(--app-primary);
+}
+.condition-summary strong {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  font-weight: 500;
+}
+.condition-kind {
+  color: var(--app-muted);
+  font-size: 12px;
+}
+.condition-default-summary {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--app-muted);
+  font-size: 12px;
+}
+.condition-summary svg {
+  flex-shrink: 0;
+}
+.parameter-inspector {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-panel);
+}
+.parameter-inspector-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--app-border);
+}
+.parameter-inspector-heading > svg {
+  color: var(--app-primary);
+}
+.parameter-inspector-heading h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.parameter-inspector-heading p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+.condition-body label {
+  margin: 0;
+}
+.condition-basics {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 58px;
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 22px;
+}
+.parameter-condition-editor label.el-checkbox {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+}
+.parameter-condition-editor .el-checkbox__label {
+  padding-left: 8px;
+  line-height: 20px;
+}
+.condition-required {
+  align-self: end;
+  padding-bottom: 4px;
+}
+.condition-default-settings {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+}
+.condition-default-settings .editor-grid {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 14px;
+}
+.condition-advanced {
+  border-top: 1px solid var(--app-border);
+  padding-top: 12px;
+}
+.condition-body .condition-advanced {
+  margin-bottom: 0;
+}
+.condition-advanced > .editor-grid,
+.condition-advanced > label {
+  margin: 16px 0;
+}
+.condition-advanced > .editor-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.condition-advanced summary {
+  font-size: 12px;
+  color: var(--app-muted);
+}
+.condition-delete {
+  border-top: 1px solid var(--app-border);
+  margin-top: 18px;
+  padding-top: 12px;
+}
+.condition-delete .el-button {
+  padding: 6px 0;
+  font-size: 12px;
+}
+.condition-bindings {
+  padding-top: 2px;
+}
+.condition-bindings > .condition-query-binding {
+  margin: 0 0 12px;
+}
+.condition-query-binding + .condition-query-binding {
+  border-top: 1px solid var(--app-border);
+  padding-top: 8px;
+}
+.condition-query-binding > .condition-query-label {
+  color: var(--app-text);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 0;
+  margin: 0 0 8px;
+}
+.condition-query-label span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--app-muted);
+  margin-left: 8px;
+}
+.condition-binding-editor > .editor-record-heading h3 {
+  display: none;
+}
+.condition-binding-editor > .editor-record-heading {
+  justify-content: flex-end;
+  margin: 0 0 10px;
+}
+.condition-binding-editor .editor-record-heading .el-button {
+  font-size: 12px;
+  padding: 4px 8px;
+  height: 26px;
+}
+.condition-binding-editor > .editor-record {
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+.condition-binding-editor > .editor-record + .editor-record {
+  border-top: 1px solid var(--app-border);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.condition-binding-editor .editor-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(86px, 0.55fr);
+  gap: 12px;
+}
+.condition-binding-editor .binding-scope-settings {
+  margin: 8px 0 0;
+  color: var(--app-muted);
+}
+.condition-binding-editor .binding-scope-settings summary {
+  display: list-item;
+  font-size: 12px;
+}
+.condition-binding-editor .binding-scope-settings .editor-grid {
+  margin: 12px 0;
+  color: var(--app-text);
+}
+.condition-binding-editor > .editor-record > .el-button {
+  margin-top: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+  height: auto;
+}
+.condition-add-query {
+  margin-top: 12px;
+  width: 100%;
+}
+.simple-typed-value {
+  flex-wrap: nowrap;
+  flex-direction: row-reverse;
+  align-items: center;
+}
+.simple-typed-value > .el-select {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+.simple-typed-value > .el-input {
+  min-width: 0;
+}
+.simple-typed-value > .value-items {
+  flex: 1;
+}
+.simple-typed-value .typed-value-settings {
+  padding: 6px;
+  margin: 0;
+  flex-shrink: 0;
+}
+.parameter-preview {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin-top: 40px;
+}
+.parameter-preview h2 {
+  font-size: 15px;
+}
+.parameter-preview > p {
+  margin: 6px 0 18px;
+  font-size: 13px;
+}
+.parameter-preview > .report-parameters {
+  padding: 18px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+.parameter-preview .parameter-form-actions .el-button.is-disabled {
+  opacity: 0.7;
+}
+.parameter-saved-preview {
+  padding-top: 8px;
+}
+.parameter-saved-preview summary {
+  font-size: 12px;
+  color: var(--app-muted);
+}
+.parameter-saved-preview .report-editor-preview {
+  margin-top: 20px;
+}
+.canvas-inspector .condition-layout.has-conditions {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+.canvas-inspector .parameter-inspector {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.canvas-inspector .condition-summary {
+  padding: 12px;
+  gap: 8px;
+}
+.canvas-inspector .condition-default-summary {
+  max-width: 80px;
+}
+@media (max-width: 1100px) {
+  .condition-layout.has-conditions {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 20px;
+  }
+  .condition-default-summary {
+    max-width: 100px;
+  }
+  .condition-kind {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  .condition-layout.has-conditions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .parameter-inspector {
+    grid-row: 2;
+  }
+  .condition-kind {
+    display: inline;
+  }
+}
+@media (max-width: 540px) {
+  .condition-summary {
+    padding: 12px;
+    gap: 8px;
+  }
+  .condition-kind {
+    display: none;
+  }
+  .condition-default-summary {
+    max-width: 90px;
+  }
+  .parameter-inspector {
+    padding: 16px;
+  }
+  .condition-binding-editor .editor-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

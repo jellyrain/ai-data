@@ -51,10 +51,17 @@ function setup() {
     artifacts: vi.fn(async () => []),
     exportConversation: vi.fn(),
   };
-  const auth = { loadContext: vi.fn(async () => context) };
+  const auth = {
+    loadContext: vi.fn(async () => context),
+    refreshContext: vi.fn(async () => context),
+  };
   const app = Fastify();
   registerContractErrorHandler(app);
-  registerReportManagementRoutes(app, auth, { definitions, management });
+  registerReportManagementRoutes(app, auth, {
+    definitions,
+    management,
+    sharing: { get: vi.fn(), candidates: vi.fn() },
+  });
   return { app, definitions, management, auth };
 }
 

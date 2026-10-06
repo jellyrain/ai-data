@@ -4,6 +4,7 @@ import { LocalMasterKeyStore } from "@ai-data/metadata/secrets";
 import type { ApiConfig } from "../config/api-config";
 import { ApplicationError } from "../errors/application-error";
 import { ModelService } from "../models/model-service";
+import { ModelCapabilities } from "../models/model-capabilities";
 import { SqlModelRepository } from "../models/sql-model-repository";
 import { ModelCredentialCipher } from "../models/model-credential-cipher";
 import { SkillCatalog } from "../skills/skill-catalog";
@@ -31,6 +32,7 @@ function createAgentConfiguration(dependencies: {
     stateDirectory,
   });
   const models = new ModelService({
+    capabilities: new ModelCapabilities(),
     repository: new SqlModelRepository(database),
     credentials: new ModelCredentialCipher(
       new LocalMasterKeyStore(resolve(stateDirectory, "model-keys")),
