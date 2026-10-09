@@ -91,6 +91,8 @@ const sseEventSchema = z
       success: z.boolean(),
       /** 脱敏后的工具输出摘要。 */
       output_summary: z.string(),
+      input_summary: z.string().max(4000).optional(),
+      duration_ms: z.number().int().nonnegative().optional(),
     }),
 
     /** 模型需要用户选择时推送的选项事件；问题和选项内容由模型生成。 */

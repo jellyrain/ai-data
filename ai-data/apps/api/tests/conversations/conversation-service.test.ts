@@ -13,6 +13,16 @@ class MemoryConversationRepository implements ConversationRepository {
   conversations: Conversation[] = [];
   messages: ConversationMessage[] = [];
   runs: AnalysisRun[] = [];
+  async deleteConversations(ids: string[], userId: string, organizationId: string) {
+    this.conversations = this.conversations.filter(
+      (item) =>
+        !(
+          ids.includes(item.id) &&
+          item.userId === userId &&
+          item.organizationId === organizationId
+        ),
+    );
+  }
   createConversation(conversation: Conversation) {
     this.conversations.push(conversation);
     return Promise.resolve();

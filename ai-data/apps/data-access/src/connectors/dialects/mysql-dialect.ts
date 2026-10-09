@@ -27,7 +27,9 @@ const mysqlDialect: DatabaseDialect = {
       c.COLUMN_NAME AS column_name,
       CASE WHEN c.DATA_TYPE = 'bit' THEN c.COLUMN_TYPE ELSE c.DATA_TYPE END AS data_type,
       c.IS_NULLABLE AS is_nullable,
-      c.ORDINAL_POSITION AS ordinal_position
+      c.ORDINAL_POSITION AS ordinal_position,
+      CASE WHEN t.TABLE_TYPE = 'VIEW' THEN NULL ELSE t.TABLE_COMMENT END AS object_description,
+      c.COLUMN_COMMENT AS column_description
     FROM INFORMATION_SCHEMA.TABLES t
     JOIN INFORMATION_SCHEMA.COLUMNS c
       ON c.TABLE_SCHEMA = t.TABLE_SCHEMA
@@ -41,7 +43,9 @@ const mysqlDialect: DatabaseDialect = {
       NULL AS column_name,
       NULL AS data_type,
       NULL AS is_nullable,
-      NULL AS ordinal_position
+      NULL AS ordinal_position,
+      r.ROUTINE_COMMENT AS object_description,
+      NULL AS column_description
     FROM INFORMATION_SCHEMA.ROUTINES r
     WHERE r.ROUTINE_SCHEMA = DATABASE()
       AND r.ROUTINE_TYPE = 'PROCEDURE'

@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { createConversationSchema, submitMessageSchema } from "@ai-data/contracts";
+import { z } from "zod";
 
 import { ApplicationError } from "../errors/application-error";
 import type { ApiAuthService, ApiConversationService } from "../app-types";
@@ -38,6 +39,20 @@ function registerConversationRoutes(
     return reply.send({
       items: await conversationService.list(await currentContext(request, authService)),
     });
+  });
+  app.post("/conversations/delete", async (request, reply) => {
+    const input = z
+      .object({ ids: z.array(z.string().min(1).max(128)).min(1).max(100) })
+      .strict()
+      .parse(request.body);
+    await conversationService.delete(await currentContext(request, authService), input.ids);
+    return reply.code(204).send();
+  });
+  app.delete("/conversations/:id", async (request, reply) => {
+    await conversationService.delete(await currentContext(request, authService), [
+      (request.params as { id: string }).id,
+    ]);
+    return reply.code(204).send();
   });
   app.get("/conversations/:id", async (request, reply) => {
     const detail = await conversationService.get(

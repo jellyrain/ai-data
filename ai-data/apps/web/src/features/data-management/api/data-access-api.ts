@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   managedDataAccessServiceSchema,
   managedDataSourceSchema,
+  deleteDataSourceSchema,
   managedDataSourceDetailSchema,
   managedSecretReferenceSchema,
   managedSourceObjectsSchema,
@@ -13,6 +14,10 @@ import {
   sourceObjectSelectionRequestSchema,
   managedSqlServerTransportSchema,
   sqlServerTransportUpdateSchema,
+  databaseConnectionSchema,
+  createDatabaseConnectionSchema,
+  updateDatabaseConnectionSchema,
+  testDatabaseConnectionDraftSchema,
 } from "@ai-data/contracts";
 import type { Transport } from "../../../shared/http/http-types";
 import { ApiError } from "../../../shared/http/api-error";
@@ -36,6 +41,76 @@ class DataAccessApi {
       .object({ service_id: z.string().min(1), credential: z.string().min(1) })
       .strict()
       .parse(await this.request(`${this.path}/credential`, { method: "POST", body: {} }));
+  }
+  async connections() {
+    return z
+      .object({ items: z.array(databaseConnectionSchema) })
+      .strict()
+      .parse(await this.request(`${this.path}/database-connections`)).items;
+  }
+  async connection(id: string) {
+    return databaseConnectionSchema.parse(
+      await this.request(`${this.path}/database-connections/${encodeURIComponent(id)}`),
+    );
+  }
+  /** 写入成功与回执完整性分开处理，缺失回执交由界面回读核对。 */
+  private connectionReceipt<T>(schema: z.ZodType<T>, response: unknown): T {
+    const parsed = schema.safeParse(response);
+    if (!parsed.success)
+      throw new ApiError("数据库连接操作回执无效，请核对实际状态", 502, "INVALID_RECEIPT");
+    return parsed.data;
+  }
+  async createConnection(input: unknown) {
+    return this.connectionReceipt(
+      databaseConnectionSchema,
+      await this.request(`${this.path}/database-connections`, {
+        method: "POST",
+        body: createDatabaseConnectionSchema.parse(input),
+      }),
+    );
+  }
+  async updateConnection(id: string, input: unknown) {
+    return this.connectionReceipt(
+      databaseConnectionSchema,
+      await this.request(`${this.path}/database-connections/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        body: updateDatabaseConnectionSchema.parse(input),
+      }),
+    );
+  }
+  async deleteConnection(id: string, revision: string) {
+    return this.connectionReceipt(
+      z.object({ secret_ref: z.literal(id) }).strict(),
+      await this.request(`${this.path}/database-connections/${encodeURIComponent(id)}/delete`, {
+        method: "POST",
+        body: { expected_revision: revision },
+      }),
+    );
+  }
+  async testConnection(id: string, input: unknown = {}) {
+    return z
+      .object({ databases: z.array(databaseTargetSchema) })
+      .strict()
+      .parse(
+        await this.request(`${this.path}/database-connections/${encodeURIComponent(id)}/test`, {
+          method: "POST",
+          body: input,
+          timeoutMs: 130000,
+        }),
+      ).databases;
+  }
+  /** 使用当前表单测试服务器连接，参数只用于这一次请求。 */
+  async testConnectionDraft(input: unknown) {
+    return z
+      .object({ databases: z.array(databaseTargetSchema) })
+      .strict()
+      .parse(
+        await this.request(`${this.path}/database-connections/test`, {
+          method: "POST",
+          body: testDatabaseConnectionDraftSchema.parse(input),
+          timeoutMs: 130000,
+        }),
+      ).databases;
   }
   async sources() {
     return z
@@ -112,6 +187,20 @@ class DataAccessApi {
           body: dataSourceManagementConfigSchema.parse(value),
         }),
       );
+  }
+  async deleteSource(input: unknown) {
+    const body = deleteDataSourceSchema.parse(input);
+    const response = await this.request(`${this.path}/data-sources/delete`, {
+      method: "POST",
+      body,
+    });
+    const parsed = z
+      .object({ source_id: z.literal(body.source_id) })
+      .strict()
+      .safeParse(response);
+    if (!parsed.success)
+      throw new ApiError("数据源删除回执无效，请核对实际状态", 502, "INVALID_RECEIPT");
+    return parsed.data;
   }
   async discover(id: string) {
     return z

@@ -25,7 +25,9 @@ const maskingRuleSchema = z.discriminatedUnion("type", [
 const outputMaskSchema = z
   .object({
     /** SELECT 产生的最终列名或别名，供 DAS 匹配结果行中的键。 */
-    result_column: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "必须是安全结果列名"),
+    result_column: z
+      .string()
+      .regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_$]*$/u, "必须是安全结果列名"),
     /** 该结果列采用的处理规则。 */
     rule: maskingRuleSchema,
   })

@@ -12,6 +12,8 @@ interface ConversationRepository {
   ): Promise<Conversation | null>;
   /** 列出当前用户的会话。 */
   listConversations(userId: string, organizationId: string): Promise<Conversation[]>;
+  /** 在会话锁内原子删除本人工作台会话；存在活跃运行时拒绝整批操作。 */
+  deleteConversations(ids: string[], userId: string, organizationId: string): Promise<void>;
   /** 按序读取已确认归属的会话消息。 */
   listMessages(conversationId: string): Promise<ConversationMessage[]>;
   /** 在会话行锁内幂等保存消息、运行和初始快照。 */

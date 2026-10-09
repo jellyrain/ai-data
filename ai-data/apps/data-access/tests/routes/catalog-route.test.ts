@@ -1,3 +1,4 @@
+import { connectionManagementFixture } from "../support/connection-management-fixture";
 import { describe, expect, it } from "vitest";
 
 import { createApp } from "../../src/app";
@@ -128,6 +129,7 @@ function createCatalogReader(): CatalogReader {
 /** 构造本目录路由测试不使用的数据源管理接口替身。 */
 function createManagementApi() {
   return {
+    connections: connectionManagementFixture(),
     listDataSources: async () => ({ items: [] }),
     getDataSource: async () => ({ config: null, revision: "a".repeat(64) }),
     getSourceObjects: async () => ({ items: [], revision: "a".repeat(64) }),
@@ -145,6 +147,9 @@ function createManagementApi() {
       return { databases: [] };
     },
     async saveDataSource() {
+      return { source_id: "unused" };
+    },
+    async deleteDataSource() {
       return { source_id: "unused" };
     },
     async discoverSourceObjects() {

@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
+import { webcrypto } from "node:crypto";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import type { Transport } from "../../../src/shared/http/http-types";
 import { SessionResources } from "../../../src/shared/session/session-resources";
 import { ApiError } from "../../../src/shared/http/api-error";
@@ -19,7 +20,10 @@ function setup() {
   });
   return { exporter, request, resources, generate, download, pack };
 }
-describe("文件导出生命周期", () => {
+afterEach(() => vi.unstubAllGlobals());
+
+describe.each([true, false])("文件导出生命周期，原生摘要可用=%s", (native) => {
+  beforeEach(() => vi.stubGlobal("crypto", native ? webcrypto : {}));
   it("未选中的表格数据不复制给生成 Worker", async () => {
     const h = setup(),
       record = structuredClone(execution);

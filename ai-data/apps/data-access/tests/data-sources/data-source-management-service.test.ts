@@ -11,6 +11,56 @@ import type { DataSourceSecretResolver } from "../../src/secrets/secret-resolver
 
 // 按场景替换写入、发现和运行时依赖，检查管理服务传递的数据及失效请求。
 describe("数据源管理服务", () => {
+  it("删除先核对并提交，再释放运行连接；冲突不释放", async () => {
+    const events: unknown[] = [];
+    let conflict = false;
+    const service = createService({
+      administration: {
+        deleteSource: async (...args: unknown[]) => {
+          events.push(args);
+          if (conflict) throw new Error("conflict");
+        },
+      },
+      runtime: {
+        ...createRuntime(),
+        invalidate: async (id: string) => {
+          events.push(id);
+        },
+      },
+    });
+    const input = {
+      source_id: "clinical",
+      expected_revision: "a".repeat(64),
+      expected_objects_revision: "b".repeat(64),
+    };
+    await expect(service.deleteDataSource(input)).resolves.toEqual({ source_id: "clinical" });
+    expect(events).toEqual([
+      ["clinical", input.expected_revision, input.expected_objects_revision],
+      "clinical",
+    ]);
+    events.length = 0;
+    conflict = true;
+    await expect(service.deleteDataSource(input)).rejects.toThrow("conflict");
+    expect(events).toHaveLength(1);
+    await expect(service.deleteDataSource({ source_id: "clinical" })).rejects.toThrow();
+  });
+  it("保存前核对数据库连接类型，拒绝缺失连接及伪造类型", async () => {
+    const service = createService();
+    const input = {
+      source_id: "source",
+      secret_ref: "hospital-sqlserver-reader",
+      connector_kind: "mysql",
+      target_database: "business",
+      timeout_ms: 1000,
+      connection_pool_limit: 1,
+      concurrency_limit: 1,
+      row_limit: 10,
+    };
+    await expect(service.saveDataSource(input)).rejects.toThrow(/类型必须/);
+    await expect(service.saveDataSource({ ...input, secret_ref: "missing" })).rejects.toThrow(
+      /不存在/,
+    );
+  });
   it("带修订基准保存白名单时保留逻辑 ID、禁用查询和已有能力", async () => {
     const stored = {
       sourceId: "clinical",
@@ -319,7 +369,28 @@ describe("数据源管理服务", () => {
 function createService(overrides: Record<string, unknown> = {}): DataSourceManagementService {
   return new DataSourceManagementService(
     {
-      findBySecretRef: async () => undefined,
+      findBySecretRef: async (secretRef) => {
+        if (!["hospital-sqlserver-reader", "hospital-oracle-reader"].includes(secretRef))
+          return undefined;
+        const encrypted = new Aes256GcmSecretCipher().encrypt(
+          Buffer.from(
+            JSON.stringify({
+              connectorKind: secretRef.includes("oracle") ? "oracle" : "sqlserver",
+              host: "sql.test",
+              port: 1433,
+              user: "reader",
+              password: "secret",
+            }),
+          ),
+          Buffer.alloc(32, 1),
+        );
+        return {
+          secretRef,
+          keyId: "key_20260831",
+          encryptedPayload: encrypted.encryptedPayload,
+          metadata: encrypted.metadata,
+        };
+      },
       replace: async (secret) => {
         await (
           overrides.secretWriter as
@@ -339,7 +410,16 @@ function createService(overrides: Record<string, unknown> = {}): DataSourceManag
     new Aes256GcmSecretCipher(),
     (overrides.targetDiscovery ?? createTargetDiscovery()) as DatabaseTargetDiscovery,
     (overrides.runtime ?? createRuntime()) as never,
-    (overrides.administration ?? {}) as never,
+    {
+      sources: async () => ({ items: [] }),
+      saveConnectedSource: async (config: DataSourceConfig, isEnabled: boolean) => {
+        await (
+          overrides.configWriter as
+            { upsert(config: DataSourceConfig, isEnabled: boolean): Promise<void> } | undefined
+        )?.upsert(config, isEnabled);
+      },
+      ...(overrides.administration ?? {}),
+    } as never,
   );
 }
 

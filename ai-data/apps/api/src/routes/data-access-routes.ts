@@ -75,6 +75,40 @@ function registerDataAccessRoutes(
   });
   const serviceParams = z.object({ serviceId: z.string().min(1).max(128) }).strict();
   const sourceParams = serviceParams.extend({ sourceId: z.string().min(1).max(128) }).strict();
+  for (const [method, suffix, operation] of [
+    ["GET", "", "list"],
+    ["POST", "", "create"],
+    ["POST", "/test", "test-draft"],
+    ["GET", "/:connectionId", "get"],
+    ["PUT", "/:connectionId", "update"],
+    ["POST", "/:connectionId/delete", "remove"],
+    ["POST", "/:connectionId/test", "test"],
+  ] as const)
+    app.route({
+      method,
+      url: `/admin/data-access/services/:serviceId/database-connections${suffix}`,
+      handler: async (request, reply) => {
+        reply.header("cache-control", "no-store");
+        await requireServiceAdmin(request, auth);
+        z.object({}).strict().parse(request.query);
+        const params = serviceParams
+          .extend({ connectionId: z.string().min(1).max(128).optional() })
+          .strict()
+          .parse(request.params);
+        const service = (await registry.listHealthyServices()).find(
+          (item) => item.serviceId === params.serviceId,
+        );
+        if (!service)
+          throw new ApplicationError("DATA_SOURCE_UNAVAILABLE", "DAS 实例尚未注册或不可用");
+        return managementClient.connection(
+          service.serviceId,
+          service.serviceUrl,
+          operation,
+          params.connectionId,
+          request.body,
+        );
+      },
+    });
   for (const method of ["GET", "PUT"] as const) {
     app.route({
       method,
@@ -194,12 +228,19 @@ function registerDataAccessRoutes(
         if (!service)
           throw new ApplicationError("DATA_SOURCE_UNAVAILABLE", "DAS 实例尚未注册或不可用");
         return reply.send(
-          await managementClient.execute(
-            service.serviceId,
-            service.serviceUrl,
-            operation,
-            request.body,
-          ),
+          await (operation === "data-sources" || operation === "data-sources/delete"
+            ? dataAccess.sourceLifecycle.execute(
+                service.serviceId,
+                service.serviceUrl,
+                operation,
+                request.body,
+              )
+            : managementClient.execute(
+                service.serviceId,
+                service.serviceUrl,
+                operation,
+                request.body,
+              )),
         );
       },
     });

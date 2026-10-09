@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import {
   managedDataSourceSchema,
+  deleteDataSourceSchema,
   managedDataSourceDetailSchema,
   managedSourceObjectsSchema,
   managedSecretReferenceSchema,
@@ -16,10 +17,27 @@ import {
 import { ManagementConflict } from "../data-sources/management-conflict";
 import { sendInvalidInput } from "./contract-error";
 import { internalServiceAuth } from "./internal-auth";
+import {
+  DatabaseConnectionError,
+  type DatabaseConnectionService,
+} from "../data-sources/database-connection-service";
+import {
+  databaseConnectionSchema,
+  createDatabaseConnectionSchema,
+  updateDatabaseConnectionSchema,
+  deleteDatabaseConnectionSchema,
+  testDatabaseConnectionSchema,
+  testDatabaseConnectionDraftSchema,
+  databaseTargetSchema,
+} from "@ai-data/contracts";
 import type { InternalServiceVerifier } from "../auth/internal-service-verifier";
 
 /** 数据源管理路由需要的最小服务能力。 */
 interface DataSourceManagementApi {
+  connections: Pick<
+    DatabaseConnectionService,
+    "list" | "get" | "create" | "update" | "remove" | "test" | "testDraft"
+  >;
   /** 元数据库公开配置读取，包含已停用源。 */
   listDataSources(): Promise<{ items: ManagedDataSource[] }>;
   getDataSource(sourceId: string): Promise<ManagedDataSourceDetail>;
@@ -39,6 +57,7 @@ interface DataSourceManagementApi {
   }>;
   /** 保存一个单库 source_id。 */
   saveDataSource(input: unknown): Promise<{ source_id: string }>;
+  deleteDataSource(input: unknown): Promise<{ source_id: string }>;
   /** 发现一个 source_id 的完整对象目录。 */
   discoverSourceObjects(input: unknown): Promise<unknown>;
   /** 替换一个 source_id 的 API 对象白名单。 */
@@ -55,6 +74,67 @@ function registerDataSourceManagementRoutes(
   const empty = z.object({}).strict();
   const params = z.object({ sourceId: z.string().min(1).max(128) }).strict();
   const secretParams = z.object({ secretRef: z.string().min(1).max(256) }).strict();
+  for (const [method, suffix, operation] of [
+    ["GET", "", "list"],
+    ["POST", "", "create"],
+    ["POST", "/test", "test-draft"],
+    ["GET", "/:secretRef", "get"],
+    ["PUT", "/:secretRef", "update"],
+    ["POST", "/:secretRef/delete", "remove"],
+    ["POST", "/:secretRef/test", "test"],
+  ] as const)
+    app.route({
+      method,
+      url: `/internal/admin/database-connections${suffix}`,
+      ...options,
+      handler: async (request, reply) => {
+        reply.header("cache-control", "no-store");
+        empty.parse(request.query);
+        const id =
+          suffix && operation !== "test-draft" ? secretParams.parse(request.params).secretRef : "";
+        try {
+          const connections = managementService.connections;
+          if (operation === "list")
+            return readConfiguration(
+              () => connections.list(),
+              z.object({ items: z.array(databaseConnectionSchema) }).strict(),
+            );
+          if (operation === "get") {
+            const value = await connections.get(id);
+            return readConfiguration(async () => value, databaseConnectionSchema);
+          }
+          if (operation === "create")
+            return databaseConnectionSchema.parse(
+              await connections.create(createDatabaseConnectionSchema.parse(request.body)),
+            );
+          if (operation === "update")
+            return databaseConnectionSchema.parse(
+              await connections.update(id, updateDatabaseConnectionSchema.parse(request.body)),
+            );
+          if (operation === "remove")
+            return await connections.remove(id, deleteDatabaseConnectionSchema.parse(request.body));
+          return z
+            .object({ databases: z.array(databaseTargetSchema) })
+            .strict()
+            .parse(
+              operation === "test-draft"
+                ? await connections.testDraft(testDatabaseConnectionDraftSchema.parse(request.body))
+                : await connections.test(id, testDatabaseConnectionSchema.parse(request.body)),
+            );
+        } catch (error) {
+          if (
+            error instanceof z.ZodError ||
+            error instanceof DatabaseConnectionError ||
+            error instanceof ManagementConflict ||
+            operation === "test" ||
+            operation === "test-draft"
+          )
+            return sendManagementError(reply, request, error);
+          // 写后回读或连接池刷新失败可能已经提交，客户端通过回读核对。
+          throw new Error("数据库连接管理失败", { cause: error });
+        }
+      },
+    });
   app.get(
     "/internal/admin/data-source-secrets/:secretRef/sqlserver-transport",
     options,
@@ -147,6 +227,21 @@ function registerDataSourceManagementRoutes(
     }
   });
 
+  app.post("/internal/admin/data-sources/delete", options, async (request, reply) => {
+    reply.header("cache-control", "no-store");
+    empty.parse(request.query);
+    try {
+      const input = deleteDataSourceSchema.parse(request.body);
+      return z
+        .object({ source_id: z.literal(input.source_id) })
+        .strict()
+        .parse(await managementService.deleteDataSource(input));
+    } catch (error) {
+      if (error instanceof z.ZodError || error instanceof ManagementConflict)
+        return sendManagementError(reply, request, error);
+      throw new Error("删除数据源失败，请核对实际状态", { cause: error });
+    }
+  });
   app.post("/internal/admin/data-source-objects/discover", options, async (request, reply) => {
     reply.header("cache-control", "no-store");
     try {
@@ -185,6 +280,10 @@ async function readConfiguration<T>(
 }
 /** 并发冲突有独立状态码，其他写入失败继续使用既有公开说明。 */
 function sendManagementError(reply: FastifyReply, request: FastifyRequest, error: unknown) {
+  if (error instanceof DatabaseConnectionError)
+    return reply
+      .code(error.code === "NOT_FOUND" ? 404 : error.code === "CONFLICT" ? 409 : 400)
+      .send({ code: error.code, message: error.message, request_id: request.id });
   if (isCertificateFailure(error))
     return reply.code(503).send({
       code: "DATA_SOURCE_CERTIFICATE_INVALID",

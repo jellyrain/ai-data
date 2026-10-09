@@ -93,6 +93,66 @@ function setup() {
 }
 
 describe("运行状态、租约、澄清与证据", () => {
+  it("每批消息只刷新一次身份并使用当前身份检查证据和提交", async () => {
+    const h = setup();
+    const lease = await h.service.claim(context, "run", "worker");
+    h.refreshContext.mockClear();
+    const current = { ...context, roles: ["reader"] };
+    h.refreshContext.mockResolvedValue(current);
+    const read = vi.spyOn(h.repository, "get");
+    const write = vi.spyOn(h.repository, "change");
+    await h.service.recordMessage(context, "run", lease, {
+      itemId: "a",
+      status: "delta",
+      content: "结果",
+    });
+    expect(h.refreshContext).toHaveBeenCalledOnce();
+    expect(read).toHaveBeenCalledWith(current, "run");
+    expect(write).toHaveBeenCalledWith(current, "run", expect.any(Function));
+  });
+  it("联合读取状态和事件只复核一次，读取期间撤销身份则拒绝返回", async () => {
+    const h = setup();
+    const lease = await h.service.claim(context, "run", "worker");
+    await h.service.recordMessage(context, "run", lease, {
+      itemId: "a",
+      status: "delta",
+      content: "结果",
+    });
+    h.refreshContext.mockClear();
+    const batch = await h.service.readEventBatch(context, "run", 0);
+    expect(batch.state.sequence).toBe(batch.events.at(-1)?.sequence);
+    expect(batch.events.at(-1)).toMatchObject({ type: "assistant_message", content: "结果" });
+    expect(h.refreshContext).toHaveBeenCalledOnce();
+    vi.spyOn(h.repository, "listEvents").mockImplementation(async () => {
+      h.refreshContext.mockRejectedValue(new Error("身份已撤销"));
+      return h.events;
+    });
+    await expect(h.service.readEventBatch(context, "run", 0)).rejects.toThrow("身份已撤销");
+  });
+  it("每批事件继续复核证据权限，撤销后拒绝正文写入和事件回放", async () => {
+    const h = setup();
+    const lease = await h.service.claim(context, "run", "worker");
+    await h.service.query(context, "run", lease, "query", {
+      type: "relational_query",
+      source_id: "clinical",
+      from: { object_id: "visit", alias: "v" },
+      select: [{ field: "v.id", as: "value" }],
+    });
+    h.authorize.mockClear();
+    await h.service.readEventBatch(context, "run", 0);
+    expect(h.authorize).toHaveBeenCalledOnce();
+    const sequence = (await h.repository.get()).sequence;
+    h.authorize.mockRejectedValue(new Error("证据权限已收回"));
+    await expect(
+      h.service.recordMessage(context, "run", lease, {
+        itemId: "a",
+        status: "delta",
+        content: "旧范围结果",
+      }),
+    ).rejects.toThrow("证据权限已收回");
+    await expect(h.service.readEventBatch(context, "run", 0)).rejects.toThrow("证据权限已收回");
+    expect((await h.repository.get()).sequence).toBe(sequence);
+  });
   it("消息在有效租约内提交后唤醒 SSE；权限收回、过期和取消后不能追加", async () => {
     const h = setup();
     const lease = await h.service.claim(context, "run", "worker");
@@ -253,6 +313,17 @@ describe("分析查询交付边界", () => {
     from: { object_id: "visit", alias: "v" },
     select: [{ field: "v.id", as: "value" }],
   };
+  it("已由工具审计管理的查询只发布表格，避免重复工具结果", async () => {
+    const h = setup();
+    const lease = await h.service.claim(context, "run", "worker");
+    await h.service.query(context, "run", lease, "managed-query", query, undefined, {
+      managed: true,
+    });
+    expect(h.events.filter((event) => event.type === "table")).toHaveLength(1);
+    expect(h.events.filter((event) => ["tool_call", "tool_result"].includes(event.type))).toEqual(
+      [],
+    );
+  });
   it("HTTP 调用保留查询结果，持久化 SSE 只携带标明范围的样本", async () => {
     const h = setup();
     h.execute.mockResolvedValue({

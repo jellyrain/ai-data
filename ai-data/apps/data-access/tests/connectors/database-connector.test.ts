@@ -56,6 +56,102 @@ function sqlRowLimit(sql: string, dialect: DatabaseDialect): number {
   return Number(match[1]);
 }
 describe("数据库连接器", () => {
+  it.each([sqlServerDialect, mysqlDialect, postgresqlDialect, oracleDialect])(
+    "$kind 发现时保留中文多行注释，缺省注释不伪造说明",
+    async (dialect) => {
+      const description = "报告编号\n数据库字段原始说明";
+      const driver: DatabaseDriver = {
+        async query() {
+          return {
+            rows: [
+              {
+                schema_name: "业务",
+                object_name: "报告",
+                object_kind: "view",
+                object_description: "检验报告",
+                column_name: "报告$编号",
+                data_type: "varchar",
+                is_nullable: "YES",
+                column_description: description,
+              },
+              {
+                schema_name: "业务",
+                object_name: "报告",
+                object_kind: "view",
+                object_description: "检验报告",
+                column_name: "类型",
+                data_type: "varchar",
+                is_nullable: "YES",
+                column_description: null,
+              },
+            ],
+          };
+        },
+        async close() {},
+      };
+      const connector = new DatabaseConnector(
+        { ...config, connectorKind: dialect.kind },
+        driver,
+        dialect,
+      );
+      try {
+        const [dataset] = await connector.discoverCatalog();
+        expect(dataset).toMatchObject({ kind: "view", source_description: "检验报告" });
+        expect(dataset?.columns).toEqual([
+          {
+            name: "报告$编号",
+            data_type: "string",
+            nullable: true,
+            source_description: description,
+          },
+          { name: "类型", data_type: "string", nullable: true },
+        ]);
+      } finally {
+        await connector.close();
+      }
+    },
+  );
+  it.each([sqlServerDialect, mysqlDialect, postgresqlDialect, oracleDialect])(
+    "$kind 留存提交驱动的 SQL 和参数类型",
+    async (dialect) => {
+      let actual = "";
+      const driver: DatabaseDriver = {
+        async query(sql) {
+          actual = sql;
+          return { rows: [] };
+        },
+        async close() {},
+      };
+      const request = {
+        ...query(),
+        filters: {
+          logic: "and" as const,
+          items: [
+            {
+              field: "v.id",
+              op: "eq" as const,
+              value: "private-value",
+              data_type: "string" as const,
+            },
+          ],
+        },
+      };
+      const result = await new DatabaseConnector(
+        { ...config, connectorKind: dialect.kind },
+        driver,
+        dialect,
+      ).execute(request);
+      expect(result.execution_sql).toEqual({
+        dialect: dialect.kind,
+        sql: actual,
+        parameters: [
+          { position: 1, placeholder: dialect.parameterPlaceholder(0), data_type: "string" },
+        ],
+      });
+      expect(actual).not.toContain("private-value");
+      expect(JSON.stringify(result.execution_sql)).not.toContain("private-value");
+    },
+  );
   it.each([
     { dialect: sqlServerDialect, nativeType: "timestamp", expected: "buffer" },
     { dialect: sqlServerDialect, nativeType: "rowversion", expected: "buffer" },

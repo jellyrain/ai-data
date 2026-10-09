@@ -211,6 +211,15 @@ class DatabaseConnector implements DataSourceConnector {
       rows,
       row_count: rows.length,
       truncated: result.rows.length > rows.length,
+      execution_sql: {
+        dialect: this.kind,
+        sql: compiled.sql,
+        parameters: compiled.parameters.map((parameter, index) => ({
+          position: index + 1,
+          placeholder: this.dialect.parameterPlaceholder(index),
+          data_type: parameter.dataType,
+        })),
+      },
     });
   }
 

@@ -1,0 +1,153 @@
+{
+  "model": "rj-model-v1",
+  "status": "completed",
+  "attempts": [
+    {
+      "name": "list_metrics",
+      "input": {
+        "query": "门诊就诊人次 科室"
+      },
+      "success": true,
+      "output": {
+        "items": [
+          {
+            "metric_id": "fixture-visits",
+            "version": 1,
+            "name": "门诊就诊人次",
+            "description": "按就诊时间统计完成的门诊记录",
+            "date_basis": {
+              "field": "v.visited_at",
+              "data_type": "datetime"
+            },
+            "source_id": "fixture-clinical",
+            "object_id": "visits"
+          }
+        ]
+      }
+    },
+    {
+      "name": "describe_metric",
+      "input": {
+        "metric_id": "fixture-visits",
+        "version": 1
+      },
+      "success": true,
+      "output": {
+        "metric_id": "fixture-visits",
+        "version": 1,
+        "name": "门诊就诊人次",
+        "description": "按就诊时间统计完成的门诊记录",
+        "aliases": [
+          "门诊人次"
+        ],
+        "grain": "就诊记录",
+        "deduplication_keys": [
+          "v.id"
+        ],
+        "date_basis": {
+          "field": "v.visited_at",
+          "data_type": "datetime"
+        },
+        "query": {
+          "type": "relational_query",
+          "source_id": "fixture-clinical",
+          "from": {
+            "object_id": "visits",
+            "alias": "v"
+          },
+          "joins": [],
+          "select": [
+            {
+              "field": "v.id",
+              "aggregation": "count_distinct",
+              "as": "visits"
+            }
+          ],
+          "filters": {
+            "logic": "and",
+            "items": []
+          },
+          "group_by": [],
+          "order_by": []
+        },
+        "dimensions": [
+          "v.department"
+        ],
+        "value": {
+          "type": "column",
+          "column": "visits"
+        },
+        "total_rule": "recalculate",
+        "query_requirements": {
+          "time_format": "YYYY-MM-DD HH:mm:ss",
+          "timezone": "UTC+8",
+          "range_bounds": "inclusive",
+          "allowed_dimensions": [
+            "v.department"
+          ],
+          "example_note": "示例仅演示参数格式，start/end 请使用当前用户要求的时间范围。",
+          "example": {
+            "metric_id": "fixture-visits",
+            "version": 1,
+            "start": "2026-01-01 00:00:00",
+            "end": "2026-01-31 23:59:59",
+            "dimensions": [
+              "v.department"
+            ]
+          }
+        },
+        "business_rules": []
+      }
+    },
+    {
+      "name": "query_metric",
+      "input": {
+        "metric_id": "fixture-visits",
+        "start": "2026-08-01 00:00:00",
+        "end": "2026-08-31 23:59:59",
+        "dimensions": [
+          "v.department"
+        ]
+      },
+      "success": true,
+      "output": {
+        "metric_id": "fixture-visits",
+        "version": 1,
+        "grouped": {
+          "columns": [
+            {
+              "name": "dimension_0",
+              "data_type": "string"
+            },
+            {
+              "name": "visits",
+              "data_type": "integer"
+            }
+          ],
+          "rows": [
+            {
+              "dimension_0": "A科",
+              "visits": 8
+            },
+            {
+              "dimension_0": "B科",
+              "visits": 5
+            }
+          ],
+          "row_count": 2,
+          "truncated": false,
+          "sampled": false
+        },
+        "values": [
+          8,
+          5
+        ],
+        "total": 13,
+        "evidence_ids": [
+          "fixture-groups",
+          "fixture-total"
+        ]
+      }
+    }
+  ]
+}

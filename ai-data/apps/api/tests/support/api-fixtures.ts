@@ -63,6 +63,7 @@ function createApiDependencies() {
       updateManagedUserDepartments: vi.fn(async () => false),
     },
     conversations: {
+      delete: vi.fn(async () => {}),
       create: vi.fn(unexpectedCall),
       list: vi.fn(async () => []),
       get: vi.fn(async () => null),
@@ -126,7 +127,7 @@ function createApiDependencies() {
     analysis: {
       runs: {
         get: vi.fn<ApiAnalysisServices["runs"]["get"]>(unexpectedCall),
-        events: vi.fn<ApiAnalysisServices["runs"]["events"]>(unexpectedCall),
+        readEventBatch: vi.fn<ApiAnalysisServices["runs"]["readEventBatch"]>(unexpectedCall),
         evidence: vi.fn(unexpectedCall),
         steps: vi.fn(unexpectedCall),
         answer: vi.fn(unexpectedCall),
@@ -183,7 +184,12 @@ function createApiDependencies() {
         listHealthyServices: vi.fn(async () => []),
       },
       catalogClient: { listCatalog: vi.fn(async () => []) },
+      sourceLifecycle: {
+        execute: vi.fn<ApiDependencies["dataAccess"]["sourceLifecycle"]["execute"]>(unexpectedCall),
+      },
       managementClient: {
+        connection:
+          vi.fn<ApiDependencies["dataAccess"]["managementClient"]["connection"]>(unexpectedCall),
         execute: vi.fn(unexpectedCall),
         read: vi.fn(unexpectedCall),
         sqlServerTransport: vi.fn(unexpectedCall),

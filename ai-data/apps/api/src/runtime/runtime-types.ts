@@ -18,6 +18,7 @@ type AnalysisInput = {
 interface RuntimeRepository {
   pending(limit: number): Promise<PendingAnalysis[]>;
   loadInput(context: AuthContext, runId: string, runtimeKey?: string): Promise<AnalysisInput>;
+  loadContextHash(context: AuthContext, runtimeKey?: string): Promise<string>;
   saveThread(
     context: AuthContext,
     runId: string,
@@ -32,7 +33,7 @@ type ExecutorDependencies = {
   runs: AnalysisRunService;
   harness: AnalysisHarness;
   tools: AnalysisTools;
-  repository: Pick<RuntimeRepository, "loadInput" | "saveThread">;
+  repository: Pick<RuntimeRepository, "loadInput" | "loadContextHash" | "saveThread">;
   refreshContext: (context: AuthContext) => Promise<AuthContext>;
   instructions: string;
   runtimeKey?: string;

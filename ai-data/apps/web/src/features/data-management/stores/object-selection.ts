@@ -2,6 +2,7 @@ import {
   queryCapabilitiesSchema,
   procedureDefinitionSchema,
   type ManagedSourceObject,
+  type QueryCapabilities,
 } from "@ai-data/contracts";
 import { ApiError } from "../../../shared/http/api-error";
 import type { ObjectSelection } from "./object-selection-types";
@@ -27,14 +28,12 @@ function parseManagementJson(value: string, label: string): unknown {
 }
 function objectEdits(
   value: ObjectSelection,
-  capabilities: string,
+  capabilities: QueryCapabilities | undefined,
   procedure: string,
 ): ObjectSelection {
   return {
     ...value,
-    query_capabilities: queryCapabilitiesSchema.parse(
-      parseManagementJson(capabilities, "查询能力"),
-    ),
+    query_capabilities: queryCapabilitiesSchema.parse(capabilities ?? {}),
     procedure_definition: procedure.trim()
       ? procedureDefinitionSchema.parse(parseManagementJson(procedure, "过程定义"))
       : null,

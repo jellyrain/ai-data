@@ -769,9 +769,9 @@ describe("自然语言分析：API、DAS HTTP 与 SQL Server 对话验收", () =
       const runtime = executor(harness, instructions, resolveConfiguration);
       await runtime.execute(restricted.context, submitted.runId);
       const state = await runs.get(restricted.context, submitted.runId);
-      const streamDirectory = fileURLToPath(
-        new URL("../../../../../任务交接/页面03-05流式验收/", import.meta.url),
-      );
+      const streamDirectory = process.env.ANALYSIS_STREAM_ACCEPTANCE_DIRECTORY
+        ? resolve(process.env.ANALYSIS_STREAM_ACCEPTANCE_DIRECTORY)
+        : fileURLToPath(new URL("../../../../../任务交接/页面03-05流式验收/", import.meta.url));
       await mkdir(streamDirectory, { recursive: true });
       await writeFile(
         join(streamDirectory, "真实模型流式时序.json"),

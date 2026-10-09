@@ -3,23 +3,11 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { ElButton } from "element-plus";
 import { renderMarkdown } from "./markdown";
 import { highlightCode } from "./code-highlight";
+import { useStreamingText } from "./use-streaming-text";
 const props = defineProps<{ text: string; streaming?: boolean }>();
-const visibleText = ref(props.text);
-let renderTimer: ReturnType<typeof setTimeout> | undefined;
-// 输出时最多每 80ms 更新一次 Markdown，段落完成时立即采用权威正文。
-watch(
-  () => [props.text, props.streaming] as const,
-  () => {
-    if (!props.streaming) {
-      clearTimeout(renderTimer);
-      renderTimer = undefined;
-      visibleText.value = props.text;
-    } else
-      renderTimer ??= setTimeout(() => {
-        renderTimer = undefined;
-        visibleText.value = props.text;
-      }, 80);
-  },
+const visibleText = useStreamingText(
+  () => props.text,
+  () => props.streaming,
 );
 const root = ref<HTMLElement>();
 const expanded = ref(false);
@@ -99,7 +87,7 @@ async function clicked(event: MouseEvent) {
     feedback.value = "复制失败，请选中代码手动复制";
   }
 }
-watch(display, () => {
+watch([display, () => props.streaming], () => {
   void enhance();
 });
 watch(
@@ -119,7 +107,6 @@ onMounted(() => {
   });
 });
 onBeforeUnmount(() => {
-  clearTimeout(renderTimer);
   generation++;
   observer?.disconnect();
   themes?.disconnect();

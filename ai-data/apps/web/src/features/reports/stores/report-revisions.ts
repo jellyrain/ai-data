@@ -5,6 +5,7 @@ import {
   reportRevisionBindingSchema,
 } from "@ai-data/contracts";
 import type { AnalysisRunState, SseEvent } from "@ai-data/contracts";
+import { createUuid } from "../../../shared/identity/create-uuid";
 import { ApiError } from "../../../shared/http/api-error";
 import { subscribeRun, isTerminal } from "../../../shared/stream/run-stream";
 import { narrativeReceiptSchema } from "../api/report-schema";
@@ -164,7 +165,7 @@ class ReportRevisions {
         })
     )
       return;
-    if (!this.pending) this.pending = { ...input, idempotency_key: crypto.randomUUID() };
+    if (!this.pending) this.pending = { ...input, idempotency_key: createUuid() };
     const generation = this.generation;
     this.state.sending = true;
     this.state.error = "";
@@ -307,8 +308,7 @@ class ReportRevisions {
     const question = this.state.run?.clarification;
     if (!question || this.state.answering) return;
     const signature = JSON.stringify([question.clarification_id, value]);
-    if (this.answerKey?.signature !== signature)
-      this.answerKey = { signature, key: crypto.randomUUID() };
+    if (this.answerKey?.signature !== signature) this.answerKey = { signature, key: createUuid() };
     await this.action(
       "answers",
       clarificationAnswerSchema.parse({

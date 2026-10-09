@@ -3,7 +3,7 @@ import { approvedRelationSchema } from "./api-dataset";
 import { dateTimeSchema } from "../shared/data-values";
 
 const id = z.string().min(1).max(128);
-const identifier = z.string().regex(/^[A-Za-z_][A-Za-z0-9_.]*$/);
+const identifier = z.string().regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u);
 /** 新发布关系始终有稳定 ID 和明确连接能力；方向固定为 object_id 到 target_object_id。 */
 const publishedRelationInputSchema = approvedRelationSchema.extend({
   relation_id: identifier.max(128),

@@ -26,6 +26,7 @@ import { SqlKnowledgeRepository } from "../../src/knowledge/sql-knowledge-reposi
 import { serialExecutor } from "../../src/memory/serial-executor";
 import { ReportService } from "../../src/reports/report-service";
 import { SqlReportRepository } from "../../src/reports/sql-report-repository";
+import { AnalysisTools } from "../../src/runtime/analysis-tools";
 import { config, context as administrator } from "../support/api-fixtures";
 
 const visitMetric = metricDefinitionSchema.parse({
@@ -69,6 +70,7 @@ function registerBusinessAcceptance(databaseProvider: () => SqlServerMetadataDat
     let database: SqlServerMetadataDatabase;
     let auth: SqlAuthRepository;
     let catalogRepository: SqlCatalogRepository;
+    let catalog: BusinessCatalogService;
     let authorization: QueryAuthorizationService;
     let metrics: MetricService;
     let knowledge: KnowledgeService;
@@ -146,14 +148,12 @@ function registerBusinessAcceptance(databaseProvider: () => SqlServerMetadataDat
             .toString(),
         },
       });
-      authorization = new QueryAuthorizationService(
-        new BusinessCatalogService(
-          { listRawCatalog: async () => [dataset] },
-          catalogRepository,
-          catalogRepository,
-        ),
-        jwt,
+      catalog = new BusinessCatalogService(
+        { listRawCatalog: async () => [dataset] },
+        catalogRepository,
+        catalogRepository,
       );
+      authorization = new QueryAuthorizationService(catalog, jwt);
       runs = new AnalysisRunService({
         repository: new SqlAnalysisRunRepository(database),
         authorization,
@@ -314,6 +314,104 @@ function registerBusinessAcceptance(databaseProvider: () => SqlServerMetadataDat
       expect(
         (await execute(full, ratioMetric, "2027-01-01", "2027-01-01")).result.total,
       ).toBeNull();
+    });
+    it("指标工具交付时间要求，修正参数后查询 SQL 并持久化具体错误及两份证据", async () => {
+      const conversation = await conversations.create(full);
+      const submitted = await conversations.submitUserMessage(
+        full,
+        conversation.id,
+        "九月各科室就诊人次",
+        randomUUID(),
+      );
+      const runId = submitted!.analysisRun.id;
+      const lease = await runs.claim(full, runId, "metric-tool-test");
+      const tools = new AnalysisTools({
+        runs,
+        catalog,
+        metrics,
+        reports,
+        listSourceIds: async () => ["clinical"],
+        refreshContext: async (current) => ({
+          ...current,
+          ...(await auth.loadAuthorization(current.userId)),
+        }),
+      });
+      const detail = await tools.execute(
+        full,
+        runId,
+        lease,
+        "describe_metric",
+        { metric_id: "visit_count", version: 1 },
+        "describe",
+      );
+      expect(detail).toMatchObject({
+        success: true,
+        output: {
+          query_requirements: { time_format: "YYYY-MM-DD", allowed_dimensions: ["v.department"] },
+        },
+      });
+      expect(
+        await tools.execute(
+          full,
+          runId,
+          lease,
+          "query_metric",
+          {
+            metric_id: "visit_count",
+            version: 1,
+            start: "2026-09-01 00:00:00",
+            end: "2026-09-30 23:59:59",
+            dimensions: ["v.department"],
+          },
+          "invalid",
+        ),
+      ).toMatchObject({
+        success: false,
+        output: {
+          code: "INVALID_INPUT",
+          message: expect.stringContaining("start 必须匹配指标的 date 格式 YYYY-MM-DD"),
+        },
+      });
+      expect(await runs.evidence(full, runId)).toEqual([]);
+      const input = {
+        metric_id: "visit_count",
+        version: 1,
+        start: "2026-09-01",
+        end: "2026-09-30",
+        dimensions: ["v.department"],
+      };
+      const corrected = await tools.execute(full, runId, lease, "query_metric", input, "corrected");
+      expect(corrected).toMatchObject({
+        success: true,
+        output: {
+          values: [2, 2],
+          total: 3,
+          evidence_ids: [expect.any(String), expect.any(String)],
+        },
+      });
+      expect(await tools.execute(full, runId, lease, "query_metric", input, "retry")).toEqual(
+        corrected,
+      );
+      expect(await runs.evidence(full, runId)).toHaveLength(2);
+      const audits = await database.execute({
+        sql: "SELECT audit_json FROM dbo.analysis_tool_audits WHERE analysis_run_id=@run",
+        parameters: [{ name: "run", type: "string", value: runId }],
+      });
+      expect(audits.rows.map((row) => JSON.parse(String(row.audit_json)))).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            tool_name: "query_metric",
+            status: "failed",
+            output_summary: expect.stringContaining("start 必须匹配指标的 date 格式 YYYY-MM-DD"),
+          }),
+          expect.objectContaining({
+            tool_name: "query_metric",
+            status: "completed",
+            evidence_ids: [expect.any(String), expect.any(String)],
+          }),
+        ]),
+      );
+      await runs.complete(full, runId, lease, "指标工具修正后查询完成");
     });
     it("日期依据使用独立指标标识，版本不可覆盖且重试固定原版本", async () => {
       const initial = await execute(full);

@@ -13,9 +13,13 @@ import {
 } from "../catalog/procedure-definition";
 
 /** 内部 DSL 标识符的字符白名单；物理名称与关系别名由规划层提供。 */
-const identifierSchema = z.string().regex(/^[A-Za-z_][A-Za-z0-9_.]*$/, "必须是安全标识符");
+const identifierSchema = z
+  .string()
+  .regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u, "必须是安全标识符");
 /** 关系与输出别名只能占一个名称段，字段限定符由查询层级单独检查。 */
-const aliasSchema = z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "必须是安全单段别名");
+const aliasSchema = z
+  .string()
+  .regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_$]*$/u, "必须是安全单段别名");
 
 /** 最终参数绑定条件，仅接受声明字段；在内部执行边界再次检查操作符与值的组合。 */
 const executableFilterConditionSchema = z

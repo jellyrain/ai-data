@@ -17,6 +17,8 @@ const router = useRouter();
 const historyOpen = ref(false);
 const evidenceOpen = ref(false);
 const selectedRun = ref("");
+const selectedTool = ref("");
+const evidenceTab = ref("queries");
 const agentKey = ref("");
 const composing = ref(false);
 const messagesCount = ref(20);
@@ -46,6 +48,22 @@ const agent = computed(() =>
 );
 const active = computed(() => analysis.activeRun());
 const selectedEvidence = computed(() => state.runs[selectedRun.value]);
+// 打开依据后继续跟随新增查询和终态；普通文字增量不触发证据请求。
+watch(
+  () =>
+    selectedEvidence.value?.events
+      .filter((event) => event.type === "table" || event.type === "run_completed")
+      .at(-1)?.sequence,
+  async (revision) => {
+    const id = selectedRun.value;
+    if (!id || revision === undefined) return;
+    await analysis.loadEvidence(id);
+    const latest = state.runs[id]?.events
+      .filter((event) => event.type === "table" || event.type === "run_completed")
+      .at(-1)?.sequence;
+    if (selectedRun.value === id && latest !== revision) await analysis.loadEvidence(id);
+  },
+);
 const runIds = computed(() => [
   ...new Set(
     state.detail?.messages
@@ -99,6 +117,7 @@ watch(
     historyOpen.value = false;
     evidenceOpen.value = false;
     selectedRun.value = "";
+    selectedTool.value = "";
     messagesCount.value = 20;
     pinned.value = true;
     await analysis.enter(typeof id === "string" ? id : "");
@@ -152,10 +171,27 @@ async function newAnalysis() {
   historyOpen.value = false;
   await router.push("/analysis");
 }
-function showEvidence(id: string) {
+async function deleteConversations(ids: string[]) {
+  const current = String(route.params.id ?? "");
+  if (await analysis.deleteConversations(ids)) {
+    if (ids.includes(current)) await router.push("/analysis");
+  }
+}
+function showEvidence(id: string, toolKey = "") {
   selectedRun.value = id;
+  selectedTool.value = toolKey;
+  evidenceTab.value = toolKey ? "tools" : "queries";
   evidenceOpen.value = true;
   void analysis.loadEvidence(id);
+}
+function toggleEvidence() {
+  if (evidenceOpen.value) {
+    evidenceOpen.value = false;
+    return;
+  }
+  if (!selectedRun.value) selectedRun.value = runIds.value.at(-1) ?? "";
+  evidenceOpen.value = true;
+  if (selectedRun.value) void analysis.loadEvidence(selectedRun.value);
 }
 function scroll() {
   const area = messageArea.value;
@@ -172,12 +208,14 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
-  <div class="analysis-workbench">
+  <div class="analysis-workbench" :class="{ 'evidence-visible': evidenceOpen && !compactEvidence }">
     <aside class="analysis-conversations">
       <ConversationList
         :items="state.conversations"
         :current="state.detail?.conversation.id"
         :error="state.listError"
+        :deleting="state.deleting"
+        @delete="deleteConversations"
         @create="newAnalysis"
         @retry="analysis.refreshLists()"
       />
@@ -199,7 +237,12 @@ onBeforeUnmount(() => {
           />
           <ElButton class="history-toggle" aria-label="打开最近会话" @click="historyOpen = true"
             ><History :size="18" /></ElButton
-          ><ElButton class="evidence-toggle" aria-label="打开分析依据" @click="evidenceOpen = true"
+          ><ElButton
+            class="evidence-toggle"
+            :aria-label="evidenceOpen ? '收起分析依据' : '打开分析依据'"
+            :title="evidenceOpen ? '收起分析依据' : '打开分析依据'"
+            :aria-expanded="evidenceOpen"
+            @click="toggleEvidence"
             ><FileSearch :size="18"
           /></ElButton>
         </div>
@@ -257,10 +300,13 @@ onBeforeUnmount(() => {
                 :fallback="item.fallback"
                 :answering="state.answering"
                 :cancelling="state.cancelling"
+                :selected-tool="selectedRun === item.runId ? selectedTool : ''"
                 @cancel="analysis.cancel(item.runId!)"
                 @reconnect="analysis.reconnect(item.runId!)"
                 @answer="analysis.answer(item.runId!, $event)"
                 @evidence="showEvidence(item.runId!)"
+                @load-results="analysis.loadEvidence(item.runId!)"
+                @tool="showEvidence(item.runId!, $event)"
               />
             </template>
           </template>
@@ -349,25 +395,40 @@ onBeforeUnmount(() => {
         </form>
       </div>
     </div>
-    <aside class="analysis-evidence">
-      <EvidencePanel :run="selectedEvidence" @retry="analysis.loadEvidence(selectedRun)" />
+    <aside v-if="evidenceOpen && !compactEvidence" class="analysis-evidence" aria-label="分析依据">
+      <EvidencePanel
+        v-model:tab="evidenceTab"
+        :run="selectedEvidence"
+        :tool-key="selectedTool"
+        closable
+        @close="evidenceOpen = false"
+        @select-tool="selectedTool = $event"
+        @retry="analysis.loadEvidence(selectedRun)"
+      />
     </aside>
     <ElDrawer v-model="historyOpen" title="最近会话" direction="ltr" size="min(320px, 100vw)"
       ><ConversationList
         :items="state.conversations"
         :current="state.detail?.conversation.id"
         :error="state.listError"
+        :deleting="state.deleting"
+        @delete="deleteConversations"
         @navigate="historyOpen = false"
         @create="newAnalysis"
         @retry="analysis.refreshLists()"
     /></ElDrawer>
     <ElDrawer
-      :model-value="evidenceOpen && compactEvidence"
+      v-if="compactEvidence"
+      v-model="evidenceOpen"
       class="evidence-drawer"
       title="分析依据"
       size="min(420px, 100vw)"
-      @close="evidenceOpen = false"
-      ><EvidencePanel :run="selectedEvidence" @retry="analysis.loadEvidence(selectedRun)"
+      ><EvidencePanel
+        v-model:tab="evidenceTab"
+        :run="selectedEvidence"
+        :tool-key="selectedTool"
+        @select-tool="selectedTool = $event"
+        @retry="analysis.loadEvidence(selectedRun)"
     /></ElDrawer>
   </div>
 </template>

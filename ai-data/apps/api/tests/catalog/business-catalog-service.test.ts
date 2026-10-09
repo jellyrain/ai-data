@@ -81,6 +81,32 @@ class MemoryCatalogRepository implements ApiDatasetConfigRepository, CatalogPerm
 }
 
 describe("业务目录服务", () => {
+  it("业务说明覆盖源注释，清空覆盖后恢复数据库原始注释", async () => {
+    const repository = new MemoryCatalogRepository();
+    const [config] = await repository.listBySourceId();
+    repository.listBySourceId = async () => [config];
+    const source: RawCatalogReader = {
+      listRawCatalog: async () => {
+        const [dataset] = await rawCatalog.listRawCatalog("clinical");
+        return [
+          {
+            ...dataset,
+            columns: dataset.columns.map((column) => ({
+              ...column,
+              source_description: "数据库科室说明",
+            })),
+          },
+        ];
+      },
+    };
+    const service = new BusinessCatalogService(source, repository, repository);
+    const overridden = (await service.listAuthorized(clinicianContext, "clinical"))[0];
+    expect(overridden.dataset.columns[0].source_description).toBe("就诊科室");
+    expect(overridden.rawColumns[1].source_description).toBe("数据库科室说明");
+    config.column_descriptions = [];
+    const inherited = (await service.listAuthorized(clinicianContext, "clinical"))[0];
+    expect(inherited.dataset.columns[0].source_description).toBe("数据库科室说明");
+  });
   it("合并业务说明并按角色过滤对象和字段", async () => {
     const service = new BusinessCatalogService(
       rawCatalog,

@@ -4,7 +4,9 @@ import { queryCapabilitiesSchema } from "./dataset";
 import { queryOperatorSchema } from "../query/query-operators";
 
 /** API 业务目录引用的对象和字段格式；存在性与授权范围在使用目录时检查。 */
-const identifier = z.string().regex(/^[A-Za-z_][A-Za-z0-9_.]*$/, "必须是安全标识符");
+const identifier = z
+  .string()
+  .regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u, "必须是安全标识符");
 
 /** Join 关系中的字段等值条件，仅接受声明字段；同一关系的多个条件使用 AND 连接。 */
 const relationColumnPairSchema = z

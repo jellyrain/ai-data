@@ -14,7 +14,7 @@ import { Download } from "lucide-vue-next";
 import { useServices } from "../../app/services";
 import { ExportController } from "./export-controller";
 import type { ExportJob, ExportSource } from "./export-types";
-const props = defineProps<{ source: ExportSource | null; disabled?: boolean }>();
+const props = defineProps<{ source: ExportSource | null; disabled?: boolean; label?: string }>();
 const services = useServices();
 const exporter = new ExportController({
   request: services.request,
@@ -78,7 +78,9 @@ watch(
 onBeforeUnmount(() => exporter.dispose());
 </script>
 <template>
-  <ElButton :disabled="!source || disabled" @click="open"><Download :size="16" />导出</ElButton>
+  <ElButton :disabled="!source || disabled" @click="open"
+    ><Download :size="16" />{{ label || "导出" }}</ElButton
+  >
   <ElDrawer v-model="opened" title="导出文件" size="min(520px, 100vw)" @closed="exporter.leave()">
     <div class="export-options">
       <ElAlert v-if="state.error" :title="state.error" type="error" :closable="false" />

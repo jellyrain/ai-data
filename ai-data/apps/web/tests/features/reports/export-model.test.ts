@@ -9,6 +9,39 @@ import {
 import { markdownDocument } from "../../../src/features/exports/markdown-document";
 import { execution, evidence } from "./fixtures";
 describe("固定授权内容转换", () => {
+  it("本表导出只包含所选证据及其条件，不混入同名工具的其他结果", () => {
+    const selected = structuredClone(evidence);
+    if (selected.authorized_query.type !== "relational_query") throw new Error("关系查询");
+    selected.authorized_query.filters = {
+      logic: "and",
+      items: [{ field: "v.count", op: "eq", value: 20, data_type: "integer" }],
+    };
+    const other = structuredClone(selected);
+    other.evidence_id = "other";
+    if (other.authorized_query.type !== "relational_query") throw new Error("关系查询");
+    other.authorized_query.filters = {
+      logic: "and",
+      items: [{ field: "v.count", op: "eq", value: 99, data_type: "integer" }],
+    };
+    const pack = {
+      kind: "conversation",
+      conversation_id: "c",
+      title: "科室分析",
+      messages: [],
+      artifacts: [],
+      runs: [{ analysis_run_id: "run", status: "completed" }],
+      tables: [selected, other].map((item) => ({ evidence: item, availability: "complete" })),
+    };
+    const source = { kind: "conversation" as const, id: "c", evidenceId: "evidence" };
+    const result = exportDocument(pack, source, "org");
+    expect(result.tables.map((table) => table.id)).toEqual(["evidence"]);
+    expect(result.blocks).toEqual([]);
+    expect(result.metadata.join(" ")).toContain('"value":20');
+    expect(result.metadata.join(" ")).not.toContain('"value":99');
+    expect(() => exportDocument(pack, { ...source, evidenceId: "missing" }, "org")).toThrow(
+      "本表来源已不可用",
+    );
+  });
   it("导出说明保留固定查询中的实际筛选值", () => {
     const record = structuredClone(execution),
       query = record.results[0]!.evidence.authorized_query;

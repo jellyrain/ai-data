@@ -22,6 +22,52 @@ function renderMarkdown(text: string, streaming = false): RenderedMarkdown {
     typographer: false,
     breaks: true,
   });
+  markdown.renderer.rules.table_open = () => '<div class="markdown-table"><table>';
+  markdown.renderer.rules.table_close = () => "</table></div>";
+  // 只为整列数值补默认对齐，作者显式指定的左右或居中优先；不保留任意 style。
+  markdown.core.ruler.after("inline", "table_alignment", (state) => {
+    let cells: {
+      token: (typeof state.tokens)[number];
+      text: string;
+      column: number;
+      header: boolean;
+    }[] = [];
+    let column = 0;
+    for (let index = 0; index < state.tokens.length; index++) {
+      const token = state.tokens[index]!;
+      if (token.type === "table_open") cells = [];
+      if (token.type === "tr_open") column = 0;
+      if (token.type === "td_open" || token.type === "th_open")
+        cells.push({
+          token,
+          column: column++,
+          text: state.tokens[index + 1]?.content ?? "",
+          header: token.type === "th_open",
+        });
+      if (token.type !== "table_close") continue;
+      const numeric = new Set(
+        cells
+          .filter((cell) => cell.header)
+          .map((cell) => cell.column)
+          .filter((position) => {
+            const values = cells
+              .filter((cell) => !cell.header && cell.column === position)
+              .map((cell) => cell.text.trim());
+            return (
+              values.length > 0 &&
+              values.every((value) => /^[+−-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$/.test(value))
+            );
+          }),
+      );
+      for (const cell of cells) {
+        const alignment = String(cell.token.attrGet("style") ?? "").match(
+          /^text-align:(left|right|center)$/,
+        )?.[1];
+        if (alignment) cell.token.attrJoin("class", `align-${alignment}`);
+        else if (numeric.has(cell.column)) cell.token.attrJoin("class", "numeric-cell");
+      }
+    }
+  });
   markdown.validateLink = (value) => /^(?:https?:|mailto:|#)/i.test(value);
   markdown.renderer.rules.image = (tokens, index) =>
     `<span class="content-image-note">[图片：${markdown.utils.escapeHtml(tokens[index]?.content || "未提供说明")}]</span>`;

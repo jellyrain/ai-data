@@ -34,6 +34,7 @@ type WorkspaceState = {
   loading: boolean;
   sending: boolean;
   creating: boolean;
+  deleting: boolean;
   answering: boolean;
   cancelling: boolean;
   pendingMessage: boolean;

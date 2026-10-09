@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-08",
+  "method": "现有 CodexSessionRouter，模拟每秒 30 个单字增量，共 90 字；onMessage 固定等待 30ms 或 250ms。修复前后使用相同输入脚本。",
+  "before": [
+    {
+      "commit_ms": 30,
+      "input_done_ms": 3003,
+      "committed_chars_at_input_done": 85,
+      "last_delta_ms": 3064,
+      "all_complete_ms": 3097,
+      "commit_count": 25
+    },
+    {
+      "commit_ms": 250,
+      "input_done_ms": 3003,
+      "committed_chars_at_input_done": 41,
+      "last_delta_ms": 6030,
+      "all_complete_ms": 6294,
+      "commit_count": 24
+    }
+  ],
+  "after": [
+    {
+      "commit_ms": 30,
+      "input_done_ms": 3004,
+      "committed_chars_at_input_done": 88,
+      "last_delta_ms": 3051,
+      "all_complete_ms": 3082,
+      "commit_count": 24
+    },
+    {
+      "commit_ms": 250,
+      "input_done_ms": 3002,
+      "committed_chars_at_input_done": 73,
+      "last_delta_ms": 3372,
+      "all_complete_ms": 3633,
+      "commit_count": 14
+    }
+  ],
+  "scope": "统计路由输入和提交时序；模拟耗时用于隔离队列行为，不等同于真实模型 token 速度或浏览器端到端延迟。"
+}

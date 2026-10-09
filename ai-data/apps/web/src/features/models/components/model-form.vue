@@ -27,7 +27,7 @@ defineProps<{ existing: boolean; disabled: boolean }>();
       <ElFormItem label="显示名称" required
         ><ElInput v-model="draft.name" maxlength="200"
       /></ElFormItem>
-      <ElFormItem label="服务地址" required
+      <ElFormItem label="服务地址" class="wide" required
         ><ElInput
           v-model="draft.base_url"
           placeholder="例如 http://localhost:8000/v1"
@@ -50,34 +50,33 @@ defineProps<{ existing: boolean; disabled: boolean }>();
         />
         <p class="management-help">留空时由运行时读取模型能力；Agent 可以覆盖此值。</p></ElFormItem
       >
-      <ElFormItem label="待发布版本"
-        ><ElInput :model-value="`v${draft.version}`" readonly
-      /></ElFormItem>
     </div>
     <section class="management-section">
       <h3>本版本认证</h3>
       <p class="muted">每个版本独立保存完整认证。下列输入仅在本次编辑中保留。</p>
-      <ElFormItem label="认证方式"
-        ><ElSelect
-          v-model="draft.authentication"
-          @change="
-            draft.authentication_confirmed = false;
-            draft.api_key = '';
-            draft.headers = [];
-          "
-          ><ElOption label="无需认证" value="none" /><ElOption
-            label="API Key"
-            value="key" /><ElOption label="自定义请求头" value="headers" /><ElOption
-            label="API Key 与请求头"
-            value="both" /></ElSelect
-      ></ElFormItem>
-      <ElFormItem v-if="['key', 'both'].includes(draft.authentication)" label="API Key" required
-        ><ElInput
-          v-model="draft.api_key"
-          type="password"
-          autocomplete="new-password"
-          maxlength="8192"
-      /></ElFormItem>
+      <div class="management-form-grid management-auth-grid">
+        <ElFormItem label="认证方式"
+          ><ElSelect
+            v-model="draft.authentication"
+            @change="
+              draft.authentication_confirmed = false;
+              draft.api_key = '';
+              draft.headers = [];
+            "
+            ><ElOption label="无需认证" value="none" /><ElOption
+              label="API Key"
+              value="key" /><ElOption label="自定义请求头" value="headers" /><ElOption
+              label="API Key 与请求头"
+              value="both" /></ElSelect
+        ></ElFormItem>
+        <ElFormItem v-if="['key', 'both'].includes(draft.authentication)" label="API Key" required
+          ><ElInput
+            v-model="draft.api_key"
+            type="password"
+            autocomplete="new-password"
+            maxlength="8192"
+        /></ElFormItem>
+      </div>
       <div v-if="['headers', 'both'].includes(draft.authentication)">
         <div v-for="(row, index) in draft.headers" :key="index" class="management-inline-row">
           <ElInput

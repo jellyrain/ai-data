@@ -23,7 +23,7 @@ function registerCatalogManagementRoutes(
     .extend({
       objectId: z
         .string()
-        .regex(/^[A-Za-z_][A-Za-z0-9_.]*$/)
+        .regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u)
         .max(256),
     })
     .strict();

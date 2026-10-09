@@ -97,6 +97,8 @@ class ExposedObjectRepository {
       sql: `
         SET XACT_ABORT ON;
         BEGIN TRANSACTION;
+        IF NOT EXISTS (SELECT 1 FROM dbo.data_source_configs WITH (UPDLOCK,HOLDLOCK) WHERE source_id=@source_id)
+          THROW 50001, 'Data source unavailable', 1;
         DELETE FROM dbo.exposed_source_objects
         WHERE source_id = @source_id;
 

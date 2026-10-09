@@ -3,7 +3,11 @@ import { dateSchema, dateTimeSchema } from "../shared/data-values";
 import { relationalQuerySchema } from "../query/query-dsl";
 
 const id = z.string().min(1).max(128);
-const field = z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*$/);
+const field = z
+  .string()
+  .regex(
+    /^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_$]*\.[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_$]*$/u,
+  );
 /** 指标值由受控聚合列或分子分母形成，零分母返回 null。 */
 const metricValueSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("column"), column: id }).strict(),

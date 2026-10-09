@@ -16,17 +16,27 @@ import type { AnalysisRunService } from "../analysis-runs/analysis-run-service";
 import { ApplicationError } from "../errors/application-error";
 import { parseAnalysisQuery } from "../analysis-runs/analysis-query";
 import type { MetricDependencies, MetricRepository } from "./metric-types";
+import { metricTimeFormats } from "./metric-query-requirements";
 
 /** 将固定时间依据和已发布维度写入 DSL，总计独立查询完整范围。 */
 function buildMetricQueries(metric: MetricDefinition, input: MetricExecutionInput) {
-  const length = metric.date_basis.data_type === "date" ? 10 : 19;
-  if (
-    input.start.length !== length ||
-    input.end.length !== length ||
-    new Set(input.dimensions).size !== input.dimensions.length ||
-    input.dimensions.some((field) => !metric.dimensions.includes(field))
-  )
-    throw new ApplicationError("INVALID_INPUT", "指标时间类型或统计维度不符合定义");
+  const format = metricTimeFormats[metric.date_basis.data_type];
+  for (const field of ["start", "end"] as const)
+    if (input[field].length !== format.length)
+      throw new ApplicationError(
+        "INVALID_INPUT",
+        `${field} 必须匹配指标的 ${metric.date_basis.data_type} 格式 ${format}（UTC+8）。请按用户要求的时间范围填写，调用要求见 describe_metric.query_requirements。`,
+      );
+  if (new Set(input.dimensions).size !== input.dimensions.length)
+    throw new ApplicationError(
+      "INVALID_INPUT",
+      "dimensions 存在重复字段，请将每个已发布维度只传一次",
+    );
+  if (input.dimensions.some((field) => !metric.dimensions.includes(field)))
+    throw new ApplicationError(
+      "INVALID_INPUT",
+      `dimensions 只能包含已发布维度：${metric.dimensions.join("、") || "无可用维度，请传 []"}。[] 表示全量汇总。`,
+    );
   const filters = {
     logic: "and" as const,
     items: [

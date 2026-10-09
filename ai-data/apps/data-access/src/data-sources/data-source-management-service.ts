@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   dataSourceManagementConfigSchema,
+  deleteDataSourceSchema,
   databaseTargetDiscoveryRequestSchema,
   sharedDatabaseCredentialsSchema,
   sourceObjectDiscoveryRequestSchema,
@@ -26,6 +27,7 @@ import type { ResolvedDataSourceSecret } from "../secrets/secret-resolver";
 import type { DasConfig } from "../config/das-config";
 import { resolveSqlServerTransport } from "../connectors/sqlserver-transport";
 import { ManagementConflict } from "./management-conflict";
+import { DatabaseConnectionService, DatabaseConnectionError } from "./database-connection-service";
 
 /** 共享密文的写入能力。 */
 interface DataSourceSecretWriter {
@@ -61,9 +63,10 @@ interface ManagedDataSourceRuntime {
 
 /** 为 API 管理接口提供凭据、目标库、对象发现与白名单保存能力。 */
 class DataSourceManagementService {
+  readonly connections: DatabaseConnectionService;
   constructor(
     private readonly secretWriter: DataSourceSecretWriter,
-    private readonly configWriter: DataSourceConfigWriter,
+    _configWriter: DataSourceConfigWriter,
     private readonly exposedObjectWriter: ExposedObjectWriter,
     private readonly secretResolver: DataSourceSecretResolver,
     private readonly activeKeyProvider: ActiveMasterKeyProvider,
@@ -72,10 +75,27 @@ class DataSourceManagementService {
     private readonly runtime: ManagedDataSourceRuntime,
     private readonly administration: Pick<
       SqlDataSourceAdministration,
-      "sources" | "source" | "objects" | "secrets" | "saveSource" | "saveObjects"
+      | "sources"
+      | "source"
+      | "objects"
+      | "secrets"
+      | "saveSource"
+      | "saveObjects"
+      | "deleteConnection"
+      | "deleteSource"
+      | "saveConnectedSource"
     >,
     private readonly sqlServerTransports: NonNullable<DasConfig["sqlserver_transports"]> = {},
-  ) {}
+  ) {
+    this.connections = new DatabaseConnectionService({
+      repository: secretWriter,
+      administration,
+      keys: activeKeyProvider,
+      cipher,
+      discovery: targetDiscovery,
+      runtime,
+    });
+  }
 
   /** 管理回读直接访问公开配置，不创建业务连接。 */
   async listDataSources() {
@@ -99,6 +119,11 @@ class DataSourceManagementService {
     for (let attempt = 0; attempt < 3; attempt++) {
       const previous = await this.secretWriter.findBySecretRef(credentials.secret_ref);
       const existing = previous ? await this.decodeSecret(previous) : undefined;
+      if (existing && existing.connectorKind !== credentials.connector_kind)
+        throw new DatabaseConnectionError(
+          "INVALID_INPUT",
+          "数据库连接类型创建后保持固定，请新建连接",
+        );
       const transport =
         credentials.connector_kind === "sqlserver"
           ? (credentials.sqlserver_transport ??
@@ -227,6 +252,9 @@ class DataSourceManagementService {
   /** 保存一个 source_id 到其唯一的目标数据库或 Oracle 服务名绑定。 */
   async saveDataSource(input: unknown): Promise<{ source_id: string }> {
     const value = dataSourceManagementConfigSchema.parse(input);
+    const connection = await this.connections.get(value.secret_ref);
+    if (connection.connector_kind !== value.connector_kind)
+      throw new DatabaseConnectionError("INVALID_INPUT", "数据源类型必须与数据库连接一致");
     const config: DataSourceConfig = {
       sourceId: value.source_id,
       connectorKind: value.connector_kind,
@@ -244,13 +272,27 @@ class DataSourceManagementService {
       rowLimit: value.row_limit,
       costLimit: value.cost_limit ?? 1,
     };
-    if (value.expected_revision === undefined)
-      await this.configWriter.upsert(config, value.is_enabled);
-    else await this.administration.saveSource(config, value.is_enabled, value.expected_revision);
+    await this.administration.saveConnectedSource(
+      config,
+      value.is_enabled,
+      connection.revision,
+      value.expected_revision,
+    );
     await this.runtime.invalidate(config.sourceId);
     return { source_id: config.sourceId };
   }
 
+  /** 删除在元数据库事务提交后释放旧运行连接，业务数据库不参与写入。 */
+  async deleteDataSource(input: unknown): Promise<{ source_id: string }> {
+    const value = deleteDataSourceSchema.parse(input);
+    await this.administration.deleteSource(
+      value.source_id,
+      value.expected_revision,
+      value.expected_objects_revision,
+    );
+    await this.runtime.invalidate(value.source_id);
+    return { source_id: value.source_id };
+  }
   /** 读取一个已保存数据源的完整对象目录，供管理员展开和勾选。 */
   async discoverSourceObjects(input: unknown): Promise<{ items: ManageableSourceObject[] }> {
     const request = sourceObjectDiscoveryRequestSchema.parse(input);

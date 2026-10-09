@@ -3,6 +3,7 @@ import type { MetadataQueryExecutor, MetadataTransactionalExecutor } from "@ai-d
 import { createHash, randomUUID } from "node:crypto";
 import { submitMessageSchema } from "@ai-data/contracts";
 import { ApplicationError } from "../errors/application-error";
+import { workbenchConversationScope } from "./workbench-conversation-scope";
 import { insertAnalysisRun, readAnalysisRun } from "../analysis-runs/analysis-run-records";
 import type { AnalysisRun } from "../analysis-runs/analysis-run-record-types";
 
@@ -148,7 +149,7 @@ class SqlConversationRepository implements ConversationRepository {
     organizationId: string,
   ): Promise<Conversation | null> {
     const result = await this.database.execute<ConversationRow>({
-      sql: "SELECT id, organization_id, user_id, title, status, created_at, updated_at, agent_id, agent_version FROM dbo.conversations WHERE id = @id AND user_id = @user_id AND organization_id = @organization_id",
+      sql: "SELECT id, organization_id, user_id, title, status, created_at, updated_at, agent_id, agent_version FROM dbo.conversations WHERE id = @id AND user_id = @user_id AND organization_id = @organization_id AND status <> 'deleted'",
       parameters: [
         { name: "id", type: "string", value: conversationId },
         { name: "user_id", type: "string", value: userId },
@@ -161,13 +162,49 @@ class SqlConversationRepository implements ConversationRepository {
   /** 按用户与组织过滤会话，并按最后更新时间倒序返回。 */
   async listConversations(userId: string, organizationId: string): Promise<Conversation[]> {
     const result = await this.database.execute<ConversationRow>({
-      sql: "SELECT id, organization_id, user_id, title, status, created_at, updated_at, agent_id, agent_version FROM dbo.conversations WHERE user_id = @user_id AND organization_id = @organization_id ORDER BY updated_at DESC",
+      sql: `SELECT c.id, c.organization_id, c.user_id, c.title, c.status, c.created_at, c.updated_at, c.agent_id, c.agent_version FROM dbo.conversations c WHERE c.user_id = @user_id AND c.organization_id = @organization_id AND c.status <> 'deleted' AND ${workbenchConversationScope} ORDER BY c.updated_at DESC`,
       parameters: [
         { name: "user_id", type: "string", value: userId },
         { name: "organization_id", type: "string", value: organizationId },
       ],
     });
     return result.rows.map((row) => this.mapConversation(row));
+  }
+
+  /** 顺序锁住整批会话后检查归属及运行状态，任何冲突均回滚整批。 */
+  async deleteConversations(ids: string[], userId: string, organizationId: string): Promise<void> {
+    await this.database.transaction(async (executor) => {
+      const owned: string[] = [];
+      for (const id of [...new Set(ids)].sort()) {
+        const parameters = [
+          { name: "id", type: "string" as const, value: id },
+          { name: "user", type: "string" as const, value: userId },
+          { name: "org", type: "string" as const, value: organizationId },
+        ];
+        const found = await executor.execute({
+          sql: `SELECT c.id,c.status FROM dbo.conversations c WITH (UPDLOCK,HOLDLOCK) WHERE c.id=@id AND c.user_id=@user AND c.organization_id=@org AND ${workbenchConversationScope}`,
+          parameters,
+        });
+        if (!found.rows[0]) throw new ApplicationError("NOT_FOUND", "会话不存在或不属于当前工作台");
+        if (found.rows[0].status === "deleted") continue;
+        const active = await executor.execute({
+          sql: "SELECT TOP (1) id FROM dbo.analysis_runs WHERE conversation_id=@id AND status IN ('created','running','waiting_clarification','cancelling')",
+          parameters: [parameters[0]!],
+        });
+        if (active.rows[0])
+          throw new ApplicationError("CONFLICT", "所选会话仍有分析任务，请先停止后再删除");
+        owned.push(id);
+      }
+      for (const id of owned)
+        await executor.execute({
+          sql: "UPDATE dbo.conversations SET status='deleted',updated_at=SYSUTCDATETIME() WHERE id=@id AND user_id=@user AND organization_id=@org",
+          parameters: [
+            { name: "id", type: "string", value: id },
+            { name: "user", type: "string", value: userId },
+            { name: "org", type: "string", value: organizationId },
+          ],
+        });
+    });
   }
 
   /** 保存调用方提供的序号；数据库唯一约束防止同一会话出现重复序号。 */

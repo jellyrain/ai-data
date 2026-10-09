@@ -1,0 +1,44 @@
+{
+  "viewport": "1920×1080",
+  "source": "真实 HTTP 路由与生产 Web，数据为隔离验收夹具",
+  "stages": [
+    {
+      "stage": "03-文字生成中",
+      "elapsed_ms": 1296
+    },
+    {
+      "stage": "04-工具执行中",
+      "elapsed_ms": 2734
+    },
+    {
+      "stage": "05-工具后的说明",
+      "elapsed_ms": 5457
+    },
+    {
+      "stage": "最终正文首次到达",
+      "elapsed_ms": 9137,
+      "text": "门诊分析结论\n\n本次查询已交付 5,000 条记录。请结合查询范围阅读结果，科室变\n\n正在输出…"
+    },
+    {
+      "stage": "06-最终正文持续输出",
+      "elapsed_ms": 9664
+    },
+    {
+      "stage": "07-最终完成",
+      "elapsed_ms": 13587
+    },
+    {
+      "stage": "08-展开分析过程",
+      "elapsed_ms": 14069
+    }
+  ],
+  "order": [
+    "1:message:before",
+    "1:tool:catalog",
+    "1:message:after",
+    "1:tool:query-1",
+    "1:message:result",
+    "1:message:answer"
+  ],
+  "errors": []
+}

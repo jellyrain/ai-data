@@ -1,3 +1,4 @@
+import { connectionManagementFixture } from "../support/connection-management-fixture";
 import { describe, expect, it, vi } from "vitest";
 import { createApp } from "../../src/app";
 import { parseDasConfig } from "../../src/config/das-config";
@@ -58,6 +59,7 @@ describe("DAS 内部入口认证", () => {
             },
           },
           {
+            connections: connectionManagementFixture(),
             listDataSources: async () => ({ items: [] }),
             getDataSource: async () => ({ config: null, revision: "a".repeat(64) }),
             getSourceObjects: async () => ({ items: [], revision: "a".repeat(64) }),
@@ -77,6 +79,10 @@ describe("DAS 内部入口认证", () => {
               return { databases: [] };
             },
             saveDataSource: async () => {
+              called();
+              return { source_id: "test" };
+            },
+            deleteDataSource: async () => {
               called();
               return { source_id: "test" };
             },

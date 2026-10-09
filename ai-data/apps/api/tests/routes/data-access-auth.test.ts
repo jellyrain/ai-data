@@ -34,6 +34,7 @@ async function setup() {
       ...dependencies.dataAccess,
       registry,
       managementClient: {
+        connection: vi.fn(async () => ({ items: [] })),
         sqlServerTransport: vi.fn(async () => {
           throw new Error("未配置连接参数测试");
         }),
@@ -197,6 +198,12 @@ describe("API 的 DAS 入口认证", () => {
     "管理代理 %s 先校验用户权限，再调用已注册实例",
     async (operation, endpoint) => {
       const { app, dependencies, registry, execute } = await setup();
+      const handler =
+        operation === "data-sources" || operation === "data-sources/delete"
+          ? dependencies.dataAccess.sourceLifecycle.execute.mockResolvedValue({
+              source_id: "source",
+            })
+          : execute;
       try {
         await registry.register(
           heartbeat as Parameters<typeof registry.register>[0],
@@ -211,14 +218,14 @@ describe("API 的 DAS 入口认证", () => {
           payload: { source_id: "source" },
         };
         expect((await app.inject(request)).statusCode).toBe(403);
-        expect(execute).not.toHaveBeenCalled();
+        expect(handler).not.toHaveBeenCalled();
         dependencies.auth.loadContext.mockResolvedValue({
           ...context,
           roles: [],
           permissions: ["data-access:manage"],
         });
         expect((await app.inject(request)).statusCode).toBe(200);
-        expect(execute).toHaveBeenCalledWith(
+        expect(handler).toHaveBeenCalledWith(
           "das-test",
           "http://127.0.0.1:3102",
           operation,

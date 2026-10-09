@@ -89,8 +89,8 @@ onBeforeUnmount(() => {
       <ElButton :loading="scope.state.busy" @click="load">刷新任务</ElButton>
     </header>
     <ManagementFeedback v-bind="scope.state" />
-    <div class="management-toolbar">
-      <ElSelect v-model="filter" aria-label="任务状态"
+    <div class="management-browse-toolbar">
+      <ElSelect v-model="filter" aria-label="任务状态" placeholder="全部状态"
         ><ElOption label="全部状态" value="" /><ElOption
           v-for="(label, value) in labels"
           :key="value"
@@ -133,7 +133,17 @@ onBeforeUnmount(() => {
                 >错误码：{{ item.last_error_code }}</small
               >
             </td>
-            <td>{{ labels[item.status] }}</td>
+            <td>
+              <span
+                class="management-badge"
+                :class="{
+                  'is-active': item.status === 'done',
+                  'is-pending': item.status === 'pending' || item.status === 'processing',
+                  'is-failed': item.status === 'failed',
+                }"
+                >{{ labels[item.status] }}</span
+              >
+            </td>
             <td>{{ item.attempts }}</td>
             <td>{{ item.updated_at }}</td>
             <td>

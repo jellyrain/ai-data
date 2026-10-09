@@ -8,6 +8,7 @@ import {
   type UserPreferenceInput,
   type PreferenceConfirmation,
 } from "@ai-data/contracts";
+import { createUuid } from "../../../shared/identity/create-uuid";
 import { PreferenceApi } from "../api/preference-api";
 import PreferenceForm from "./preference-form.vue";
 import ResourceList from "../../../shared/management/resource-list.vue";
@@ -124,7 +125,7 @@ async function save() {
       boundKey.value = parsed.key;
     }
     const content = stableStringify({ ...parsed, expected_version: expected.value });
-    if (attempt.content !== content) attempt = { content, id: crypto.randomUUID() };
+    if (attempt.content !== content) attempt = { content, id: createUuid() };
     try {
       const result = await api.save({
         ...parsed,
@@ -178,7 +179,7 @@ async function remove() {
     return;
   await scope.run(async (request) => {
     const api = new PreferenceApi(request),
-      key = crypto.randomUUID();
+      key = createUuid();
     try {
       await api.remove(record.key, record.version, key);
     } catch (error) {

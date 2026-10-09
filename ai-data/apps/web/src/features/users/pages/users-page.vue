@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { ElButton, ElSelect, ElOption } from "element-plus";
+import { ElButton, ElSelect, ElOption, ElInput } from "element-plus";
 import {
   stableStringify,
   type ManagedUser,
@@ -10,7 +10,7 @@ import {
 } from "@ai-data/contracts";
 import { UserApi } from "../api/user-api";
 import UserCreateForm from "../components/user-create-form.vue";
-import ResourceList from "../../../shared/management/resource-list.vue";
+import { Search, X } from "lucide-vue-next";
 import ManagementFeedback from "../../../shared/management/management-feedback.vue";
 import {
   useManagementPage,
@@ -60,14 +60,29 @@ const { scope, discard } = useManagementPage(
   },
   () => dirty.value || uncertain.value,
 );
-const rows = computed(() =>
-  items.value.map((item) => ({
-    id: item.id,
-    title: item.display_name,
-    status: item.status === "active" ? "正常" : item.status === "disabled" ? "停用" : "待激活",
-    description: item.username,
-  })),
+const search = ref(""),
+  status = ref("all");
+const visible = computed(() =>
+  items.value.filter(
+    (item) =>
+      (status.value === "all" || item.status === status.value) &&
+      (item.display_name + " " + item.username)
+        .toLocaleLowerCase()
+        .includes(search.value.trim().toLocaleLowerCase()),
+  ),
 );
+const statusLabel = (value: string) =>
+  value === "active" ? "正常" : value === "disabled" ? "停用" : "待激活";
+async function closeDetails() {
+  if (!(await discard())) return;
+  selected.value = null;
+  authorization.value = null;
+  creating.value = false;
+  draft.value = empty();
+  departments.value = [];
+  conflict.value = null;
+  uncertain.value = false;
+}
 function list() {
   return scope.run(async (request) => {
     const api = new UserApi(request);
@@ -231,16 +246,93 @@ onMounted(list);
       </div>
     </header>
     <ManagementFeedback v-bind="scope.state" />
-    <div class="management-grid">
-      <ResourceList
-        :items="rows"
-        :selected="selected?.id"
-        :disabled="scope.state.busy"
-        @select="open"
-      />
-      <main class="management-detail">
-        <template v-if="creating"
-          ><h2>创建本地账号</h2>
+
+    <div class="management-browse-toolbar">
+      <ElInput v-model="search" clearable aria-label="搜索用户" placeholder="搜索姓名或账号"
+        ><template #prefix><Search :size="16" /></template
+      ></ElInput>
+      <ElSelect v-model="status" aria-label="账号状态"
+        ><ElOption label="全部状态" value="all" /><ElOption label="正常" value="active" /><ElOption
+          label="停用"
+          value="disabled" /><ElOption label="待激活" value="pending"
+      /></ElSelect>
+      <span class="muted">当前 {{ visible.length }} 位用户</span>
+    </div>
+    <div class="management-user-layout">
+      <div class="management-table-wrap">
+        <table class="management-table" aria-label="用户账号">
+          <thead>
+            <tr>
+              <th>姓名</th>
+              <th class="account-id">账号</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="item in visible"
+              :key="item.id"
+              :class="{ 'is-selected': selected?.id === item.id }"
+            >
+              <td>
+                <button
+                  class="management-account"
+                  :disabled="scope.state.busy"
+                  @click="open(item.id)"
+                >
+                  <span class="management-avatar" aria-hidden="true">{{
+                    item.display_name.slice(0, 1)
+                  }}</span
+                  ><strong>{{ item.display_name }}</strong>
+                </button>
+              </td>
+              <td class="account-id">{{ item.username }}</td>
+              <td>
+                <span class="management-badge" :class="{ 'is-active': item.status === 'active' }">{{
+                  statusLabel(item.status)
+                }}</span>
+              </td>
+              <td>
+                <ElButton
+                  text
+                  :disabled="scope.state.busy"
+                  :aria-label="'查看 ' + item.display_name"
+                  @click="open(item.id)"
+                  >查看</ElButton
+                >
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-if="!visible.length" class="management-empty">
+          {{ scope.state.busy ? "正在读取用户…" : "没有匹配的用户" }}
+        </p>
+      </div>
+      <aside
+        v-if="selected || creating"
+        class="management-panel management-user-detail"
+        role="region"
+        aria-label="用户详情"
+      >
+        <div class="management-panel-heading">
+          <span v-if="selected" class="management-avatar is-large">{{
+            selected.display_name.slice(0, 1)
+          }}</span>
+          <div>
+            <h2>{{ creating ? "创建用户" : selected?.display_name }}</h2>
+            <p v-if="selected" class="management-help">{{ selected.username }}</p>
+          </div>
+          <ElButton
+            text
+            class="management-close"
+            :disabled="scope.state.busy"
+            aria-label="关闭用户详情"
+            @click="closeDetails"
+            ><X :size="18"
+          /></ElButton>
+        </div>
+        <template v-if="creating">
           <UserCreateForm
             v-model="draft"
             :options="options"
@@ -256,8 +348,7 @@ onMounted(list);
             >
           </footer></template
         >
-        <template v-else-if="selected && authorization"
-          ><h2>{{ selected.display_name }}</h2>
+        <template v-else-if="selected && authorization">
           <dl class="management-definition">
             <dt>登录名</dt>
             <dd>{{ selected.username }}</dd>
@@ -338,13 +429,20 @@ onMounted(list);
               :disabled="!!conflict || !dirty"
               @click="saveDepartments"
               >保存部门范围</ElButton
-            ><ElButton :disabled="scope.state.busy || dirty" @click="toggle">{{
-              selected.status === "active" ? "停用账号" : "启用账号"
-            }}</ElButton>
-          </footer></template
+            >
+          </footer>
+          <div class="management-danger-zone">
+            <ElButton
+              text
+              :type="selected.status === 'active' ? 'danger' : 'primary'"
+              :disabled="scope.state.busy || dirty"
+              @click="toggle"
+              >{{ selected.status === "active" ? "停用账号" : "启用账号" }}</ElButton
+            >
+          </div></template
         >
         <div v-else class="management-empty">选择用户查看授权资料，或创建新账号。</div>
-      </main>
+      </aside>
     </div>
   </section>
 </template>

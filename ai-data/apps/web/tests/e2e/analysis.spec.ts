@@ -75,8 +75,9 @@ test("提问、澄清、完整结果、流程图、历史恢复与追问", async
   await expect(page.getByText("分析完成", { exact: true })).toBeVisible();
   await page.locator(".diagram-output").scrollIntoViewIfNeeded();
   await expect(page.locator(".diagram-output svg")).toHaveCount(1);
-  await page.getByRole("button", { name: "读取完整已保存结果" }).click();
+  await page.locator(".query-results-toggle").click();
   await expect(page.getByText("已显示 5,000 行", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "查看分析依据", exact: true }).click();
   await expect(
     page.locator(".evidence-panel").getByText("clinical", { exact: true }),
   ).toBeVisible();
@@ -154,7 +155,7 @@ test("事件认证刷新与断流按游标恢复，权限收窄清除结果", as
       }),
     }),
   );
-  await page.getByRole("button", { name: "读取结果以保存报表 / 查看依据", exact: true }).click();
+  await page.getByRole("button", { name: "查看分析依据", exact: true }).click();
   await expect(page.getByRole("heading", { name: "门诊分析结论" })).toHaveCount(0);
   await expect(page.getByRole("alert")).toContainText("数据权限已变更");
   await expect(page.getByRole("button", { name: "发送问题" })).toBeDisabled();
@@ -211,12 +212,14 @@ test("Agent 空列表和新建回执丢失有明确恢复入口", async ({ page 
 });
 
 test("四套明暗配色覆盖内容、代码、图表与 1024px 布局", async ({ page }) => {
+  test.setTimeout(90000);
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await login(page);
   await page.getByRole("textbox", { name: "分析问题" }).fill("主题验收的门诊分析");
   await page.getByRole("button", { name: "发送问题" }).click();
   await expect(page.getByText("分析完成", { exact: true })).toBeVisible();
+  await page.locator(".query-results-toggle").click();
   await page.getByRole("combobox", { name: "结果展示方式" }).focus();
   await page.getByRole("combobox", { name: "结果展示方式" }).press("Enter");
   await page.getByRole("option", { name: "柱状图", exact: true }).click();
@@ -313,6 +316,7 @@ test("空结果、截断范围与运行失败按服务端内容展示", async ({
     await page.goto("/analysis");
     await page.getByRole("textbox", { name: "分析问题" }).fill(question!);
     await page.getByRole("button", { name: "发送问题" }).click();
+    if (question !== "失败分析") await page.locator(".query-results-toggle").click();
     await expect(page.getByText(notice!, { exact: true })).toBeVisible();
   }
   await expect(page.getByRole("button", { name: "停止分析" })).toHaveCount(0);

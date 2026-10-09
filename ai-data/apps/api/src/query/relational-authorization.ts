@@ -31,7 +31,10 @@ function authorizeRelationalQuery(
     const field = assertField(item.field);
     const relation = relations.get(field.alias)!;
     const resultName = item.as ?? item.field.replaceAll(".", "_");
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(resultName) || outputNames.has(resultName))
+    if (
+      !/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_$]*$/u.test(resultName) ||
+      outputNames.has(resultName)
+    )
       throw new QueryAuthorizationError("结果字段别名必须为唯一的单段安全名称", "INVALID_INPUT");
     outputNames.set(resultName, item);
     if (isGrouped && !item.aggregation && !groupFields.has(item.field))

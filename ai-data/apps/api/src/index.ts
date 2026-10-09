@@ -22,6 +22,8 @@ import { QueryAuthorizationService } from "./query/query-authorization-service";
 import { DataAccessQueryClient } from "./data-access/data-access-query-client";
 import { DataAccessSessionService } from "./data-access/data-access-session-service";
 import { DataAccessManagementClient } from "./data-access/data-access-management-client";
+import { DataSourceLifecycle } from "./data-access/data-source-lifecycle";
+import { SqlDataSourceLifecycle } from "./data-access/sql-data-source-lifecycle";
 import { AnalysisRunService } from "./analysis-runs/analysis-run-service";
 import { SqlAnalysisRunRepository } from "./analysis-runs/sql-analysis-run-repository";
 import { createReportServices } from "./reports/create-report-services";
@@ -60,6 +62,7 @@ async function start(): Promise<void> {
       config.trusted_data_access_services ?? [],
     );
     const dataAccessCatalogClient = new HttpDataAccessCatalogClient(jwt);
+    const managementClient = new DataAccessManagementClient(jwt);
     const catalogRepository = new SqlCatalogRepository(metadataDatabase);
     const rawCatalog = new RegisteredDataAccessCatalog(dataAccessRegistry, dataAccessCatalogClient);
     const businessCatalog = new BusinessCatalogService(
@@ -227,7 +230,12 @@ async function start(): Promise<void> {
       dataAccess: {
         registry: dataAccessRegistry,
         catalogClient: dataAccessCatalogClient,
-        managementClient: new DataAccessManagementClient(jwt),
+        managementClient,
+        sourceLifecycle: new DataSourceLifecycle({
+          client: managementClient,
+          registry: dataAccessRegistry,
+          store: new SqlDataSourceLifecycle(metadataDatabase),
+        }),
       },
       catalog: {
         relations: new CatalogRelationService({

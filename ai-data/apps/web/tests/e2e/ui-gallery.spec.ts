@@ -130,7 +130,7 @@ test("全站视觉验收：模型、Agent、用户、权限与数据管理", asy
   await page.getByRole("button", { name: /住院分析助手 clinical/ }).click();
   await shot(page, "21-Agent管理");
   await page.goto("/settings/users");
-  await page.locator(".management-resource").first().click();
+  await page.getByRole("button", { name: "住院业务员", exact: true }).click();
   await shot(page, "22-用户管理");
   await page.goto("/settings/permissions");
   await choose(page, "策略数据源", "clinical");
@@ -166,6 +166,7 @@ test("全站视觉验收：知识、偏好、审核和后台任务", async ({ pa
     .fill("按出院日期统计，费用按有效记账记录汇总。\n科室以出院科室为准，退费计入发生当期。");
   await page.getByRole("button", { name: "保存候选", exact: true }).click();
   await expect(page.getByText("候选已保存", { exact: false })).toBeVisible();
+  await page.getByRole("button", { name: "负责人和审核", exact: true }).click();
   await page.getByRole("button", { name: "搜索负责人", exact: true }).click();
   await choose(page, "负责人", "测试管理员 · admin");
   await page.getByRole("button", { name: "分配负责人", exact: true }).click();
@@ -175,6 +176,7 @@ test("全站视觉验收：知识、偏好、审核和后台任务", async ({ pa
   await page.getByLabel("知识生效时间", { exact: true }).fill("2026-10-03 09:00:00");
   await page.getByRole("button", { name: "发布知识", exact: true }).click();
   await page.getByRole("button", { name: "确认", exact: true }).click();
+  await page.getByRole("button", { name: "来源与记录", exact: true }).click();
   await expect(page.getByRole("heading", { name: "审核记录" })).toBeVisible();
   await page.goto("/knowledge");
   await page.locator(".management-resource").first().click();

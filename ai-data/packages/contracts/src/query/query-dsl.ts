@@ -10,7 +10,7 @@ import type { PreAggregate } from "./pre-aggregate-types";
  * DSL 中的对象名、字段名和别名，允许使用点号限定引用。
  * 这一层检查字符形式；对象和字段是否可用，由后续目录与授权校验确定。
  */
-const identifier = z.string().regex(/^[A-Za-z_][A-Za-z0-9_.]*$/);
+const identifier = z.string().regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u);
 
 /** 查询 DSL 的单条过滤条件，仅接受合同定义的字段。 */
 const filterConditionSchema = z

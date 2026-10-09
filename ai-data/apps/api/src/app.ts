@@ -55,6 +55,7 @@ function validateDependencies(dependencies: ApiDependencies): void {
     "dataAccess.registry": dependencies.dataAccess?.registry,
     "dataAccess.catalogClient": dependencies.dataAccess?.catalogClient,
     "dataAccess.managementClient": dependencies.dataAccess?.managementClient,
+    "dataAccess.sourceLifecycle": dependencies.dataAccess?.sourceLifecycle,
     "catalog.service": dependencies.catalog?.service,
     "catalog.permissions": dependencies.catalog?.permissions,
     "catalog.admin": dependencies.catalog?.admin,

@@ -1,6 +1,7 @@
 import { shallowReactive } from "vue";
 import { analysisRunSchema, clarificationAnswerSchema } from "@ai-data/contracts";
 import type { AnalysisRunState, SseEvent } from "@ai-data/contracts";
+import { createUuid } from "../../../shared/identity/create-uuid";
 import { ApiError } from "../../../shared/http/api-error";
 import { subscribeRun, isTerminal } from "../../../shared/stream/run-stream";
 import { narrativeListSchema, narrativeReceiptSchema } from "../api/report-schema";
@@ -101,7 +102,7 @@ class ReportNarratives {
       return;
     const generation = this.generation;
     if (this.pending?.prompt !== prompt.trim())
-      this.pending = { prompt: prompt.trim(), key: crypto.randomUUID() };
+      this.pending = { prompt: prompt.trim(), key: createUuid() };
     this.state.sending = true;
     this.state.error = "";
     try {
@@ -232,8 +233,7 @@ class ReportNarratives {
     const question = this.state.run?.clarification;
     if (!question || this.state.answering || !this.state.receipt) return;
     const signature = JSON.stringify([question.clarification_id, value]);
-    if (this.answerKey?.signature !== signature)
-      this.answerKey = { signature, key: crypto.randomUUID() };
+    if (this.answerKey?.signature !== signature) this.answerKey = { signature, key: createUuid() };
     await this.action(
       "answers",
       clarificationAnswerSchema.parse({

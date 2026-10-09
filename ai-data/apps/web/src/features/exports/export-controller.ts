@@ -1,5 +1,6 @@
 import { shallowReactive } from "vue";
 import dayjs from "dayjs";
+import { sha256Hex } from "../../shared/crypto/sha256";
 import { ApiError } from "../../shared/http/api-error";
 import {
   checkExportBudget,
@@ -17,13 +18,6 @@ const mime = {
 };
 function initial(): ExportState {
   return { source: null, document: null, busy: false, ready: false, stage: "", error: "" };
-}
-async function digest(value: unknown): Promise<string> {
-  const hash = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(JSON.stringify(value)),
-  );
-  return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 /** 生成、下载各自复核当前身份与固定内容；取消会同时终止生成 Worker。 */
 class ExportController {
@@ -82,7 +76,7 @@ class ExportController {
       throw new ApiError("账号已变化，请重新打开导出", 401);
     return {
       document: exportDocument(pack, source, identity.organizationId),
-      hash: await digest(pack),
+      hash: await sha256Hex(JSON.stringify(pack)),
     };
   }
   async open(source: ExportSource) {

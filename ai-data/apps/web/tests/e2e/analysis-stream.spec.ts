@@ -1,13 +1,14 @@
 import { expect, test } from "@playwright/test";
 import { mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
-const directory = fileURLToPath(
-  new URL("../../../../../任务交接/页面03-05流式验收/", import.meta.url),
-);
+const directory = process.env.ANALYSIS_STREAM_ACCEPTANCE_DIRECTORY
+  ? resolve(process.env.ANALYSIS_STREAM_ACCEPTANCE_DIRECTORY)
+  : fileURLToPath(new URL("../../../../../任务交接/页面03-05流式验收/", import.meta.url));
 test.use({
   viewport: { width: 1920, height: 1080 },
-  video: { mode: "on", size: { width: 1920, height: 1080 } },
+  video: "off",
 });
 test("真实 HTTP 持续交付文字、工具与后续说明，刷新恢复完整顺序", async ({ page }) => {
   await mkdir(directory, { recursive: true });
@@ -31,9 +32,9 @@ test("真实 HTTP 持续交付文字、工具与后续说明，刷新恢复完�
   await shot("03-文字生成中");
   await expect(first).toContainText("门诊数据和科室范围。");
   const tool = page.locator('.tool-record[data-tool-key$=":catalog"]');
-  await expect(tool).toContainText("执行中");
+  await expect(tool).toContainText("正在读取业务结构");
   await shot("04-工具执行中");
-  await expect(tool).toContainText("已完成");
+  await expect(tool).toContainText("已读取业务结构");
   await expect(page.locator('.assistant-message[data-message-key$=":after"]')).toContainText(
     "本年各科室的门诊记录。",
   );
@@ -63,7 +64,7 @@ test("真实 HTTP 持续交付文字、工具与后续说明，刷新恢复完�
   await expect(tool).toBeHidden();
   await expect(page.locator(".progress-summary:visible")).toHaveCount(0);
   await expect(answer).toBeVisible();
-  await expect(page.getByRole("region", { name: "查询结果", exact: true }).first()).toBeVisible();
+  await expect(page.locator(".query-results-toggle")).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator(".diagram-output svg")).toHaveCount(1);
   await shot("07-最终完成");
   await process.click();

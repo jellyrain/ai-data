@@ -1,3 +1,4 @@
+import { connectionManagementFixture } from "../support/connection-management-fixture";
 import { describe, expect, it } from "vitest";
 
 import { createApp } from "../../src/app";
@@ -6,6 +7,7 @@ import type { DasConfig } from "../../src/config/das-config";
 import type { MetadataDatabaseHealthChecker } from "@ai-data/metadata";
 import type { DataSourceManagementApi } from "../../src/routes/data-source-management-route";
 import { createServiceToken, createServiceVerifier } from "../support/service-auth-fixtures";
+import { ManagementConflict } from "../../src/data-sources/management-conflict";
 
 const config: DasConfig = {
   service: {
@@ -38,6 +40,181 @@ const config: DasConfig = {
 
 // 管理服务由替身提供，用例检查路由转发、响应结构及失败消息转换。
 describe("DAS 数据源管理接口", () => {
+  it("删除必须签名且参数完整，冲突返回 409", async () => {
+    const api = createManagementApi();
+    const path = "/internal/admin/data-sources/delete";
+    const body = {
+      source_id: "clinical",
+      expected_revision: "a".repeat(64),
+      expected_objects_revision: "b".repeat(64),
+    };
+    let calls = 0;
+    api.deleteDataSource = async (input) => {
+      expect(input).toEqual(body);
+      calls++;
+      return { source_id: "clinical" };
+    };
+    const app = createApp(
+      config,
+      createHealthChecker(),
+      createCatalogReader(),
+      api,
+      undefined,
+      undefined,
+      await createServiceVerifier(),
+    );
+    app.log.level = "silent";
+    const request = async (payload: Record<string, unknown>, signed = true) =>
+      app.inject({
+        method: "POST",
+        url: path,
+        payload,
+        headers: signed
+          ? { authorization: `Bearer ${await createServiceToken("POST", path, payload)}` }
+          : {},
+      });
+    try {
+      expect((await request(body, false)).statusCode).toBe(401);
+      expect((await request({ source_id: "clinical" })).statusCode).toBe(400);
+      expect(calls).toBe(0);
+      const response = await request(body);
+      expect(response.statusCode).toBe(200);
+      expect(response.headers["cache-control"]).toBe("no-store");
+      expect(response.json()).toEqual({ source_id: "clinical" });
+      api.deleteDataSource = async () => {
+        throw new ManagementConflict();
+      };
+      expect((await request(body)).statusCode).toBe(409);
+    } finally {
+      await app.close();
+    }
+  });
+  it("保存前连接测试要求签名，转发当前参数且隐藏驱动失败详情", async () => {
+    const api = createManagementApi();
+    const body = {
+      connector_kind: "sqlserver",
+      host: "draft.test",
+      port: 1433,
+      user: "reader",
+      password: "private-test-password",
+    };
+    const path = "/internal/admin/database-connections/test";
+    let seen: unknown;
+    api.connections.testDraft = async (value) => {
+      seen = value;
+      return { databases: [{ name: "business", connect_target: "business" }] };
+    };
+    const app = createApp(
+      config,
+      createHealthChecker(),
+      createCatalogReader(),
+      api,
+      undefined,
+      undefined,
+      await createServiceVerifier(),
+    );
+    app.log.level = "silent";
+    const request = async (payload: unknown, signed = true) =>
+      app.inject({
+        method: "POST",
+        url: path,
+        payload: payload as Record<string, unknown>,
+        headers: signed
+          ? { authorization: `Bearer ${await createServiceToken("POST", path, payload)}` }
+          : {},
+      });
+    try {
+      expect((await request(body, false)).statusCode).toBe(401);
+      const success = await request(body);
+      expect(success.statusCode).toBe(200);
+      expect(success.headers["cache-control"]).toBe("no-store");
+      expect(seen).toEqual(body);
+      expect(success.body).not.toContain(body.password);
+      expect((await request({ ...body, password: "" })).statusCode).toBe(400);
+      api.connections.testDraft = async () => {
+        throw new Error(`driver failed ${body.password} ${body.host}`);
+      };
+      const failure = await request(body);
+      expect(failure.statusCode).toBe(400);
+      expect(failure.json().code).toBe("INVALID_INPUT");
+      expect(failure.body).not.toMatch(/private-test-password|draft\.test/);
+    } finally {
+      await app.close();
+    }
+  });
+  it.each(["reader", "医院业务库"])("连接 %s 校验签名、路径解码及管理错误码", async (id) => {
+    const { DatabaseConnectionError } =
+      await import("../../src/data-sources/database-connection-service");
+    const api = createManagementApi();
+    const state = {
+      secret_ref: id,
+      connector_kind: "sqlserver" as const,
+      host: "sql.test",
+      port: 1433,
+      user: "reader",
+      source_ids: ["clinical"],
+      revision: "a".repeat(64),
+    };
+    api.connections = {
+      ...connectionManagementFixture(),
+      get: async (ref) => {
+        expect(ref).toBe(id);
+        return state;
+      },
+      remove: async () => {
+        throw new DatabaseConnectionError("CONFLICT", "连接仍被使用");
+      },
+    };
+    const app = createApp(
+      config,
+      createHealthChecker(),
+      createCatalogReader(),
+      api,
+      undefined,
+      undefined,
+      await createServiceVerifier(),
+    );
+    app.log.level = "silent";
+    const path = `/internal/admin/database-connections/${encodeURIComponent(id)}`;
+    try {
+      expect((await app.inject({ url: path })).statusCode).toBe(401);
+      const result = await app.inject({
+        url: path,
+        headers: { authorization: `Bearer ${await createServiceToken("GET", path, undefined)}` },
+      });
+      expect(result.statusCode).toBe(200);
+      expect(result.json()).toEqual(state);
+      expect(result.headers["cache-control"]).toBe("no-store");
+      const body = { expected_revision: state.revision };
+      expect(
+        (
+          await app.inject({
+            method: "POST",
+            url: path + "/delete",
+            payload: body,
+            headers: {
+              authorization: `Bearer ${await createServiceToken("POST", path + "/delete", body)}`,
+            },
+          })
+        ).statusCode,
+      ).toBe(409);
+      api.connections.get = async () => {
+        throw new DatabaseConnectionError("NOT_FOUND", "数据库连接不存在");
+      };
+      expect(
+        (
+          await app.inject({
+            url: path,
+            headers: {
+              authorization: `Bearer ${await createServiceToken("GET", path, undefined)}`,
+            },
+          })
+        ).statusCode,
+      ).toBe(404);
+    } finally {
+      await app.close();
+    }
+  });
   it("连接参数写入后的回读故障标记为服务失败，供 Web 核对保存状态", async () => {
     const api = createManagementApi();
     api.saveSqlServerTransport = async () => {
@@ -256,6 +433,7 @@ function createCatalogReader(): CatalogReader {
 /** 构造数据源管理路由的最小服务替身。 */
 function createManagementApi(): DataSourceManagementApi {
   return {
+    connections: connectionManagementFixture(),
     async listDataSources() {
       return { items: [] };
     },
@@ -281,6 +459,9 @@ function createManagementApi(): DataSourceManagementApi {
       return { databases: [] };
     },
     async saveDataSource() {
+      return { source_id: "unused" };
+    },
+    async deleteDataSource() {
       return { source_id: "unused" };
     },
     async discoverSourceObjects() {

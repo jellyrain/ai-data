@@ -70,7 +70,7 @@ class AnalysisRunService {
     message: HarnessMessage,
   ): Promise<void> {
     context = await this.dependencies.refreshContext(context);
-    await this.get(context, runId);
+    await this.readAuthorized(context, runId);
     await this.change(context, runId, (state) => {
       this.assertLease(state, lease);
       return {
@@ -186,6 +186,11 @@ class AnalysisRunService {
 
   async get(context: AuthContext, runId: string): Promise<AnalysisRunState> {
     context = await this.dependencies.refreshContext(context);
+    return this.readAuthorized(context, runId);
+  }
+
+  /** 调用方已在本次操作刷新身份；状态和完整证据仍逐批从仓储复核。 */
+  private async readAuthorized(context: AuthContext, runId: string): Promise<AnalysisRunState> {
     const state = await this.dependencies.repository.get(context, runId);
     const evidence = await this.dependencies.repository.listEvidence(context, runId);
     await Promise.all(
@@ -204,9 +209,14 @@ class AnalysisRunService {
   }
 
   async events(context: AuthContext, runId: string, after: number) {
+    return (await this.readEventBatch(context, runId, after)).events;
+  }
+
+  /** 先读取事件，再复核当前权限和状态；SSE 同批复用该状态判断是否追平终态。 */
+  async readEventBatch(context: AuthContext, runId: string, after: number) {
     const events = await this.dependencies.repository.listEvents(context, runId, after);
-    await this.get(context, runId);
-    return events;
+    const state = await this.get(context, runId);
+    return { state, events };
   }
   async steps(context: AuthContext, runId: string) {
     const steps = await this.dependencies.repository.listSteps(context, runId);
@@ -602,13 +612,17 @@ class AnalysisRunService {
         return {
           evidence: [evidence],
           events: [
-            {
-              type: "tool_result",
-              tool_call_id: toolCallId,
-              tool_name: "query_dataset",
-              success: true,
-              output_summary: `返回 ${result.row_count} 行`,
-            },
+            ...(options?.managed
+              ? []
+              : [
+                  {
+                    type: "tool_result" as const,
+                    tool_call_id: toolCallId,
+                    tool_name: "query_dataset",
+                    success: true,
+                    output_summary: `返回 ${result.row_count} 行`,
+                  },
+                ]),
             {
               type: "table",
               evidence_id: evidence.evidence_id,
@@ -704,14 +718,16 @@ class AnalysisRunService {
                 type: "tool_call",
                 tool_call_id: audit.tool_call_id,
                 tool_name: audit.tool_name,
-                input_summary: "执行已校验的业务条件",
+                input_summary: audit.input_summary ?? "调用参数摘要未留存",
               }
             : {
                 type: "tool_result",
                 tool_call_id: audit.tool_call_id,
                 tool_name: audit.tool_name,
                 success: audit.status === "completed",
-                output_summary: audit.error_code ?? "工具执行完成",
+                output_summary: audit.output_summary ?? audit.error_code ?? "工具执行完成",
+                input_summary: audit.input_summary,
+                duration_ms: audit.duration_ms,
               },
         ],
       };

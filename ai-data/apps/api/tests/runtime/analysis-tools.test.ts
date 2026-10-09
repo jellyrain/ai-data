@@ -49,6 +49,41 @@ describe("运行绑定的查询工具", () => {
       select: [{ field: "p.amount" }],
     },
   };
+  it("查询执行明细记录对象和行数，执行 SQL 保存在证据而不扩大模型结果", async () => {
+    const h = setup();
+    const sql = { dialect: "sqlserver", sql: "SELECT [amount] FROM [payment]", parameters: [] };
+    h.runs.query.mockResolvedValue({
+      evidence_id: "e",
+      result: {
+        columns: [{ name: "amount", data_type: "integer" }],
+        rows: [{ amount: 7 }],
+        row_count: 1,
+        truncated: false,
+        execution_sql: sql,
+      },
+    });
+    const result = await h.service.execute(
+      context,
+      "run",
+      h.lease,
+      "query_dataset",
+      queryInput,
+      "query",
+    );
+    expect(result).toMatchObject({ success: true, output: { row_count: 1, evidence_id: "e" } });
+    expect(result.output).not.toHaveProperty("execution_sql");
+    expect(h.runs.recordTool).toHaveBeenLastCalledWith(
+      context,
+      "run",
+      h.lease,
+      expect.objectContaining({
+        input_summary: expect.stringContaining("payment"),
+        output_summary: expect.stringContaining('"row_count": 1'),
+        duration_ms: expect.any(Number),
+        status: "completed",
+      }),
+    );
+  });
   it("启用定义读取后只预加载简短入口，按需读取完整定义且保持旧 Agent 参数", async () => {
     const h = setup(false, ["get_tool_schema", "query_dataset"]);
     const definitions = h.service.definitions();

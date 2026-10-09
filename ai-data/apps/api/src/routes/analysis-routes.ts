@@ -88,8 +88,7 @@ function registerAnalysisRoutes(
         while (!controller.signal.aborted) {
           changed = false;
           const context = await auth.loadContext(token);
-          const state = await runs.get(context, id);
-          const events = await runs.events(context, id, after);
+          const { state, events } = await runs.readEventBatch(context, id, after);
           for (const event of events) {
             if (controller.signal.aborted) return;
             yield `id: ${event.sequence}\nevent: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`;

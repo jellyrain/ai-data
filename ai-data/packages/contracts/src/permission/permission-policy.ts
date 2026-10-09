@@ -8,7 +8,9 @@ const permissionContextPath = z
   .regex(/^permission_context\.[a-z_][a-z0-9_]*$/, "只能引用 permission_context 下的白名单字段");
 
 /** 权限策略中允许使用的对象、字段和别名格式。 */
-const identifier = z.string().regex(/^[A-Za-z_][A-Za-z0-9_.]*$/, "必须是安全标识符");
+const identifier = z
+  .string()
+  .regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u, "必须是安全标识符");
 
 /** 权限条件允许的比较操作。 */
 const policyOperator = queryOperatorSchema;

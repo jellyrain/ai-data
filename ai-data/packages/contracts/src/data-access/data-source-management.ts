@@ -75,7 +75,14 @@ const databaseTargetDiscoveryRequestSchema = z
 const dataSourceManagementConfigSchema = z
   .object({
     /** 单一目标数据库的运行数据源标识。 */
-    source_id: z.string().regex(/^[A-Za-z_][A-Za-z0-9_.-]*$/),
+    source_id: z
+      .string()
+      .min(1, "请填写数据源标识")
+      .max(128, "数据源标识最多 128 个字符")
+      .regex(
+        /^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.-]*$/u,
+        "数据源标识支持中文、英文、数字和 _ . -，须以中文、英文或下划线开头",
+      ),
     /** 当前 source_id 使用的数据库连接器。 */
     connector_kind: databaseConnectorKindSchema,
     /** 指向共享服务器凭据的加密记录。 */
@@ -150,7 +157,7 @@ const sourceObjectSelectionSchema = z
     /** 管理端从当前数据源目录中勾选的对象标识。 */
     object_id: z
       .string()
-      .regex(/^[A-Za-z_][A-Za-z0-9_.]*$/)
+      .regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u)
       .max(256),
     /** 发现结果的标识用于校验物理映射；省略时使用逻辑标识。 */
     discovered_object_id: z.string().min(1).max(512).optional(),
@@ -192,6 +199,14 @@ const managedDataSourceSchema = z
     cost_limit: z.number().int().positive(),
   })
   .strict();
+/** 删除同时核对配置和完整白名单，避免并发保存后被旧页面删除。 */
+const deleteDataSourceSchema = z
+  .object({
+    source_id: z.string().min(1).max(128),
+    expected_revision: managementRevisionSchema,
+    expected_objects_revision: managementRevisionSchema,
+  })
+  .strict();
 /** 不存在的源也有明确空基准，用于首次创建比较更新。 */
 const managedDataSourceDetailSchema = z
   .object({ config: managedDataSourceSchema.nullable(), revision: managementRevisionSchema })
@@ -202,7 +217,7 @@ const managedSourceObjectSchema = z
     source_id: z.string().min(1).max(128),
     object_id: z
       .string()
-      .regex(/^[A-Za-z_][A-Za-z0-9_.]*$/)
+      .regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u)
       .max(256),
     object_kind: z.enum(["table", "view", "stored_procedure", "api_dataset"]),
     native_schema_name: z.string().min(1).optional(),
@@ -243,6 +258,7 @@ const manageableSourceObjectSchema = z
 
 export {
   managementRevisionSchema,
+  deleteDataSourceSchema,
   dataSourceManagementConfigSchema,
   databaseTargetDiscoveryRequestSchema,
   sharedDatabaseCredentialsSchema,

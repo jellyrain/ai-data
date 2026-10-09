@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { vNumberAccessibility } from "../../../shared/management/number-accessibility";
 import { computed, onMounted, ref } from "vue";
-import { ElButton, ElInputNumber } from "element-plus";
+import { ElButton, ElInputNumber, ElInput, ElSelect, ElOption } from "element-plus";
 import { stableStringify, type ModelConfiguration } from "@ai-data/contracts";
-import ResourceList from "../../../shared/management/resource-list.vue";
+import ResourceCard from "../../../shared/management/resource-card.vue";
+import { useResourceLocation } from "../../../shared/management/use-resource-location";
+import { Cpu, ArrowLeft, Search } from "lucide-vue-next";
 import ManagementFeedback from "../../../shared/management/management-feedback.vue";
 import {
   useManagementPage,
@@ -33,29 +35,48 @@ const { scope, discard } = useManagementPage(
   },
   () => editing.value && stableStringify(draft.value) !== baseline.value,
 );
-const rows = computed(() =>
-  items.value.map((item) => ({
-    id: item.model_id,
-    title: item.name,
-    status: item.enabled ? "启用" : "停用",
-    description: `v${item.version} · ${item.model}`,
-  })),
+const search = ref(""),
+  status = ref("all"),
+  detailTab = ref("config");
+const visible = computed(() =>
+  items.value.filter(
+    (item) =>
+      (status.value === "all" || item.enabled === (status.value === "enabled")) &&
+      (item.name + " " + item.model_id)
+        .toLocaleLowerCase()
+        .includes(search.value.trim().toLocaleLowerCase()),
+  ),
 );
+function clearSelection() {
+  selected.value = null;
+  latest.value = null;
+  draft.value = emptyModel();
+  editing.value = false;
+  baseline.value = "";
+  blocked.value = false;
+  detailTab.value = "config";
+}
+const location = useResourceLocation({ discard, clear: clearSelection, load: loadSelection });
+async function open(id: string) {
+  await location.select(id);
+}
+async function cancelEditing() {
+  if (!(await discard())) return;
+  editing.value = false;
+  draft.value = emptyModel();
+}
 function list() {
   return scope.run(async (request) => {
     items.value = await new ModelApi(request).list();
   });
 }
-async function open(id: string) {
-  if (!(await discard())) return;
+async function loadSelection(id: string, version?: number) {
   await scope.run(async (request) => {
-    const value = await new ModelApi(request).get(id);
-    selected.value = value;
-    latest.value = value;
-    historyVersion.value = value.version;
-    editing.value = false;
-    draft.value = emptyModel();
-    blocked.value = false;
+    const api = new ModelApi(request);
+    latest.value = await api.get(id);
+    selected.value =
+      version && version !== latest.value.version ? await api.get(id, version) : latest.value;
+    historyVersion.value = selected.value.version;
   });
 }
 async function create() {
@@ -67,14 +88,8 @@ async function create() {
   editing.value = true;
   blocked.value = false;
 }
-function readVersion() {
-  if (!selected.value) return;
-  return scope.run(async (request) => {
-    selected.value = await new ModelApi(request).get(
-      selected.value!.model_id,
-      historyVersion.value,
-    );
-  });
+async function readVersion() {
+  if (selected.value) await location.select(selected.value.model_id, historyVersion.value);
 }
 async function edit() {
   if (!selected.value || !(await discard())) return;
@@ -107,6 +122,8 @@ async function publish() {
           : "发布结果待核对。公开配置无法核实认证内容，请检查目标版本后决定是否发布下一版本。";
     }
   });
+  if (!editing.value && selected.value)
+    await location.select(selected.value.model_id, selected.value.version, true);
 }
 async function rebase() {
   if (
@@ -152,98 +169,184 @@ async function toggle() {
     items.value = await api.list();
   });
 }
-onMounted(list);
+onMounted(async () => {
+  await list();
+  await location.restore();
+});
 </script>
 <template>
-  <section class="management-page">
+  <section class="management-page management-resource-page">
     <header class="management-heading">
-      <div>
-        <h1>模型管理</h1>
-        <p class="muted">维护模型连接，按版本发布完整配置。</p>
+      <div class="management-title-group">
+        <ElButton
+          v-if="selected || editing || location.route.query.resource"
+          text
+          :disabled="scope.state.busy"
+          aria-label="返回模型列表"
+          @click="location.close"
+          ><ArrowLeft :size="19"
+        /></ElButton>
+        <div>
+          <h1>{{ selected ? selected.name : editing ? "新建模型" : "模型管理" }}</h1>
+          <p class="muted">{{ selected ? selected.model_id : "配置模型服务，管理发布版本。" }}</p>
+        </div>
       </div>
       <div class="management-actions">
-        <ElButton :disabled="scope.state.busy" @click="list">刷新列表</ElButton
-        ><ElButton type="primary" :disabled="scope.state.busy" @click="create">新建模型</ElButton>
+        <ElButton :disabled="scope.state.busy" @click="list">刷新列表</ElButton>
+        <template v-if="editing">
+          <ElButton :disabled="scope.state.busy" @click="cancelEditing">取消编辑</ElButton>
+          <ElButton v-if="blocked" @click="rebase">核对后准备下一版本</ElButton>
+          <ElButton type="primary" :loading="scope.state.busy" :disabled="blocked" @click="publish"
+            >发布 v{{ draft.version }}</ElButton
+          >
+        </template>
+        <template v-else-if="selected">
+          <ElButton :disabled="scope.state.busy" @click="toggle">{{
+            selected.enabled ? "停用模型" : "启用模型"
+          }}</ElButton>
+          <ElButton type="primary" :disabled="scope.state.busy" @click="edit"
+            >以此版本为基础发布</ElButton
+          >
+        </template>
+        <template v-else>
+          <ElButton type="primary" :disabled="scope.state.busy" @click="create">新建模型</ElButton>
+        </template>
       </div>
     </header>
     <ManagementFeedback v-bind="scope.state" />
-    <div class="management-grid">
-      <ResourceList
-        :items="rows"
-        :selected="selected?.model_id"
-        :disabled="scope.state.busy"
-        @select="open"
-      />
-      <main class="management-detail">
-        <template v-if="editing"
-          ><h2>{{ selected ? "发布新版本" : "新建模型" }}</h2>
-          <ModelForm v-model="draft" :existing="!!selected" :disabled="scope.state.busy" />
-          <footer class="management-footer">
-            <ElButton
-              type="primary"
-              :loading="scope.state.busy"
-              :disabled="blocked"
-              @click="publish"
-              >发布 v{{ draft.version }}</ElButton
-            ><ElButton v-if="blocked" @click="rebase">核对后准备下一版本</ElButton
-            ><ElButton
-              :disabled="scope.state.busy"
-              @click="
-                async () => {
-                  if (await discard()) {
-                    editing = false;
-                    draft = emptyModel();
-                  }
-                }
-              "
-              >取消编辑</ElButton
-            >
-          </footer></template
+    <template v-if="!selected && !editing && !location.route.query.resource">
+      <div class="management-browse-toolbar">
+        <ElInput v-model="search" clearable aria-label="搜索模型" placeholder="搜索名称或标识"
+          ><template #prefix><Search :size="16" /></template
+        ></ElInput>
+        <ElSelect v-model="status" aria-label="模型状态"
+          ><ElOption label="全部状态" value="all" /><ElOption
+            label="已启用"
+            value="enabled" /><ElOption label="已停用" value="disabled"
+        /></ElSelect>
+        <span class="muted">当前 {{ visible.length }} 个模型</span>
+      </div>
+      <div class="management-card-grid">
+        <ResourceCard
+          v-for="item in visible"
+          :key="item.model_id"
+          :title="item.name"
+          :identifier="item.model_id"
+          :status="item.enabled ? '启用' : '停用'"
+          :active="item.enabled"
+          :disabled="scope.state.busy"
+          @select="open(item.model_id)"
         >
-        <template v-else-if="selected"
-          ><h2>{{ selected.name }}</h2>
-          <div class="management-toolbar">
-            <label for="model-history">查看版本</label
-            ><ElInputNumber
-              id="model-history"
-              v-model="historyVersion"
-              v-number-accessibility
-              :min="1"
-              :max="latest?.version ?? 1"
-              :precision="0"
-              style="max-width: 140px"
-            /><ElButton :disabled="scope.state.busy" @click="readVersion">读取版本</ElButton>
+          <template #icon><Cpu :size="23" /></template>
+          <span
+            ><span>当前版本</span><span>v{{ item.version }}</span></span
+          >
+          <span
+            ><span>上游模型</span><span>{{ item.model }}</span></span
+          ><span
+            ><span>上下文窗口</span
+            ><span>{{
+              item.context_window ? item.context_window.toLocaleString() + " tokens" : "运行时探测"
+            }}</span></span
+          >
+        </ResourceCard>
+      </div>
+      <div v-if="!visible.length" class="management-empty">
+        {{
+          scope.state.busy
+            ? "正在读取模型…"
+            : items.length
+              ? "没有匹配的模型"
+              : "暂无模型，点击右上角新建。"
+        }}
+      </div>
+    </template>
+    <template v-else>
+      <nav v-if="selected && !editing" class="management-tabs" aria-label="模型详情">
+        <ElButton
+          :type="detailTab === 'config' ? 'primary' : 'default'"
+          @click="detailTab = 'config'"
+          >配置详情</ElButton
+        >
+        <ElButton
+          :type="detailTab === 'history' ? 'primary' : 'default'"
+          @click="detailTab = 'history'"
+          >版本记录</ElButton
+        >
+      </nav>
+      <div class="management-editor-layout">
+        <main class="management-panel management-editor-main">
+          <template v-if="editing"
+            ><h2>基本配置</h2>
+            <ModelForm v-model="draft" :existing="!!selected" :disabled="scope.state.busy"
+          /></template>
+          <template v-else-if="selected">
+            <template v-if="detailTab === 'history'">
+              <h2>查看已发布版本</h2>
+              <div class="management-toolbar">
+                <label for="model-history">查看版本</label
+                ><ElInputNumber
+                  id="model-history"
+                  v-model="historyVersion"
+                  v-number-accessibility
+                  :min="1"
+                  :max="latest?.version ?? 1"
+                  :precision="0"
+                  style="max-width: 140px"
+                /><ElButton :disabled="scope.state.busy" @click="readVersion">读取版本</ElButton>
+              </div>
+            </template>
+            <h2 v-else>配置详情</h2>
+            <dl class="management-definition">
+              <dt>模型标识</dt>
+              <dd>{{ selected.model_id }}</dd>
+              <dt>版本 / 状态</dt>
+              <dd>v{{ selected.version }} · {{ selected.enabled ? "启用" : "停用" }}</dd>
+              <dt>协议</dt>
+              <dd>Responses</dd>
+              <dt>服务地址</dt>
+              <dd>{{ selected.base_url }}</dd>
+              <dt>上游模型</dt>
+              <dd>{{ selected.model }}</dd>
+              <dt>上下文窗口</dt>
+              <dd>{{ selected.context_window ?? "运行时探测" }}</dd>
+              <dt>认证配置</dt>
+              <dd>
+                {{ selected.has_api_key ? "已设置 API Key" : "未设置 API Key" }}<br />请求头：{{
+                  selected.header_names.join("、") || "无"
+                }}
+              </dd>
+            </dl>
+          </template>
+          <div v-else class="management-empty">
+            {{ scope.state.busy ? "正在读取配置…" : "无法读取该资源，请返回列表重新选择。" }}
           </div>
-          <dl class="management-definition">
-            <dt>模型标识</dt>
-            <dd>{{ selected.model_id }}</dd>
-            <dt>版本 / 状态</dt>
-            <dd>v{{ selected.version }} · {{ selected.enabled ? "启用" : "停用" }}</dd>
-            <dt>协议</dt>
-            <dd>Responses</dd>
-            <dt>服务地址</dt>
-            <dd>{{ selected.base_url }}</dd>
-            <dt>上游模型</dt>
-            <dd>{{ selected.model }}</dd>
-            <dt>上下文窗口</dt>
-            <dd>{{ selected.context_window ?? "运行时探测" }}</dd>
-            <dt>认证配置</dt>
-            <dd>
-              {{ selected.has_api_key ? "已设置 API Key" : "未设置 API Key" }}<br />请求头：{{
-                selected.header_names.join("、") || "无"
-              }}
-            </dd>
-          </dl>
-          <div class="management-footer">
-            <ElButton type="primary" :disabled="scope.state.busy" @click="edit"
-              >以此版本为基础发布</ElButton
-            ><ElButton :disabled="scope.state.busy" @click="toggle">{{
-              selected.enabled ? "停用模型" : "启用模型"
-            }}</ElButton>
-          </div></template
-        >
-        <div v-else class="management-empty">选择模型查看版本与连接配置，或新建模型。</div>
-      </main>
-    </div>
+        </main>
+        <aside class="management-editor-aside">
+          <section class="management-panel">
+            <h2>{{ editing ? "本次发布" : "版本信息" }}</h2>
+            <dl class="management-definition management-summary">
+              <dt>当前版本</dt>
+              <dd>{{ latest ? "v" + latest.version : "首次发布" }}</dd>
+              <template v-if="editing"
+                ><dt>待发布版本</dt>
+                <dd>v{{ draft.version }}</dd></template
+              >
+              <template v-else-if="selected"
+                ><dt>查看版本</dt>
+                <dd>v{{ selected.version }}</dd></template
+              >
+              <dt>状态</dt>
+              <dd>{{ selected ? (selected.enabled ? "已启用" : "已停用") : "待发布" }}</dd>
+            </dl>
+            <p class="management-help management-aside-note">发布后可供 Agent 选择使用。</p>
+          </section>
+          <section class="management-panel">
+            <h2>版本管理</h2>
+            <p class="management-help">已发布版本保留，配置变更将生成独立版本。</p>
+          </section>
+        </aside>
+      </div>
+    </template>
   </section>
 </template>

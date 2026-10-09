@@ -6,6 +6,8 @@ const toolAuditSchema = z
     tool_call_id: z.string().min(1).max(128),
     tool_name: z.string().min(1).max(128),
     input_hash: z.string().regex(/^[a-f0-9]{64}$/),
+    input_summary: z.string().max(4000).optional(),
+    output_summary: z.string().max(4000).optional(),
     status: z.enum(["running", "completed", "failed"]),
     duration_ms: z.number().int().nonnegative(),
     evidence_ids: z.array(z.string().min(1)).max(1000).default([]),

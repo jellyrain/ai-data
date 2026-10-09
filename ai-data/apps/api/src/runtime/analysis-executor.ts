@@ -116,12 +116,10 @@ class AnalysisExecutor {
             "POLICY_REJECTED",
             "分析期间正式知识的版本或可见范围发生变化，请重新发起分析",
           );
-        if (
-          (await repository.loadInput(current, runId, runtimeKey)).context_hash !==
-          input.context_hash
-        )
+        if ((await repository.loadContextHash(current, runtimeKey)) !== input.context_hash)
           throw new ApplicationError("POLICY_REJECTED", "分析期间授权范围发生变化，请重新发起分析");
-        for (const id of input.run_ids) await runs.get(current, id);
+        // 本轮证据由 recordMessage / complete 在提交前检查，历史运行在此逐一复核。
+        for (const id of input.run_ids) if (id !== runId) await runs.get(current, id);
         return current;
       };
       const result = await harness.run({

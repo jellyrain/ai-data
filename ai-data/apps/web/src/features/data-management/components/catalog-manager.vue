@@ -86,7 +86,7 @@ async function save() {
   if (!selected.value || !draft.value || !(await (relation.value?.canLeave() ?? true))) return;
   await scope.run(async (request) => {
     const api = new CatalogApi(request),
-      input = catalogInput(draft.value!);
+      input = catalogInput(draft.value!, selected.value!.dataset);
     try {
       await api.save({ ...input, expected_version: selected.value!.config_version });
     } catch (error) {
@@ -130,8 +130,9 @@ defineExpose({ canLeave });
 </script>
 <template>
   <section>
-    <div class="management-toolbar">
-      <ElSelect
+    <div class="management-context-bar">
+      <span class="muted">业务数据源</span
+      ><ElSelect
         :model-value="sourceId"
         filterable
         placeholder="选择业务数据源"
@@ -160,6 +161,7 @@ defineExpose({ canLeave });
             {{ selected.dataset.object_id }} · 配置 v{{ selected.config_version }}
           </p>
           <CatalogForm
+            :key="`${sourceId}:${selected.dataset.object_id}:${selected.config_version}`"
             v-model="draft"
             :dataset="selected.dataset"
             :roles="roles"
@@ -169,24 +171,27 @@ defineExpose({ canLeave });
             <pre class="management-code">{{ JSON.stringify(remote.config, null, 2) }}</pre>
             <ElButton @click="rebase">已核对，保留草稿采用新基准</ElButton>
           </div>
+          <details class="management-disclosure">
+            <summary>业务关系与关联图</summary>
+            <RelationManager
+              :key="`${sourceId}:${selected.dataset.object_id}`"
+              ref="relation"
+              :source-id="sourceId"
+              :object-id="selected.dataset.object_id"
+              :datasets="items"
+              :disabled="dirty || scope.state.busy || !!remote"
+              @published="published"
+            /></details>
           <footer class="management-footer">
             <ElButton
               type="primary"
               :loading="scope.state.busy"
               :disabled="!!remote || (!dirty && selected.config !== null)"
               @click="save"
-              >保存业务配置</ElButton
+            >保存业务配置</ElButton
             >
           </footer>
-          <RelationManager
-            :key="`${sourceId}:${selected.dataset.object_id}`"
-            ref="relation"
-            :source-id="sourceId"
-            :object-id="selected.dataset.object_id"
-            :datasets="items"
-            :disabled="dirty || scope.state.busy || !!remote"
-            @published="published"
-        /></template>
+        </template>
         <div v-else class="management-empty">选择数据源与对象，维护业务含义、字段策略与关系。</div>
       </main>
     </div>

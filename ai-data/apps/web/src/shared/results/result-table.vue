@@ -27,6 +27,7 @@ const ResultChart = defineAsyncComponent({
     ),
 });
 const props = defineProps<{
+  title?: string;
   table: Pick<QueryResult, "columns" | "rows">;
   rowCount?: number;
   sampled?: boolean;
@@ -57,6 +58,10 @@ const columns = computed(() =>
       dataKey: column.name,
       title: column.name,
       width: 190,
+      flexGrow: 1,
+      align: ["integer", "decimal"].includes(column.data_type)
+        ? ("right" as const)
+        : ("left" as const),
       cellRenderer: ({ rowData }: { rowData: { row: Record<string, unknown> } }) => {
         const value = formatCell(rowData.row[column.name]);
         return value.length > 80
@@ -83,6 +88,10 @@ const columns = computed(() =>
 const numericColumns = computed(() =>
   props.table.columns.filter((column) => ["integer", "decimal"].includes(column.data_type)),
 );
+function fittedColumns(width: number) {
+  const columnWidth = Math.max(190, Math.floor(width / Math.max(1, columns.value.length)));
+  return columns.value.map((column) => ({ ...column, width: columnWidth }));
+}
 watch(
   () => props.table.columns,
   (items) => {
@@ -104,30 +113,36 @@ watch(paged, (value) => {
 <template>
   <section class="result-view" aria-label="查询结果">
     <div class="result-toolbar">
-      <span class="result-count"
-        >已显示 {{ table.rows.length.toLocaleString() }} 行<span v-if="sampled"
-          >样本<span v-if="rowCount !== undefined">
-            · 已交付 {{ rowCount.toLocaleString() }} 行</span
+      <div class="result-heading">
+        <strong v-if="title">{{ title }}</strong
+        ><span class="result-count"
+          >已显示 {{ table.rows.length.toLocaleString() }} 行<span v-if="sampled"
+            >样本<span v-if="rowCount !== undefined">
+              · 已交付 {{ rowCount.toLocaleString() }} 行</span
+            ></span
           ></span
-        ></span
-      >
-      <ElSelect v-model="kind" aria-label="结果展示方式" class="chart-kind"
-        ><ElOption label="表格" value="table" /><ElOption label="柱状图" value="bar" /><ElOption
-          label="折线图"
-          value="line" /><ElOption label="饼图" value="pie"
-      /></ElSelect>
-      <ElPopover trigger="click" placement="bottom-end" :width="260"
-        ><template #reference><ElButton>显示列</ElButton></template
-        ><ElCheckboxGroup v-model="visibleColumns" aria-label="显示列"
-          ><ElCheckbox
-            v-for="column in table.columns"
-            :key="column.name"
-            :value="column.name"
-            :disabled="visibleColumns.length === 1 && visibleColumns.includes(column.name)"
-            >{{ column.name }}</ElCheckbox
-          ></ElCheckboxGroup
-        ></ElPopover
-      >
+        >
+      </div>
+      <div class="result-controls">
+        <ElSelect v-model="kind" aria-label="结果展示方式" class="chart-kind"
+          ><ElOption label="表格" value="table" /><ElOption label="柱状图" value="bar" /><ElOption
+            label="折线图"
+            value="line" /><ElOption label="饼图" value="pie"
+        /></ElSelect>
+        <ElPopover trigger="click" placement="bottom-end" :width="260"
+          ><template #reference><ElButton>显示列</ElButton></template
+          ><ElCheckboxGroup v-model="visibleColumns" aria-label="显示列"
+            ><ElCheckbox
+              v-for="column in table.columns"
+              :key="column.name"
+              :value="column.name"
+              :disabled="visibleColumns.length === 1 && visibleColumns.includes(column.name)"
+              >{{ column.name }}</ElCheckbox
+            ></ElCheckboxGroup
+          ></ElPopover
+        >
+        <slot name="actions" />
+      </div>
     </div>
     <p v-if="truncated" class="result-notice">结果已截断，当前行数是已交付量，业务总量未知。</p>
     <p v-else-if="sampled" class="result-notice">
@@ -135,13 +150,17 @@ watch(paged, (value) => {
     </p>
     <p v-if="!table.rows.length" class="result-notice">查询已返回，当前条件下没有数据。</p>
     <template v-else-if="kind === 'table'">
-      <div class="virtual-table" data-testid="virtual-table">
+      <div
+        class="virtual-table"
+        data-testid="virtual-table"
+        :style="{ height: `${Math.min(340, 40 + rows.length * 40 + 8)}px` }"
+      >
         <ElAutoResizer
           ><template #default="{ width, height }"
             ><ElTableV2
               :width="width"
               :height="height"
-              :columns="columns"
+              :columns="fittedColumns(width)"
               :data="rows"
               row-key="position"
               :row-height="40"
@@ -150,6 +169,7 @@ watch(paged, (value) => {
         ></ElAutoResizer>
       </div>
       <ElPagination
+        v-if="table.rows.length > size || size !== 100"
         v-model:page-size="size"
         :current-page="paged.page"
         :page-sizes="[50, 100, 200]"

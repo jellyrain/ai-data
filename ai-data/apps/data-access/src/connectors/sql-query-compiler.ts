@@ -268,7 +268,7 @@ function renderField(field: string, dialect: DatabaseDialect): string {
 
 /** 编译前再次限定单段标识符的字符形式，再交给方言转义引用。 */
 function quoteName(identifier: string, dialect: DatabaseDialect): string {
-  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(identifier)) {
+  if (!/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_$]*$/u.test(identifier)) {
     throw new Error(`标识符不安全: ${identifier}`);
   }
   return dialect.quoteIdentifier(identifier);

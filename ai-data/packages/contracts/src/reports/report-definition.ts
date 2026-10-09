@@ -10,7 +10,7 @@ import { preAggregateSchema } from "../query/pre-aggregate";
 import { preferenceTimeRangeSchema } from "../memory/user-preference";
 
 const id = z.string().min(1).max(128);
-const identifier = z.string().regex(/^[A-Za-z_][A-Za-z0-9_.]*$/);
+const identifier = z.string().regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u);
 const scalar = z.union([z.string().max(16000), z.number().finite(), z.boolean(), z.null()]);
 /** 参数值只接受可序列化标量或有界数组；实际类型及上下限按定义再次校验。 */
 const reportParameterValueSchema = z.union([scalar, z.array(scalar).min(1).max(1000)]);

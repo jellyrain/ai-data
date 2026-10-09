@@ -2,6 +2,17 @@ import { describe, expect, it } from "vitest";
 import { renderMarkdown, safeDiagramSource } from "../../../src/shared/content/markdown";
 
 describe("AI 内容的安全渲染", () => {
+  it("表格使用可滚动容器，纯数字列右对齐且保留作者指定的对齐", () => {
+    const element = document.createElement("div");
+    element.innerHTML = renderMarkdown(
+      "|科室|人次|占比|\n|---|---|:---:|\n|内科|1,005|20%|\n|外科|50|1%|",
+    ).html;
+    expect(element.querySelector(".markdown-table table")).not.toBeNull();
+    expect(element.querySelectorAll("th")[1]?.classList.contains("numeric-cell")).toBe(true);
+    expect(element.querySelectorAll("td")[1]?.classList.contains("numeric-cell")).toBe(true);
+    expect(element.querySelectorAll("td")[2]?.classList.contains("align-center")).toBe(true);
+    expect(element.querySelectorAll("td")[0]?.classList.contains("numeric-cell")).toBe(false);
+  });
   it("流式代码围栏未闭合时保留文本，闭合后才交给高亮和流程图", () => {
     const content = "```mermaid\nflowchart LR\n A --> B\n";
     expect(renderMarkdown(content, true).blocks).toEqual([]);

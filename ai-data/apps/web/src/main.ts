@@ -33,6 +33,7 @@ import "element-plus/theme-chalk/el-dialog.css";
 import "element-plus/theme-chalk/el-date-picker.css";
 import "element-plus/theme-chalk/el-dropdown.css";
 import "element-plus/theme-chalk/el-tag.css";
+import "element-plus/theme-chalk/el-tabs.css";
 import "element-plus/theme-chalk/el-message-box.css";
 import "element-plus/theme-chalk/dark/css-vars.css";
 import "./styles/theme.css";

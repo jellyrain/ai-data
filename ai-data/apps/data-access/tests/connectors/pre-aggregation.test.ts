@@ -215,6 +215,10 @@ describe("对象预聚合 SQL 与统计语义", () => {
         rows: [{ id: 1, fees: 200 }],
         row_count: 1,
         truncated: true,
+        execution_sql: expect.objectContaining({
+          dialect: "mysql",
+          sql: expect.stringContaining("GROUP BY"),
+        }),
       });
     } finally {
       await connector.close();

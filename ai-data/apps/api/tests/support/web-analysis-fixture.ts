@@ -51,6 +51,8 @@ const agent: AgentVersion = agentVersionSchema.parse({
 });
 /** 隔离 HTTP 验收数据；运行调度和 SQL 结果为确定性替身，认证与路由使用真实实现。 */
 class WebAnalysisRepository implements ConversationRepository {
+  deleted = new Set<string>();
+  reportConversations = new Set<string>();
   conversations = new Map<string, Conversation>();
   messages = new Map<string, ConversationMessage[]>();
   states = new Map<string, AnalysisRunState>();
@@ -87,21 +89,46 @@ class WebAnalysisRepository implements ConversationRepository {
     this.messages.set(conversation.id, []);
   }
   async findConversation(id: string, userId: string, organizationId: string) {
+    if (this.deleted.has(id)) return null;
     const item = this.conversations.get(id);
     return item?.userId === userId && item.organizationId === organizationId ? item : null;
   }
   async listConversations(userId: string, organizationId: string) {
     return [...this.conversations.values()].filter(
-      (item) => item.userId === userId && item.organizationId === organizationId,
+      (item) =>
+        item.userId === userId &&
+        item.organizationId === organizationId &&
+        !this.deleted.has(item.id) &&
+        !this.reportConversations.has(item.id),
     );
   }
   async listMessages(id: string) {
     return this.messages.get(id) ?? [];
   }
+  async deleteConversations(ids: string[], userId: string, organizationId: string) {
+    for (const id of ids) {
+      const item = this.conversations.get(id);
+      if (
+        !item ||
+        item.userId !== userId ||
+        item.organizationId !== organizationId ||
+        this.reportConversations.has(id)
+      )
+        throw new ApplicationError("NOT_FOUND", "会话不存在或不属于当前工作台");
+      if (
+        [...this.states.values()].some(
+          (state) => state.conversation_id === id && !terminal(state.status),
+        )
+      )
+        throw new ApplicationError("CONFLICT", "所选会话仍有分析任务，请先停止后再删除");
+    }
+    ids.forEach((id) => this.deleted.add(id));
+  }
   get(context: AuthContext, id: string) {
     const state = this.states.get(id);
     if (
       !state ||
+      this.deleted.has(state.conversation_id) ||
       state.user_id !== context.userId ||
       state.organization_id !== context.organizationId
     )
@@ -300,6 +327,7 @@ class WebAnalysisRepository implements ConversationRepository {
           tool_name: "get_business_schema",
           success: true,
           output_summary: "已取得科室、就诊日期与人次字段",
+          duration_ms: 1800,
         },
       ],
       [
@@ -352,6 +380,7 @@ class WebAnalysisRepository implements ConversationRepository {
     const state = this.states.get(id)!;
     if (terminal(state.status)) return;
     const question = this.questions.get(id) ?? "";
+    const layout = question.includes("布局验收");
     if (question.includes("失败")) {
       state.status = "failed";
       state.error = { code: "DATA_SOURCE_UNAVAILABLE", message: "测试数据源暂时不可用" };
@@ -376,6 +405,22 @@ class WebAnalysisRepository implements ConversationRepository {
       status: "completed",
       occurred_at: now(),
     });
+    if (layout) {
+      this.emit(id, {
+        type: "tool_call",
+        tool_call_id: "query-failed",
+        tool_name: "query_dataset",
+        input_summary: "门诊人次 · 时间格式校验",
+      });
+      this.emit(id, {
+        type: "tool_result",
+        tool_call_id: "query-failed",
+        tool_name: "query_dataset",
+        success: false,
+        output_summary: "时间格式不符合 datetime 要求",
+        duration_ms: 12,
+      });
+    }
     if (!streaming)
       this.emit(id, {
         type: "tool_call",
@@ -406,7 +451,7 @@ class WebAnalysisRepository implements ConversationRepository {
       },
       limit: 5000,
     });
-    const count = question.includes("空结果") ? 0 : 5000;
+    const count = question.includes("空结果") ? 0 : layout ? 17 : 5000;
     const truncated = question.includes("截断");
     const item = queryEvidenceSchema.parse({
       evidence_id: randomUUID(),
@@ -443,10 +488,41 @@ class WebAnalysisRepository implements ConversationRepository {
           ? { status: "truncated", total_row_count: null }
           : { status: "complete", total_row_count: count },
         freshness: "2026-09-27 08:00:00",
+        execution_sql: {
+          dialect: "sqlserver",
+          sql: "SELECT [v].[department], [v].[visits] FROM [dbo].[outpatient] AS [v] WHERE [v].[date] >= @p1",
+          parameters: [{ position: 1, placeholder: "@p1", data_type: "date" }],
+        },
       },
     });
-    this.evidence.set(id, [item]);
-    state.evidence_ids = [item.evidence_id];
+    const items = [item];
+    if (layout) {
+      const totalQuery = queryDslSchema.parse({
+        ...query,
+        select: [{ field: "v.visits", aggregation: "count", as: "count" }],
+      });
+      items.push(
+        queryEvidenceSchema.parse({
+          ...item,
+          evidence_id: randomUUID(),
+          requested_query: totalQuery,
+          authorized_query: totalQuery,
+          result: {
+            columns: [{ name: "count", data_type: "integer" }],
+            rows: [{ count: 10053 }],
+            row_count: 1,
+            truncated: false,
+            execution_sql: {
+              dialect: "sqlserver",
+              sql: "SELECT COUNT([v].[visits]) AS [count] FROM [dbo].[outpatient] AS [v]",
+              parameters: [],
+            },
+          },
+        }),
+      );
+    }
+    this.evidence.set(id, items);
+    state.evidence_ids = items.map((value) => value.evidence_id);
     this.steps.set(id, [
       {
         step_id: randomUUID(),
@@ -462,7 +538,11 @@ class WebAnalysisRepository implements ConversationRepository {
       tool_call_id: "query-1",
       tool_name: "query_dataset",
       success: true,
-      output_summary: `已返回 ${count} 行`,
+      output_summary: layout
+        ? JSON.stringify({ row_count: count, evidence_ids: state.evidence_ids }, null, 2)
+        : `已返回 ${count} 行`,
+      input_summary: "数据源 clinical · 门诊科室明细",
+      duration_ms: 320,
     });
     this.emit(id, {
       type: "table",
@@ -473,7 +553,20 @@ class WebAnalysisRepository implements ConversationRepository {
       result_truncated: truncated,
       sampled: count > 100,
     });
-    const content = `## 门诊分析结论\n\n本次查询已交付 **${count.toLocaleString()} 条记录**。请结合查询范围阅读结果，科室变化可在图表中进一步查看。\n\n- 时间范围：2026 年\n- 数据来源：clinical\n\n### 分析流程\n\n\`\`\`mermaid\nflowchart LR\n A[确认范围] --> B[读取授权数据]\n B --> C[核对结果]\n\`\`\`\n\n\`\`\`sql\nSELECT department, visits FROM outpatient;\n\`\`\`\n\n> 此页面使用隔离的浏览器验收数据。`;
+    if (layout) {
+      const total = items[1]!;
+      this.emit(id, {
+        type: "table",
+        evidence_id: total.evidence_id,
+        columns: total.result.columns,
+        rows: total.result.rows,
+        result_row_count: 1,
+        sampled: false,
+      });
+    }
+    const content = layout
+      ? `## 今年门诊人次（截至 2026-10-08）\n\n全年累计门诊就诊人次：**10,053 人次**，覆盖 **17 个科室**。\n\n|科室|门诊人次|\n|---|---|\n${["康复科|682", "心内科|682", "神经内科|682", "消化科|673", "口腔科|650", "呼吸科|636", "皮肤科|614", "泌尿科|599", "耳鼻喉科|576", "产科|562", "眼科|539", "儿科|527", "中医科|527", "妇科|526", "骨科|526", "内科|526", "外科|526"].map((row) => `|${row}|`).join("\n")}\n\n统计范围：2026-01-01 至 2026-10-08。\n\n此页面使用隔离的浏览器验收数据。`
+      : `## 门诊分析结论\n\n本次查询已交付 **${count.toLocaleString()} 条记录**。请结合查询范围阅读结果，科室变化可在图表中进一步查看。\n\n- 时间范围：2026 年\n- 数据来源：clinical\n\n### 分析流程\n\n\`\`\`mermaid\nflowchart LR\n A[确认范围] --> B[读取授权数据]\n B --> C[核对结果]\n\`\`\`\n\n\`\`\`sql\nSELECT department, visits FROM outpatient;\n\`\`\`\n\n> 此页面使用隔离的浏览器验收数据。`;
     const finalize = () => {
       if (terminal(state.status)) return;
       this.message(id, "assistant", content);
@@ -548,14 +641,15 @@ function registerWebAnalysisFixture(app: FastifyInstance, auth: ApiAuthService) 
   const runs: ApiAnalysisServices["runs"] = {
     subscribeEvents: (id, notify) => repository.subscribeEvents(id, notify),
     get: async (context, id) => structuredClone(repository.get(context, id)),
-    events: async (context, id, after) => {
-      repository.get(context, id);
-      return structuredClone(
-        repository.events
+    readEventBatch: async (context, id, after) => {
+      const state = repository.get(context, id);
+      return structuredClone({
+        state,
+        events: repository.events
           .get(id)!
           .filter((event) => event.sequence > after)
           .slice(0, 200),
-      );
+      });
     },
     evidence: async (context, id) => {
       repository.get(context, id);
@@ -648,6 +742,7 @@ function registerWebAnalysisFixture(app: FastifyInstance, auth: ApiAuthService) 
   return {
     conversations,
     runs,
+    markReportConversation: (id: string) => repository.reportConversations.add(id),
     onComplete: (id: string, operation: () => void) => repository.completions.set(id, operation),
   };
 }

@@ -62,13 +62,7 @@ class SqlRuntimeRepository implements RuntimeRepository {
     });
     const rows = result.rows.map((row) => messageSchema.parse(row)).reverse();
     if (!rows.length) throw new ApplicationError("INVALID_INPUT", "分析运行缺少用户消息");
-    const policies = await this.database.execute({
-      sql: "SELECT source_id, MAX(version) AS version FROM dbo.catalog_policy_versions WHERE organization_id=@org GROUP BY source_id ORDER BY source_id",
-      parameters: [{ name: "org", type: "string", value: context.organizationId }],
-    });
-    const contextHash = createHash("sha256")
-      .update(stableStringify({ context, policies: policies.rows, runtimeKey }))
-      .digest("hex");
+    const contextHash = await this.loadContextHash(context, runtimeKey);
     const saved = await this.database.execute({
       sql: "SELECT thread_id FROM dbo.analysis_codex_threads WHERE conversation_id=@conversation AND context_hash=@hash",
       parameters: [
@@ -87,6 +81,17 @@ class SqlRuntimeRepository implements RuntimeRepository {
       messages: rows.map(({ role, content }) => ({ role, content })),
       run_ids: history.rows.map((row) => z.string().parse(row.id)),
     };
+  }
+
+  /** 当前身份与组织策略形成同一线程指纹；流式复核无需重读消息和线程映射。 */
+  async loadContextHash(context: AuthContext, runtimeKey = ""): Promise<string> {
+    const policies = await this.database.execute({
+      sql: "SELECT source_id, MAX(version) AS version FROM dbo.catalog_policy_versions WHERE organization_id=@org GROUP BY source_id ORDER BY source_id",
+      parameters: [{ name: "org", type: "string", value: context.organizationId }],
+    });
+    return createHash("sha256")
+      .update(stableStringify({ context, policies: policies.rows, runtimeKey }))
+      .digest("hex");
   }
   /** 以会话、运行的统一锁顺序校验租约，防止过期执行器覆盖恢复入口。 */
   async saveThread(

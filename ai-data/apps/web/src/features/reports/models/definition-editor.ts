@@ -30,7 +30,7 @@ function uniqueId(prefix: string, used: Iterable<string>): string {
   return `${prefix}_${index}`;
 }
 function validName(name: string, used: string[]): void {
-  if (!/^[A-Za-z_][A-Za-z0-9_.]*$/.test(name) || name.length > 128)
+  if (!/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u.test(name) || name.length > 128)
     throw new Error("标识需以字母或下划线开头，最长128个字符");
   if (used.includes(name)) throw new Error("标识已经存在");
 }

@@ -109,3 +109,31 @@
 .knowledge-details dt {
   color: var(--app-muted);
 }
+
+.knowledge-admin-page .management-grid {
+  grid-template-columns: 310px minmax(0, 1fr);
+  gap: 24px;
+}
+.knowledge-admin-page .management-detail {
+  min-height: 460px;
+}
+.knowledge-admin-page .knowledge-review-tabs {
+  margin-top: 24px;
+}
+.knowledge-admin-page .management-toolbar.management-context-bar {
+  gap: 12px;
+}
+.knowledge-admin-page .management-toolbar > .el-select {
+  max-width: 180px;
+}
+.knowledge-admin-page .management-resource-status {
+  color: var(--app-primary);
+}
+.knowledge-review-controls .management-actions {
+  margin-top: 16px;
+}
+@media (max-width: 960px) {
+  .knowledge-admin-page .management-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

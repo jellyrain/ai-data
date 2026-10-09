@@ -34,7 +34,7 @@ async function select(value: typeof tab.value) {
 }
 </script>
 <template>
-  <section class="management-page knowledge-page">
+  <section class="management-page knowledge-page" :class="{ 'knowledge-admin-page': admin }">
     <header class="management-heading">
       <div>
         <h1>{{ admin ? "知识审核" : "知识与偏好" }}</h1>

@@ -23,9 +23,16 @@ const oracleDialect: DatabaseDialect = {
     SELECT c.owner AS schema_name, c.table_name AS object_name,
       CASE WHEN o.object_type = 'VIEW' THEN 'view' ELSE 'table' END AS object_kind,
       c.column_name, c.data_type, c.nullable AS is_nullable,
-      c.column_id AS ordinal_position
+      c.column_id AS ordinal_position,
+      object_note.comments AS object_description,
+      column_note.comments AS column_description
     FROM ALL_TAB_COLUMNS c
     JOIN ALL_OBJECTS o ON o.owner = c.owner AND o.object_name = c.table_name
+    LEFT JOIN ALL_TAB_COMMENTS object_note
+      ON object_note.owner = c.owner AND object_note.table_name = c.table_name
+    LEFT JOIN ALL_COL_COMMENTS column_note
+      ON column_note.owner = c.owner AND column_note.table_name = c.table_name
+      AND column_note.column_name = c.column_name
     WHERE o.object_type IN ('TABLE', 'VIEW')
       AND o.owner NOT IN ('SYS', 'SYSTEM')
     UNION ALL
@@ -36,7 +43,9 @@ const oracleDialect: DatabaseDialect = {
       NULL AS column_name,
       NULL AS data_type,
       NULL AS is_nullable,
-      NULL AS ordinal_position
+      NULL AS ordinal_position,
+      NULL AS object_description,
+      NULL AS column_description
     FROM all_procedures p
     WHERE p.object_type = 'PROCEDURE'
       AND p.owner NOT IN ('SYS', 'SYSTEM')

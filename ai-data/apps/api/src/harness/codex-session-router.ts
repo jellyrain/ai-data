@@ -46,6 +46,8 @@ class CodexSessionRouter {
   private flushTimer?: NodeJS.Timeout;
   private queued = 0;
   private queuedBytes = 0;
+  /** 仅指向队尾尚未开始提交的增量；任何有序边界都会结束本次合并。 */
+  private queuedDelta?: HarnessMessage;
   private textLength = 0;
   private queue = Promise.resolve();
   private readonly calls = new Set<string>();
@@ -90,6 +92,7 @@ class CodexSessionRouter {
         throw new ApplicationError("INTERNAL_ERROR", "Codex 工具调用上下文无效");
       this.calls.add(call.callId);
       this.flushText();
+      this.queuedDelta = undefined;
       const task = this.queue.then(async () => {
         if (this.stopped || this.waiting || this.request.signal.aborted)
           throw new ApplicationError("CANCELLED", "分析已停止");
@@ -218,6 +221,7 @@ class CodexSessionRouter {
     }
   }
   private enqueue(action: () => Promise<void>): void {
+    this.queuedDelta = undefined;
     this.queue = this.queue
       .then(async () => {
         if (!this.stopped && !this.request.signal.aborted) await action();
@@ -258,20 +262,33 @@ class CodexSessionRouter {
   private publish(event: HarnessMessage): void {
     if (!this.request.onMessage || this.stopped || this.request.signal.aborted) return;
     const bytes = Buffer.byteLength(event.content, "utf8");
-    if (this.queued >= 128 || this.queuedBytes + bytes > 512000) {
+    const previous = this.queuedDelta;
+    const merge =
+      event.status === "delta" &&
+      previous?.itemId === event.itemId &&
+      previous.phase === event.phase &&
+      previous.content.length + event.content.length <= 64000;
+    if ((!merge && this.queued >= 128) || this.queuedBytes + bytes > 512000) {
       this.fail(new ApplicationError("QUERY_LIMIT_EXCEEDED", "助手文字提交队列已满"));
       return;
     }
-    this.queued++;
     this.queuedBytes += bytes;
+    if (merge) {
+      previous.content += event.content;
+      return;
+    }
+    this.queued++;
     this.enqueue(async () => {
+      // 回调开始后冻结其正文，后续增量进入下一批，避免修改正在持久化的事件。
+      if (this.queuedDelta === event) this.queuedDelta = undefined;
       try {
         await this.request.onMessage!(event);
       } finally {
         this.queued--;
-        this.queuedBytes -= bytes;
+        this.queuedBytes -= Buffer.byteLength(event.content, "utf8");
       }
     });
+    if (event.status === "delta") this.queuedDelta = event;
   }
   private flushText(): void {
     const pending = this.pending;

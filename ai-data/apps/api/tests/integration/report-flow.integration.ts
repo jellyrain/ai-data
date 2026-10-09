@@ -361,6 +361,15 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
     expect(response.statusCode).toBe(200);
     const result = reportExecutionSchema.parse(response.json());
     expect(result.status).toBe("completed");
+    const executionRun = await runs.get(context, result.analysis_run_id);
+    expect((await conversations.list(context)).map((item) => item.id)).not.toContain(
+      executionRun.conversation_id,
+    );
+    expect(result.results[0].evidence.result.execution_sql).toMatchObject({
+      dialect: "sqlserver",
+      sql: expect.stringContaining("SELECT"),
+      parameters: expect.any(Array),
+    });
     expect(result.results[0].evidence.result.rows).toEqual([{ department: "A", visits: 2 }]);
     expect(execute.mock.calls.length).toBe(before + 1);
     expect(
@@ -429,6 +438,9 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
       idempotency_key: "edit",
     });
     const queryCalls = execute.mock.calls.length;
+    expect((await conversations.list(context)).map((item) => item.id)).not.toContain(
+      run.conversation_id,
+    );
     const binding = {
       report_id: saved.report_id,
       analysis_run_id: run.analysis_run_id,
@@ -556,6 +568,14 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
     expect(
       (await reporting.definitions.get(context, manual.report_id)).source_analysis_run_id,
     ).toBe(id);
+    await conversations.delete(context, [conversation.id]);
+    expect(await conversations.get(context, conversation.id)).toBeNull();
+    expect((await reporting.reports.get(context, manual.report_id)).report_id).toBe(
+      manual.report_id,
+    );
+    expect(
+      (await reporting.management.exportReport(context, manual.report_id)).tables,
+    ).toHaveLength(1);
   });
   it("分析说明只引用指定执行，导出携带说明且新运行不复制旧结论", async () => {
     const saved = await reporting.definitions.save(context, { definition });
@@ -568,6 +588,9 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
       prompt: "说明结果",
       idempotency_key: "narrative",
     });
+    expect((await conversations.list(context)).map((item) => item.id)).not.toContain(
+      createdRun.conversation_id,
+    );
     await expect(
       reporting.revisions.binding(context, saved.report_id, createdRun.analysis_run_id),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });

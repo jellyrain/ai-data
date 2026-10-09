@@ -1,9 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AnalysisWorkspace } from "../../../src/features/analysis/stores/analysis-workspace";
 import { SessionResources } from "../../../src/shared/session/session-resources";
 import { ApiError } from "../../../src/shared/http/api-error";
 import type { Transport } from "../../../src/shared/http/http-types";
 import type { AnalysisRunState } from "@ai-data/contracts";
+
+afterEach(() => vi.unstubAllGlobals());
 
 const conversation = {
   id: "c",
@@ -54,6 +56,27 @@ function fixture(extra?: Transport) {
   return { workspace, request, resources, stream };
 }
 describe("分析工作台交互与身份清理", () => {
+  it("批量删除当前会话清理正文与草稿，拒绝删除时保留列表", async () => {
+    let conflict = true;
+    const { workspace, request } = fixture(async () => {
+      if (conflict) throw new ApiError("请先停止分析", 409);
+    });
+    await workspace.enter("c");
+    workspace.setDraft("草稿");
+    expect(await workspace.deleteConversations(["c"])).toBe(false);
+    expect(workspace.state.detail?.conversation.id).toBe("c");
+    expect(workspace.state.conversations).toHaveLength(1);
+    conflict = false;
+    expect(await workspace.deleteConversations(["c"])).toBe(true);
+    expect(workspace.state.detail).toBeNull();
+    expect(workspace.state.draft).toBe("");
+    expect(workspace.state.conversations).toEqual([]);
+    expect(request).toHaveBeenCalledWith(
+      "/api/conversations/delete",
+      expect.objectContaining({ method: "POST", body: { ids: ["c"] } }),
+    );
+    workspace.dispose();
+  });
   it("运行期间读到的依据在运行结束后重新读取，合并同时点击的请求", async () => {
     let snapshot: AnalysisRunState = {
       analysis_run_id: "r",
@@ -100,24 +123,34 @@ describe("分析工作台交互与身份清理", () => {
     expect(request.mock.calls.filter(([path]) => path.endsWith("/evidence"))).toHaveLength(2);
     workspace.dispose();
   });
-  it("回执丢失时同次重试复用幂等键，重复点击只产生一个在途请求", async () => {
-    let attempts = 0;
-    const { workspace, request } = fixture(async () => {
-      if (++attempts === 1) throw new ApiError("响应丢失");
-      return receipt;
-    });
-    await workspace.enter("c");
-    workspace.setDraft("人次");
-    await Promise.all([workspace.send(), workspace.send()]);
-    expect(attempts).toBe(1);
-    await workspace.send();
-    const calls = request.mock.calls.filter(([path]) => path.endsWith("/messages"));
-    expect(calls).toHaveLength(2);
-    expect(calls[0]?.[1]?.body).toEqual(calls[1]?.[1]?.body);
-    expect(workspace.state.detail?.messages).toHaveLength(1);
-    expect(workspace.state.draft).toBe("");
-    workspace.dispose();
-  });
+  it.each([true, false])(
+    "原生 UUID 可用=%s 时，回执丢失后重试复用幂等键，重复点击只产生一个在途请求",
+    async (nativeUuid) => {
+      if (!nativeUuid)
+        vi.stubGlobal("crypto", { getRandomValues: crypto.getRandomValues.bind(crypto) });
+      let attempts = 0;
+      const { workspace, request } = fixture(async () => {
+        if (++attempts === 1) throw new ApiError("响应丢失");
+        return receipt;
+      });
+      await workspace.enter("c");
+      workspace.setDraft("人次");
+      await Promise.all([workspace.send(), workspace.send()]);
+      expect(attempts).toBe(1);
+      await workspace.send();
+      const calls = request.mock.calls.filter(([path]) => path.endsWith("/messages"));
+      expect(calls).toHaveLength(2);
+      expect(calls[0]?.[1]?.body).toEqual(calls[1]?.[1]?.body);
+      expect(calls[0]?.[1]?.body).toMatchObject({
+        idempotency_key: expect.stringMatching(
+          /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/,
+        ),
+      });
+      expect(workspace.state.detail?.messages).toHaveLength(1);
+      expect(workspace.state.draft).toBe("");
+      workspace.dispose();
+    },
+  );
   it("切换会话保留草稿，退出清理草稿、结果和待确认提交", async () => {
     const { workspace, resources } = fixture();
     await workspace.enter("c");

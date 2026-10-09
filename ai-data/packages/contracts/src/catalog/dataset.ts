@@ -3,7 +3,9 @@ import { queryOperatorSchema } from "../query/query-operators";
 import { dataTypeSchema, isDataValue } from "../shared/data-values";
 
 /** 数据目录中的对象名、字段名和关系字段引用。 */
-const identifier = z.string().regex(/^[A-Za-z_][A-Za-z0-9_.]*$/, "必须是安全标识符");
+const identifier = z
+  .string()
+  .regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u, "必须是安全标识符");
 
 /** DAS 目录中字段条件与输入参数共用的值定义，仅接受声明字段。 */
 const queryValueDefinitionSchema = z

@@ -61,6 +61,21 @@ it("模型的最终阶段标记仍属于过程，只有已提交答案成为最�
     ])[0],
   ).toMatchObject({ final: true, content: "已提交回答" });
 });
+it("历史回放仅有工具结果时仍保留参数摘要与耗时", () => {
+  expect(
+    projectRunTimeline([
+      event(1, {
+        type: "tool_result",
+        tool_call_id: "query",
+        tool_name: "query_dataset",
+        success: true,
+        input_summary: "科室明细",
+        output_summary: "返回 18 行",
+        duration_ms: 45,
+      }),
+    ])[0],
+  ).toMatchObject({ input: "科室明细", output: "返回 18 行", durationMs: 45, success: true });
+});
 it("代次区分相同消息和工具 ID，旧答案与表格保持事件位置", () => {
   const timeline = projectRunTimeline([
     event(1, {

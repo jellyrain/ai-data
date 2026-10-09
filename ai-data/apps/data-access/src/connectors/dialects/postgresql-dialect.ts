@@ -27,11 +27,17 @@ const postgresqlDialect: DatabaseDialect = {
       c.column_name,
       c.data_type,
       c.is_nullable,
-      c.ordinal_position AS ordinal_position
+      c.ordinal_position AS ordinal_position,
+      pg_catalog.obj_description(o.oid, 'pg_class') AS object_description,
+      pg_catalog.col_description(o.oid, a.attnum) AS column_description
     FROM information_schema.tables t
     JOIN information_schema.columns c
       ON c.table_schema = t.table_schema
       AND c.table_name = t.table_name
+    LEFT JOIN pg_catalog.pg_namespace n ON n.nspname = t.table_schema
+    LEFT JOIN pg_catalog.pg_class o ON o.relnamespace = n.oid AND o.relname = t.table_name
+    LEFT JOIN pg_catalog.pg_attribute a
+      ON a.attrelid = o.oid AND a.attname = c.column_name AND a.attnum > 0 AND NOT a.attisdropped
     WHERE t.table_schema NOT IN ('pg_catalog', 'information_schema')
     UNION ALL
     SELECT
@@ -41,7 +47,9 @@ const postgresqlDialect: DatabaseDialect = {
       NULL AS column_name,
       NULL AS data_type,
       NULL AS is_nullable,
-      NULL AS ordinal_position
+      NULL AS ordinal_position,
+      NULL::text AS object_description,
+      NULL::text AS column_description
     FROM information_schema.routines r
     WHERE r.routine_schema NOT IN ('pg_catalog', 'information_schema')
       AND r.routine_type = 'PROCEDURE'

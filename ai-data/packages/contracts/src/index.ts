@@ -503,6 +503,7 @@ export {
 } from "./data-access/procedure-definition";
 export {
   managementRevisionSchema,
+  deleteDataSourceSchema,
   dataSourceManagementConfigSchema,
   databaseTargetDiscoveryRequestSchema,
   sharedDatabaseCredentialsSchema,
@@ -571,3 +572,17 @@ export type {
 } from "./knowledge/knowledge-management-types";
 export { preferenceEditStateSchema } from "./memory/preference-management";
 export type { PreferenceEditState } from "./memory/preference-management-types";
+export {
+  databaseConnectionSchema,
+  createDatabaseConnectionSchema,
+  updateDatabaseConnectionSchema,
+  deleteDatabaseConnectionSchema,
+  testDatabaseConnectionSchema,
+  testDatabaseConnectionDraftSchema,
+} from "./data-access/database-connection";
+export type {
+  DatabaseConnection,
+  CreateDatabaseConnection,
+  UpdateDatabaseConnection,
+  TestDatabaseConnection,
+} from "./data-access/database-connection-types";

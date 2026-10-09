@@ -1,0 +1,299 @@
+{
+  "model": "rj-model-v1",
+  "status": "completed",
+  "elapsed_ms": 62073,
+  "streamTiming": [
+    {
+      "type": "tool_start",
+      "name": "list_sources",
+      "elapsed_ms": 19297
+    },
+    {
+      "type": "tool_end",
+      "name": "list_sources",
+      "elapsed_ms": 19609
+    },
+    {
+      "type": "tool_start",
+      "name": "read_skill_reference",
+      "elapsed_ms": 19676
+    },
+    {
+      "type": "tool_end",
+      "name": "read_skill_reference",
+      "elapsed_ms": 19848
+    },
+    {
+      "type": "tool_start",
+      "name": "search_catalog",
+      "elapsed_ms": 23902
+    },
+    {
+      "type": "tool_end",
+      "name": "search_catalog",
+      "elapsed_ms": 24128
+    },
+    {
+      "type": "tool_start",
+      "name": "get_tool_schema",
+      "elapsed_ms": 24210
+    },
+    {
+      "type": "tool_end",
+      "name": "get_tool_schema",
+      "elapsed_ms": 24465
+    },
+    {
+      "type": "tool_start",
+      "name": "describe_dataset",
+      "elapsed_ms": 29792
+    },
+    {
+      "type": "tool_end",
+      "name": "describe_dataset",
+      "elapsed_ms": 30044
+    },
+    {
+      "type": "tool_start",
+      "name": "query_dataset",
+      "elapsed_ms": 42198
+    },
+    {
+      "type": "tool_end",
+      "name": "query_dataset",
+      "elapsed_ms": 43362
+    },
+    {
+      "type": "assistant_message",
+      "status": "started",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 0,
+      "received_ms": 51798,
+      "committed_ms": 52315
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 21,
+      "received_ms": 52315,
+      "committed_ms": 52529
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 6,
+      "received_ms": 52529,
+      "committed_ms": 52744
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 16,
+      "received_ms": 52744,
+      "committed_ms": 52915
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 11,
+      "received_ms": 52915,
+      "committed_ms": 53085
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 8,
+      "received_ms": 53085,
+      "committed_ms": 53270
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 12,
+      "received_ms": 53270,
+      "committed_ms": 53433
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 11,
+      "received_ms": 53433,
+      "committed_ms": 53601
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 10,
+      "received_ms": 53601,
+      "committed_ms": 53772
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 11,
+      "received_ms": 53772,
+      "committed_ms": 53935
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 9,
+      "received_ms": 53935,
+      "committed_ms": 54116
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 6,
+      "received_ms": 54116,
+      "committed_ms": 54267
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 6,
+      "received_ms": 54267,
+      "committed_ms": 54862
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 36,
+      "received_ms": 54862,
+      "committed_ms": 55599
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 40,
+      "received_ms": 55599,
+      "committed_ms": 55998
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 32,
+      "received_ms": 55998,
+      "committed_ms": 56567
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 49,
+      "received_ms": 56567,
+      "committed_ms": 57062
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 40,
+      "received_ms": 57062,
+      "committed_ms": 57607
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 24,
+      "received_ms": 57607,
+      "committed_ms": 57976
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 14,
+      "received_ms": 57976,
+      "committed_ms": 58361
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 18,
+      "received_ms": 58361,
+      "committed_ms": 58709
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 12,
+      "received_ms": 58709,
+      "committed_ms": 58978
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 7,
+      "received_ms": 58978,
+      "committed_ms": 59437
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 28,
+      "received_ms": 59437,
+      "committed_ms": 59907
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 10,
+      "received_ms": 59907,
+      "committed_ms": 60497
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 26,
+      "received_ms": 60497,
+      "committed_ms": 60914
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 10,
+      "received_ms": 60914,
+      "committed_ms": 61137
+    },
+    {
+      "type": "assistant_message",
+      "status": "delta",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 11,
+      "received_ms": 61137,
+      "committed_ms": 61380
+    },
+    {
+      "type": "assistant_message",
+      "status": "completed",
+      "item_id": "msg_eyIg8De0tJOMtXAfT6fUkIIdC962ewN9",
+      "characters": 484,
+      "received_ms": 61380,
+      "committed_ms": 61612
+    }
+  ]
+}

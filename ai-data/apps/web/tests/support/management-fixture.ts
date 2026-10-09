@@ -7,6 +7,7 @@ import {
   createManagedUserSchema,
   managedDepartmentsInputSchema,
   dataSourceManagementConfigSchema,
+  deleteDataSourceSchema,
   sourceObjectSelectionRequestSchema,
   apiDatasetConfigSchema,
   relationPublishInputSchema,
@@ -19,6 +20,8 @@ import {
   type ApiDatasetConfig,
   type CurrentPolicyState,
   type CatalogRelation,
+  type Dataset,
+  type DatasetColumn,
 } from "@ai-data/contracts";
 /** 浏览器交互使用隔离内存合同；实际路由和 SQL 另行验证，所有凭据均为测试值。 */
 async function managementFixture(page: Page) {
@@ -85,6 +88,14 @@ async function managementFixture(page: Page) {
   };
   let sourceVersion = 1,
     objectVersion = 1;
+  let sourceDeleted = false;
+  const sourceMode = {
+    deleteConflict: false,
+    dropDeleteReceipt: false,
+    failTargets: false,
+    chineseObjects: false,
+    objectCount: 24,
+  };
   const revision = (version: number) => String(version).padStart(64, "0");
   let objects: ManagedSourceObject[] = [
     {
@@ -98,12 +109,12 @@ async function managementFixture(page: Page) {
       query_capabilities: { sortable_fields: [] },
     },
   ];
-  const columns = [
+  const columns: DatasetColumn[] = [
     { name: "id", data_type: "integer", nullable: false },
     { name: "department_id", data_type: "string", nullable: false },
     { name: "amount", data_type: "decimal", nullable: false },
   ];
-  const datasets = ["visits", "departments"].map((id, index) => ({
+  const datasets: Dataset[] = ["visits", "departments"].map((id, index) => ({
     source_id: "clinical",
     object_id: id,
     name: index ? "科室字典" : "住院记录",
@@ -256,6 +267,19 @@ async function managementFixture(page: Page) {
       });
     if (path.startsWith("/admin/data-access/services/")) {
       const suffix = path.split("/").slice(5).join("/");
+      if (suffix === "database-connections" || suffix === "database-connections/demo-ref") {
+        const connection = {
+          secret_ref: "demo-ref",
+          connector_kind: "sqlserver",
+          host: "sql.test",
+          port: 1433,
+          user: "reader",
+          sqlserver_transport: transport,
+          source_ids: sourceDeleted ? [] : ["clinical"],
+          revision: revision(transportVersion),
+        };
+        return send(suffix === "database-connections" ? { items: [connection] } : connection);
+      }
       if (suffix === "data-source-secrets/demo-ref/sqlserver-transport") {
         if (method === "PUT") {
           const input = sqlServerTransportUpdateSchema.parse(body);
@@ -279,7 +303,38 @@ async function managementFixture(page: Page) {
           ],
         });
       }
-      if (suffix === "data-sources" && method === "GET") return send({ items: [source] });
+      if (suffix === "database-connections/demo-ref/test") {
+        return sourceMode.failTargets
+          ? send({ code: "DATA_SOURCE_UNAVAILABLE", message: "数据库暂时不可达" }, 503)
+          : send({
+              databases: [
+                { name: "ai_bi_demo", connect_target: "ai_bi_demo" },
+                { name: "archive", connect_target: "archive" },
+              ],
+            });
+      }
+      if (suffix === "data-sources/delete") {
+        const input = deleteDataSourceSchema.parse(body);
+        if (sourceDeleted)
+          return sourceMode.dropDeleteReceipt
+            ? send({ code: "INTERNAL_ERROR", message: "清理未完成" }, 500)
+            : send({ source_id: input.source_id });
+        if (
+          sourceMode.deleteConflict ||
+          input.expected_revision !== revision(sourceVersion) ||
+          input.expected_objects_revision !== revision(objectVersion)
+        )
+          return conflict();
+        sourceDeleted = true;
+        objects = [];
+        sourceVersion++;
+        objectVersion++;
+        return sourceMode.dropDeleteReceipt
+          ? send({ code: "INTERNAL_ERROR", message: "回执丢失" }, 500)
+          : send({ source_id: input.source_id });
+      }
+      if (suffix === "data-sources" && method === "GET")
+        return send({ items: sourceDeleted ? [] : [source] });
       if (suffix === "data-sources" && method === "PUT") {
         const input = dataSourceManagementConfigSchema.parse(body);
         if (input.expected_revision !== revision(sourceVersion)) return conflict();
@@ -291,7 +346,7 @@ async function managementFixture(page: Page) {
         return send({ source_id: source.source_id });
       }
       if (suffix.startsWith("data-sources/"))
-        return send({ config: source, revision: revision(sourceVersion) });
+        return send({ config: sourceDeleted ? null : source, revision: revision(sourceVersion) });
       if (suffix === "data-source-secrets" && method === "GET")
         return send({
           items: [{ secret_ref: "demo-ref", exists: true, source_ids: ["clinical"] }],
@@ -306,6 +361,38 @@ async function managementFixture(page: Page) {
               native_object_name: "inpatient",
               columns,
             },
+            ...(sourceMode.chineseObjects
+              ? [
+                  {
+                    object_id: "table.dbo.科室",
+                    kind: "table",
+                    native_schema_name: "dbo",
+                    native_object_name: "科室",
+                    columns: [
+                      { name: "科室编号", data_type: "integer", nullable: false },
+                      { name: "科室名称", data_type: "string", nullable: false },
+                      { name: "__$operation", data_type: "integer", nullable: false },
+                    ],
+                  },
+                  {
+                    object_id: "view.dbo.科室视图",
+                    kind: "view",
+                    native_schema_name: "dbo",
+                    native_object_name: "科室视图",
+                    columns: [
+                      { name: "科室编号", data_type: "integer", nullable: false },
+                      { name: "科室名称", data_type: "string", nullable: false },
+                      { name: "__$operation", data_type: "integer", nullable: false },
+                    ],
+                  },
+                ]
+              : Array.from({ length: sourceMode.objectCount - 1 }, (_, i) => ({
+                  object_id: `table.dbo.department_${i + 1}`,
+                  kind: "table",
+                  native_schema_name: "dbo",
+                  native_object_name: `department_${i + 1}`,
+                  columns,
+                }))),
           ],
         });
       if (suffix.startsWith("data-source-objects/") && method === "GET")
@@ -314,7 +401,13 @@ async function managementFixture(page: Page) {
         const input = sourceObjectSelectionRequestSchema.parse(body);
         if (input.expected_revision !== revision(objectVersion)) return conflict();
         objects = input.objects.map((item) => ({
-          ...objects[0]!,
+          source_id: "clinical",
+          object_kind: item.discovered_object_id?.startsWith("view.")
+            ? ("view" as const)
+            : ("table" as const),
+          native_schema_name: "dbo",
+          native_object_name: item.discovered_object_id?.split(".").at(-1),
+          ...objects.find((row) => row.object_id === item.object_id),
           object_id: item.object_id,
           is_discoverable: item.is_discoverable ?? true,
           is_queryable: item.is_queryable ?? true,
@@ -435,6 +528,6 @@ async function managementFixture(page: Page) {
     }
     return route.fallback();
   });
-  return { models, agents, users, writes };
+  return { models, agents, users, writes, sourceMode, datasets };
 }
 export { managementFixture };

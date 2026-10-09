@@ -42,7 +42,7 @@ function projectRunTimeline(events: readonly SseEvent[]): RunTimelineItem[] {
       const id = event.tool_call_id ? `${event.lease_epoch ?? 0}:tool:${event.tool_call_id}` : key;
       let item = tools.get(id);
       if (!item) {
-        item = { kind: "tool", key: id, name: event.tool_name };
+        item = { kind: "tool", key: id, name: event.tool_name, callId: event.tool_call_id };
         tools.set(id, item);
         items.push(item);
       }
@@ -50,6 +50,8 @@ function projectRunTimeline(events: readonly SseEvent[]): RunTimelineItem[] {
       else {
         item.output = event.output_summary;
         item.success = event.success;
+        item.input ??= event.input_summary;
+        item.durationMs = event.duration_ms;
       }
     } else if (event.type === "table") items.push({ kind: "table", key, event });
     else if (event.type === "thinking" || event.type === "progress")

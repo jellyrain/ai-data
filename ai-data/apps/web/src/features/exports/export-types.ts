@@ -11,7 +11,7 @@ type MarkdownToken = ReturnType<InstanceType<typeof MarkdownIt>["parse"]>[number
 type ExportSource =
   | { kind: "execution"; id: string; reportId: string }
   | { kind: "snapshot"; id: string; version: number }
-  | { kind: "conversation"; id: string };
+  | { kind: "conversation"; id: string; evidenceId?: string };
 /** 已通过 API 授权的三种内容包。 */
 type ExportPack = ReportExportContent | ReportExecutionExportContent | ConversationExportContent;
 /** 文档内联文字，只接受安全链接和基本文字样式。 */

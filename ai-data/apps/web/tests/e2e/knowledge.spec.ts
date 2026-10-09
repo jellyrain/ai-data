@@ -35,6 +35,8 @@ async function createRule(page: Page) {
   await expect(page.getByText("候选已保存", { exact: false })).toBeVisible();
 }
 async function publish(page: Page) {
+  if (new URL(page.url()).pathname === "/settings/knowledge")
+    await page.getByRole("button", { name: "负责人和审核", exact: true }).click();
   await page.getByRole("button", { name: "搜索负责人", exact: true }).click();
   await choose(page, "负责人", "测试管理员 · admin");
   await page.getByRole("button", { name: "分配负责人", exact: true }).click();
@@ -43,6 +45,8 @@ async function publish(page: Page) {
   await page.getByLabel("知识生效时间", { exact: true }).fill("2026-10-03 09:00:00");
   await page.getByRole("button", { name: "发布知识", exact: true }).click();
   await page.getByRole("button", { name: "确认", exact: true }).click();
+  if (new URL(page.url()).pathname === "/settings/knowledge")
+    await page.getByRole("button", { name: "来源与记录", exact: true }).click();
   await expect(page.getByRole("heading", { name: "审核记录" })).toBeVisible();
 }
 

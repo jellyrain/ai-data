@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { ElInput, ElSelect, ElOption, ElButton } from "element-plus";
 import type { ReportDefinition } from "@ai-data/contracts";
+import { createUuid } from "../../../shared/identity/create-uuid";
 import type { ReportEditor } from "../stores/report-editor";
 import { cloneDefinition } from "../models/definition-editor";
 import ReportPreview from "./report-preview.vue";
@@ -54,11 +55,9 @@ function create() {
   if (!id) return;
   edit((draft) => {
     draft.presentation.push({
-      section_id: crypto.randomUUID(),
+      section_id: createUuid(),
       title: draft.title,
-      blocks: [
-        { block_id: crypto.randomUUID(), title: draft.title, type: "table", query_ids: [id] },
-      ],
+      blocks: [{ block_id: createUuid(), title: draft.title, type: "table", query_ids: [id] }],
     });
   });
 }

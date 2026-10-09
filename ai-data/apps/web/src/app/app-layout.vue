@@ -8,6 +8,7 @@ import { useLayoutStore } from "./layout-store";
 import { navigation } from "./navigation";
 import NavigationMenu from "./navigation-menu.vue";
 import AppearancePicker from "../shared/ui/appearance-picker.vue";
+import AccountFooter from "./account-footer.vue";
 const { auth, resources } = useServices();
 const layout = useLayoutStore();
 const route = useRoute();
@@ -34,19 +35,12 @@ async function logout() {
         ><span class="brand-mark"><ChartNoAxesCombined :size="22" aria-hidden="true" /></span>AI
         Data</RouterLink
       ><NavigationMenu />
-      <div class="sidebar-footer">
-        <span class="account-avatar" aria-hidden="true">{{
-          auth.state.user?.displayName?.slice(0, 1) || "A"
-        }}</span>
-        <div>
-          <strong>{{ auth.state.user?.displayName }}</strong
-          ><span>数据分析工作台</span>
-        </div>
-      </div>
+      <AccountFooter :display-name="auth.state.user?.displayName" />
     </aside>
-    <ElDrawer v-model="layout.navigationOpen" title="工作空间导航" direction="ltr" size="280px"
-      ><NavigationMenu @navigate="layout.navigationOpen = false"
-    /></ElDrawer>
+    <ElDrawer v-model="layout.navigationOpen" title="工作空间导航" direction="ltr" size="280px">
+      <NavigationMenu @navigate="layout.navigationOpen = false" />
+      <template #footer><AccountFooter :display-name="auth.state.user?.displayName" /></template>
+    </ElDrawer>
     <div class="workspace">
       <header class="app-header">
         <div class="header-context">

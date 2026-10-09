@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { z } from "zod";
 import type { CreateConversation } from "@ai-data/contracts";
 import { ApplicationError } from "../errors/application-error";
 import type { AnalysisDispatcher } from "../runtime/runtime-types";
@@ -56,6 +57,16 @@ class ConversationService {
   /** 返回当前用户有权访问的会话列表。 */
   async list(context: AuthContext): Promise<Conversation[]> {
     return this.repository.listConversations(context.userId, context.organizationId);
+  }
+
+  /** 批次上限为 100；去重并固定锁顺序，归属与运行冲突由仓储在同一事务校验。 */
+  async delete(context: AuthContext, ids: unknown): Promise<void> {
+    const selected = z.array(z.string().min(1).max(128)).min(1).max(100).parse(ids);
+    await this.repository.deleteConversations(
+      [...new Set(selected)].sort(),
+      context.userId,
+      context.organizationId,
+    );
   }
 
   /** 返回会话及其按序消息；跨用户和跨组织时不暴露记录。 */

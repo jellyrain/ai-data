@@ -7,6 +7,7 @@ import {
   submitMessageSchema,
 } from "@ai-data/contracts";
 import type { AgentVersion, AnalysisRunState, SseEvent } from "@ai-data/contracts";
+import { createUuid } from "../../../shared/identity/create-uuid";
 import { ApiError } from "../../../shared/http/api-error";
 import { subscribeRun, isTerminal } from "../../../shared/stream/run-stream";
 import {
@@ -36,6 +37,7 @@ function initialState(): WorkspaceState {
     loading: false,
     sending: false,
     creating: false,
+    deleting: false,
     answering: false,
     cancelling: false,
     pendingMessage: false,
@@ -108,6 +110,7 @@ class AnalysisWorkspace {
     this.state.answering = false;
     this.state.cancelling = false;
     this.state.creating = false;
+    this.state.deleting = false;
   }
   reset(): void {
     this.leave();
@@ -246,6 +249,43 @@ class AnalysisWorkspace {
     this.state.creationUncertain = false;
     this.state.error = "";
   }
+  /** 服务端确认整批删除后清理列表与草稿；页面切换后晚到的响应不能覆盖新会话。 */
+  async deleteConversations(ids: string[]): Promise<boolean> {
+    if (this.state.deleting || !ids.length) return false;
+    const generation = this.generation;
+    this.state.deleting = true;
+    this.state.listError = "";
+    try {
+      await this.dependencies.request("/api/conversations/delete", {
+        method: "POST",
+        body: { ids },
+        signal: this.page.signal,
+      });
+      if (!this.current(generation)) return false;
+      const removed = new Set(ids);
+      this.state.conversations = this.state.conversations.filter((item) => !removed.has(item.id));
+      for (const id of ids) {
+        this.drafts.delete(id);
+        this.pending.delete(id);
+      }
+      if (removed.has(this.selected)) {
+        this.leave();
+        this.page = new AbortController();
+        this.selected = "";
+        this.state.draft = "";
+        this.state.pendingMessage = false;
+      }
+      return true;
+    } catch (error) {
+      if (this.current(generation)) {
+        this.state.listError = errorText(error);
+        if (error instanceof ApiError && [401, 403].includes(error.status)) this.failed(error);
+      }
+      return false;
+    } finally {
+      if (generation === this.generation) this.state.deleting = false;
+    }
+  }
   activeRun(): RunView | undefined {
     return Object.values(this.state.runs).find(
       (run) => !run.snapshot || !isTerminal(run.snapshot.status),
@@ -264,7 +304,7 @@ class AnalysisWorkspace {
     const existing = this.pending.get(id);
     const content = existing?.content ?? this.state.draft.trim();
     if (!content || content.length > 64000) return;
-    const submission = existing ?? { content, key: crypto.randomUUID() };
+    const submission = existing ?? { content, key: createUuid() };
     this.pending.set(id, submission);
     this.state.pendingMessage = true;
     const generation = this.generation;
@@ -440,8 +480,7 @@ class AnalysisWorkspace {
     const generation = this.generation;
     const signature = JSON.stringify(value);
     const prior = this.answers.get(question.clarification_id);
-    const pending =
-      prior?.value === signature ? prior : { value: signature, key: crypto.randomUUID() };
+    const pending = prior?.value === signature ? prior : { value: signature, key: createUuid() };
     this.answers.set(question.clarification_id, pending);
     this.state.answering = true;
     this.state.error = "";

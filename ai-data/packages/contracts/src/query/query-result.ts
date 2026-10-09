@@ -83,6 +83,25 @@ const queryResultSchema = queryResultTableSchema
     delivery: queryResultDeliverySchema.optional(),
     /** 数据新鲜度说明，可由连接器提供。 */
     freshness: z.string().optional(),
+    /** 数据库连接器实际提交的参数化 SQL；参数只留存绑定顺序和类型。旧证据与 HTTP 结果可省略。 */
+    execution_sql: z
+      .object({
+        dialect: z.enum(["sqlserver", "mysql", "postgresql", "oracle"]),
+        sql: z.string().min(1).max(256000),
+        parameters: z
+          .array(
+            z
+              .object({
+                position: z.number().int().positive(),
+                placeholder: z.string().min(1).max(128),
+                data_type: dataTypeSchema,
+              })
+              .strict(),
+          )
+          .max(10000),
+      })
+      .strict()
+      .optional(),
   })
   .refine((result) => result.row_count === result.rows.length, {
     path: ["row_count"],

@@ -9,7 +9,7 @@ import { bearerToken } from "./auth-routes";
 const sourceParamsSchema = z.object({ sourceId: z.string().min(1).max(128) }).strict();
 /** 图中心对象只允许目录标识符，关系方向由已发布定义确定。 */
 const graphParamsSchema = sourceParamsSchema
-  .extend({ objectId: z.string().regex(/^[A-Za-z_][A-Za-z0-9_.]*$/) })
+  .extend({ objectId: z.string().regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u) })
   .strict();
 
 /** 管理发布和用户图读取共享关系服务，用户图不包含隐藏对象或连接字段。 */

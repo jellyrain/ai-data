@@ -30,7 +30,7 @@ function buildRelationScopes(
   const uniqueKeys = new Map<string, string[][]>();
   for (const ref of [query.from, ...query.joins]) {
     const relation = relations.get(ref.alias)!;
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(ref.alias))
+    if (!/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_$]*$/u.test(ref.alias))
       throw new QueryAuthorizationError("查询别名必须为单段安全名称", "INVALID_INPUT");
     if (!["table", "view"].includes(relation.authorized.dataset.kind))
       throw new QueryAuthorizationError("关系查询仅支持表或视图", "UNSUPPORTED_QUERY");

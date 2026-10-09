@@ -17,7 +17,8 @@ import type {
   SkillCatalogEntry,
   ModelConfiguration,
 } from "@ai-data/contracts";
-import { watch } from "vue";
+import { ref, watch } from "vue";
+const section = ref("basic");
 const draft = defineModel<AgentDefinition>({ required: true });
 defineProps<{
   existing: boolean;
@@ -37,8 +38,22 @@ watch(
 );
 </script>
 <template>
-  <ElForm label-position="top" :disabled="disabled" @submit.prevent
-    ><div class="management-form-grid">
+  <ElForm label-position="top" :disabled="disabled" @submit.prevent>
+    <nav class="management-tabs" aria-label="Agent 配置分区">
+      <ElButton
+        v-for="item in [
+          { id: 'basic', label: '基本配置' },
+          { id: 'tools', label: '工具' },
+          { id: 'skills', label: 'Skill 资源' },
+          { id: 'limits', label: '运行限制' },
+        ]"
+        :key="item.id"
+        :type="section === item.id ? 'primary' : 'default'"
+        @click="section = item.id"
+        >{{ item.label }}</ElButton
+      >
+    </nav>
+    <div v-show="section === 'basic'" class="management-form-grid">
       <ElFormItem label="Agent 标识" required
         ><ElInput v-model="draft.agent_id" :disabled="existing" maxlength="128" /></ElFormItem
       ><ElFormItem label="名称" required
@@ -72,11 +87,11 @@ watch(
         />
         <p class="management-help">发布后固定此版本；模型后续升级不会自动替换。</p></ElFormItem
       >
-      <ElFormItem label="运行指令" class="wide"
+      <ElFormItem label="运行指令/系统提示词" class="wide"
         ><ElInput v-model="draft.instructions" type="textarea" :rows="6" maxlength="16000"
       /></ElFormItem>
     </div>
-    <section class="management-section">
+    <section v-show="section === 'tools'" class="management-section">
       <h3>工具</h3>
       <ElCheckboxGroup v-model="draft.tool_names" class="management-checks"
         ><ElCheckbox v-for="tool in tools" :key="tool.name" :value="tool.name"
@@ -85,7 +100,7 @@ watch(
         ></ElCheckboxGroup
       >
     </section>
-    <section class="management-section">
+    <section v-show="section === 'skills'" class="management-section">
       <h3>Skill 资源</h3>
       <p class="management-help">
         选择 Skill 时需启用 read_skill_reference 工具。发布时保存资源快照。
@@ -99,7 +114,7 @@ watch(
         </div></ElCheckboxGroup
       >
     </section>
-    <section class="management-section">
+    <section v-show="section === 'limits'" class="management-section">
       <h3>单轮运行限制</h3>
       <div class="management-form-grid">
         <ElFormItem label="超时（毫秒）"

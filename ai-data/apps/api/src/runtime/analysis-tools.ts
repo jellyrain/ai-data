@@ -25,7 +25,9 @@ import {
   schemaOnDemandTools,
 } from "./tool-contracts";
 import { modelQueryResult } from "./model-query-result";
+import { toolInputSummary, toolOutputSummary } from "./tool-presentation";
 import { modelToolSchema } from "./model-tool-schema";
+import { metricQueryRequirements } from "../metrics/metric-query-requirements";
 import { datasetSummary, metricSummary, discoveryPage } from "./model-discovery-result";
 import type { MemoryRuntime } from "../memory/memory-runtime";
 import { saveUserPreferenceResultSchema } from "@ai-data/contracts";
@@ -121,12 +123,12 @@ class AnalysisTools {
     const started = dayjs();
     const auditId = createHash("sha256").update(`${lease.epoch}:${callId}`).digest("hex");
     const inputHash = createHash("sha256").update(stableStringify(input)).digest("hex");
-    const base = { tool_call_id: auditId, tool_name: name.slice(0, 128), input_hash: inputHash };
-    await this.dependencies.runs.recordTool(context, runId, lease, {
-      ...base,
-      status: "running",
-      duration_ms: 0,
-    });
+    const base = {
+      tool_call_id: auditId,
+      tool_name: name.slice(0, 128),
+      input_hash: inputHash,
+      input_summary: "参数未通过校验",
+    };
     try {
       if (this.dependencies.allowedNames && !this.dependencies.allowedNames.includes(name))
         throw new ApplicationError("UNAUTHORIZED", "Agent 未启用该工具");
@@ -143,6 +145,12 @@ class AnalysisTools {
         }
       }
       const parsed = schema.parse(input);
+      base.input_summary = toolInputSummary(name, parsed);
+      await this.dependencies.runs.recordTool(context, runId, lease, {
+        ...base,
+        status: "running",
+        duration_ms: 0,
+      });
       const reportTarget = await this.dependencies.reportEditing?.target(context, runId);
       if (reportTarget?.mode === "narrative") {
         if (
@@ -216,6 +224,7 @@ class AnalysisTools {
         status: "completed",
         duration_ms: dayjs().diff(started),
         evidence_ids: evidenceIds(output),
+        output_summary: toolOutputSummary(name, output),
       });
       return { success: true, output };
     } catch (error) {
@@ -230,26 +239,47 @@ class AnalysisTools {
           : error instanceof ApplicationError
             ? error.code
             : "INTERNAL_ERROR";
+      // 指标日期联合类型的默认错误只有 Invalid input，交付具体格式以便模型修正。
+      const issues =
+        error instanceof z.ZodError
+          ? error.issues.slice(0, 10).map((issue) => ({
+              path: issue.path.map(String).join(".").slice(0, 256),
+              message:
+                name === "query_metric" &&
+                issue.code === "invalid_union" &&
+                issue.path.length === 1 &&
+                ["start", "end"].includes(String(issue.path[0]))
+                  ? "必须使用有效的 YYYY-MM-DD 日期或 YYYY-MM-DD HH:mm:ss 日期时间（空格分隔，UTC+8），具体格式按 describe_metric.query_requirements.time_format 填写"
+                  : issue.message.slice(0, 512),
+            }))
+          : undefined;
+      const metricInputError = name === "query_metric" && Boolean(issues?.length);
+      const message =
+        error instanceof ApplicationError
+          ? error.message
+          : metricInputError
+            ? issues!
+                .map((issue) => `${issue.path || "参数"}：${issue.message}`)
+                .join("；")
+                .slice(0, 3900)
+            : "工具调用失败，请检查业务条件";
       await this.dependencies.runs.recordTool(context, runId, lease, {
         ...base,
         status: "failed",
         duration_ms: dayjs().diff(started),
         error_code: code,
+        output_summary:
+          `${code}：${error instanceof ApplicationError || metricInputError ? message : error instanceof z.ZodError ? "调用参数格式无效" : "工具执行失败"}`.slice(
+            0,
+            4000,
+          ),
       });
       return {
         success: false,
         output: {
           code,
-          message:
-            error instanceof ApplicationError ? error.message : "工具调用失败，请检查业务条件",
-          ...(error instanceof z.ZodError
-            ? {
-                issues: error.issues.slice(0, 10).map((issue) => ({
-                  path: issue.path.map(String).join(".").slice(0, 256),
-                  message: issue.message.slice(0, 512),
-                })),
-              }
-            : {}),
+          message,
+          ...(issues ? { issues } : {}),
         },
       };
     }
@@ -438,6 +468,7 @@ class AnalysisTools {
         );
         return {
           ...metric,
+          query_requirements: metricQueryRequirements(metric),
           business_rules: await this.rules(
             context,
             queryScopes(metric.query).map((scope) => ({ ...scope, metric_id: metric.metric_id })),

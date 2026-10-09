@@ -32,6 +32,7 @@ function setup(overrides: Record<string, unknown> = {}) {
     execute: vi.fn(async () => ({ success: true, output: {} })),
   };
   const repository = {
+    loadContextHash: vi.fn(async () => "scope-hash"),
     loadInput: vi.fn(async () => ({
       conversation_id: "conversation",
       context_hash: "scope-hash",
@@ -55,6 +56,24 @@ function setup(overrides: Record<string, unknown> = {}) {
 }
 
 describe("分析执行器", () => {
+  it("流式复核只读取指纹并检查历史，本轮证据由提交服务校验", async () => {
+    const h = setup();
+    const input = await h.repository.loadInput();
+    h.repository.loadInput.mockResolvedValue({ ...input, run_ids: ["historical", "run"] });
+    h.repository.loadInput.mockClear();
+    h.harness.run.mockImplementation(async (request) => {
+      h.runs.get.mockClear();
+      await request.onMessage!({ itemId: "a", status: "delta", content: "结果" });
+      expect(h.repository.loadInput).toHaveBeenCalledOnce();
+      expect(h.repository.loadContextHash).toHaveBeenCalledOnce();
+      expect(h.runs.get).toHaveBeenCalledExactlyOnceWith(context, "historical");
+      return { status: "completed", content: "结果" };
+    });
+    await h.executor.execute(context, "run");
+    expect(h.runs.fail).not.toHaveBeenCalled();
+    expect(h.runs.recordMessage).toHaveBeenCalledOnce();
+    expect(h.runs.complete).toHaveBeenCalledOnce();
+  });
   it("流式文字先校验当前知识范围，变更后停止交付后续正文和终态", async () => {
     let visible = true;
     const h = setup({ loadMemoryFingerprint: async () => visible });
@@ -105,7 +124,7 @@ describe("分析执行器", () => {
     });
     version = 2;
     await h.executor.execute(context, "run2");
-    expect((h.repository.loadInput.mock.calls as unknown[][])[2]?.[2]).not.toBe(firstKey);
+    expect((h.repository.loadInput.mock.calls as unknown[][])[1]?.[2]).not.toBe(firstKey);
   });
   it("根据会话绑定版本装配指令和工具，工具预算来自该版本", async () => {
     const selectedTools = {
@@ -165,10 +184,7 @@ describe("分析执行器", () => {
   });
   it("模型完成前授权范围发生变化时拒绝交付旧范围答案", async () => {
     const h = setup();
-    const input = await h.repository.loadInput();
-    h.repository.loadInput
-      .mockResolvedValueOnce(input)
-      .mockResolvedValue({ ...input, context_hash: "changed-scope" });
+    h.repository.loadContextHash.mockResolvedValue("changed-scope");
     await h.executor.execute(context, "run");
     expect(h.harness.run).toHaveBeenCalledOnce();
     expect(h.runs.complete).not.toHaveBeenCalled();

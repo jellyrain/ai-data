@@ -4,6 +4,39 @@ import { createApiDependencies } from "../support/api-fixtures";
 import type { SseEvent } from "@ai-data/contracts";
 
 describe("分析运行接口", () => {
+  it("终态包含超过一页事件时连续回放，追平序号后关闭", async () => {
+    const dependencies = createApiDependencies();
+    const state = { status: "completed", sequence: 205 } as never;
+    dependencies.analysis.runs.get.mockResolvedValue(state);
+    const events: SseEvent[] = Array.from({ length: 205 }, (_, index) => ({
+      type: "assistant_message",
+      conversation_id: "c",
+      analysis_run_id: "r",
+      sequence: index + 1,
+      message_id: "a",
+      status: "delta",
+      content: "字",
+    }));
+    dependencies.analysis.runs.readEventBatch.mockImplementation(async (_context, _id, after) => ({
+      state,
+      events: events.filter((event) => event.sequence > after).slice(0, 200),
+    }));
+    const app = await createApp(dependencies);
+    app.log.level = "silent";
+    try {
+      const response = await app.inject({
+        url: "/analysis-runs/r/events",
+        headers: { authorization: "Bearer test" },
+      });
+      expect([...response.body.matchAll(/^id: (\d+)$/gm)].map((match) => Number(match[1]))).toEqual(
+        events.map((event) => event.sequence),
+      );
+      expect(dependencies.analysis.runs.readEventBatch).toHaveBeenCalledTimes(2);
+      expect(dependencies.analysis.runs.get).toHaveBeenCalledOnce();
+    } finally {
+      await app.close();
+    }
+  });
   it("提交唤醒活跃 SSE，正文在终态前到达，关闭后释放订阅", async () => {
     const dependencies = createApiDependencies();
     let sequence = 0;
@@ -18,9 +51,10 @@ describe("分析运行接口", () => {
       },
     });
     dependencies.analysis.runs.get.mockImplementation(async () => ({ status, sequence }) as never);
-    dependencies.analysis.runs.events.mockImplementation(async (_context, _id, after) =>
-      events.filter((event) => event.sequence > after),
-    );
+    dependencies.analysis.runs.readEventBatch.mockImplementation(async (_context, _id, after) => ({
+      state: { status, sequence } as never,
+      events: events.filter((event) => event.sequence > after),
+    }));
     const app = await createApp(dependencies);
     app.log.level = "silent";
     const controller = new AbortController();
@@ -60,7 +94,8 @@ describe("分析运行接口", () => {
         /* 读到终态，确认订阅随连接释放。 */
       }
       expect(unsubscribe).toHaveBeenCalledOnce();
-      expect(dependencies.analysis.runs.events.mock.calls.length).toBeLessThanOrEqual(5);
+      expect(dependencies.analysis.runs.readEventBatch.mock.calls.length).toBeLessThanOrEqual(5);
+      expect(dependencies.analysis.runs.get).toHaveBeenCalledOnce();
     } finally {
       controller.abort();
       await reader?.cancel().catch(() => {});
@@ -70,29 +105,31 @@ describe("分析运行接口", () => {
   it("压缩事件和取消终态按序回放，支持前台清理压缩提示", async () => {
     const dependencies = createApiDependencies();
     dependencies.analysis.runs.get.mockResolvedValue({ status: "cancelled", sequence: 3 } as never);
-    dependencies.analysis.runs.events.mockImplementation(async (_context, _id, after) =>
-      after < 3
-        ? [
-            {
-              type: "context_compaction",
-              conversation_id: "c",
-              analysis_run_id: "r",
-              sequence: 2,
-              lease_epoch: 1,
-              item_id: "compact-1",
-              status: "started",
-              occurred_at: "2026-09-15 16:00:00",
-            },
-            {
-              type: "run_cancelled",
-              conversation_id: "c",
-              analysis_run_id: "r",
-              sequence: 3,
-              lease_epoch: 1,
-            },
-          ]
-        : [],
-    );
+    dependencies.analysis.runs.readEventBatch.mockImplementation(async (_context, _id, after) => ({
+      state: { status: "cancelled", sequence: 3 } as never,
+      events:
+        after < 3
+          ? [
+              {
+                type: "context_compaction",
+                conversation_id: "c",
+                analysis_run_id: "r",
+                sequence: 2,
+                lease_epoch: 1,
+                item_id: "compact-1",
+                status: "started",
+                occurred_at: "2026-09-15 16:00:00",
+              },
+              {
+                type: "run_cancelled",
+                conversation_id: "c",
+                analysis_run_id: "r",
+                sequence: 3,
+                lease_epoch: 1,
+              },
+            ]
+          : [],
+    }));
     const app = await createApp(dependencies);
     app.log.level = "silent";
     try {
@@ -113,19 +150,21 @@ describe("分析运行接口", () => {
   it("终态 SSE 从 Last-Event-ID 回放并返回持久化事件编号", async () => {
     const dependencies = createApiDependencies();
     dependencies.analysis.runs.get.mockResolvedValue({ status: "completed", sequence: 3 } as never);
-    dependencies.analysis.runs.events.mockImplementation(async (_context, _id, after) =>
-      after < 3
-        ? [
-            {
-              type: "run_completed",
-              conversation_id: "c",
-              analysis_run_id: "r",
-              sequence: 3,
-              lease_epoch: 1,
-            },
-          ]
-        : [],
-    );
+    dependencies.analysis.runs.readEventBatch.mockImplementation(async (_context, _id, after) => ({
+      state: { status: "completed", sequence: 3 } as never,
+      events:
+        after < 3
+          ? [
+              {
+                type: "run_completed",
+                conversation_id: "c",
+                analysis_run_id: "r",
+                sequence: 3,
+                lease_epoch: 1,
+              },
+            ]
+          : [],
+    }));
     const app = await createApp(dependencies);
     app.log.level = "silent";
     try {
@@ -158,7 +197,7 @@ describe("分析运行接口", () => {
           })
         ).statusCode,
       ).toBe(404);
-      expect(dependencies.analysis.runs.events).not.toHaveBeenCalled();
+      expect(dependencies.analysis.runs.readEventBatch).not.toHaveBeenCalled();
     } finally {
       await app.close();
     }

@@ -302,3 +302,467 @@
   outline: 2px solid var(--app-primary);
   outline-offset: 2px;
 }
+
+/* 管理入口沿用报表的资源卡片与独立配置区域。 */
+.management-title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.management-title-group > .el-button {
+  margin-top: 2px;
+  padding: 6px;
+}
+.management-title-group h1 {
+  overflow-wrap: anywhere;
+}
+.management-browse-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+}
+.management-browse-toolbar > .el-input {
+  width: 320px;
+}
+.management-browse-toolbar > .el-select {
+  width: 160px;
+}
+.management-browse-toolbar > .muted {
+  margin-left: auto;
+  font-size: 12px;
+}
+.management-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.management-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px 24px 0;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-panel);
+  color: var(--app-text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 150ms,
+    background-color 150ms;
+}
+.management-card:hover {
+  border-color: var(--app-control-border);
+  background: var(--app-surface);
+}
+.management-card:focus-visible {
+  outline: 2px solid var(--app-primary);
+  outline-offset: 3px;
+}
+.management-card:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+.management-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.management-card-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: var(--app-hover);
+  color: var(--app-muted);
+}
+.management-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.management-card-id {
+  display: block;
+  margin-top: 5px;
+  color: var(--app-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.management-card-facts {
+  display: grid;
+  gap: 12px;
+  padding: 22px 0;
+  flex: 1;
+  font-size: 13px;
+}
+.management-card-facts > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.management-card-facts > span > :first-child {
+  flex-shrink: 0;
+  color: var(--app-muted);
+}
+.management-card-facts > span > :last-child {
+  text-align: right;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.management-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--app-border);
+  padding: 16px 0;
+  font-size: 12px;
+  width: 100%;
+}
+.management-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border-radius: 5px;
+  border: 1px solid var(--app-border);
+  padding: 3px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--app-muted);
+  background: var(--app-surface);
+}
+.management-badge.is-active {
+  color: var(--app-chart-teal);
+  border-color: color-mix(in srgb, var(--app-chart-teal) 30%, var(--app-border));
+  background: color-mix(in srgb, var(--app-chart-teal) 8%, var(--app-panel));
+}
+.management-badge.is-pending {
+  color: var(--app-primary);
+  background: var(--app-primary-soft);
+}
+.management-badge.is-failed {
+  color: var(--el-color-danger);
+}
+.management-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+.management-panel {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-panel);
+}
+.management-panel h2 {
+  margin: 0 0 24px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.management-panel h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.management-editor-aside {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.management-editor-aside > .management-section {
+  margin: 0;
+  padding: 24px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-panel);
+}
+.management-summary {
+  grid-template-columns: minmax(90px, 1fr) minmax(0, 1fr);
+  font-size: 13px;
+}
+.management-summary dd {
+  text-align: right;
+}
+.management-aside-note {
+  border-top: 1px solid var(--app-border);
+  padding-top: 16px;
+  margin-top: 20px;
+}
+.management-panel .management-footer {
+  background: var(--app-panel);
+}
+.management-panel .management-section:last-child {
+  margin-bottom: 0;
+}
+.management-form-grid .el-form-item {
+  margin-bottom: 20px;
+}
+.management-auth-grid {
+  margin-bottom: 16px;
+}
+.management-user-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.management-user-layout:has(.management-user-detail) {
+  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 1fr);
+}
+.management-table-wrap {
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-panel);
+}
+.management-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.management-table th {
+  font-weight: 500;
+  color: var(--app-muted);
+  background: var(--app-surface);
+}
+.management-table th,
+.management-table td {
+  padding: 17px 20px;
+  border-bottom: 1px solid var(--app-border);
+}
+.management-table tr:last-child td {
+  border-bottom: 0;
+}
+.management-table tbody tr:hover {
+  background: var(--app-surface);
+}
+.management-table tbody tr.is-selected {
+  background: var(--app-primary-soft);
+}
+.management-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.management-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--app-hover);
+  color: var(--app-muted);
+  flex-shrink: 0;
+}
+.management-avatar.is-large {
+  width: 46px;
+  height: 46px;
+  background: var(--app-primary-soft);
+  color: var(--app-primary);
+  font-size: 19px;
+}
+.management-user-detail {
+  min-width: 0;
+  scroll-margin-top: 24px;
+}
+.management-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.management-panel-heading h2 {
+  margin: 0 0 4px;
+}
+.management-panel-heading .management-close {
+  margin-left: auto;
+  align-self: flex-start;
+}
+.management-user-detail .management-definition {
+  grid-template-columns: 95px minmax(0, 1fr);
+  font-size: 13px;
+}
+.management-user-detail .management-definition p {
+  margin: 0 0 5px;
+}
+.management-danger-zone {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--app-border);
+}
+.management-user-detail .management-footer {
+  position: static;
+  border: 0;
+  padding-bottom: 0;
+}
+.management-context-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-panel);
+  margin-bottom: 20px;
+}
+.management-context-bar > .el-select {
+  max-width: 310px;
+}
+.management-context-bar > .context-more {
+  margin-left: auto;
+}
+.management-subheading {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0 20px;
+}
+.management-subheading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+.management-source-editor {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+.management-source-editor > .management-panel {
+  margin-top: 20px;
+}
+.management-page .management-grid > .management-list {
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-panel);
+}
+.management-grid > .management-detail {
+  padding: 24px;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-panel);
+  max-width: none;
+}
+.management-grid > .management-detail .management-footer {
+  background: var(--app-panel);
+}
+.management-selection-label {
+  margin: 4px 10px 14px;
+  font-size: 12px;
+  color: var(--app-muted);
+}
+.management-page .management-context-bar .management-help {
+  margin: 0;
+}
+.management-page .knowledge-task-list {
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  background: var(--app-panel);
+}
+.management-page .knowledge-task-list th {
+  padding: 16px 20px;
+}
+.management-page .knowledge-task-list td {
+  padding: 20px;
+  vertical-align: middle;
+}
+@media (min-width: 1600px) {
+  .management-card-grid {
+    gap: 24px;
+  }
+  .management-card {
+    padding: 28px 28px 0;
+  }
+}
+@media (max-width: 1200px) {
+  .management-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .management-editor-layout {
+    grid-template-columns: minmax(0, 1fr) 260px;
+  }
+}
+@media (max-width: 960px) {
+  .management-editor-layout,
+  .management-user-layout:has(.management-user-detail) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .management-editor-aside {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .management-card-grid,
+  .management-editor-aside {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .management-panel,
+  .management-grid > .management-detail {
+    padding: 18px;
+  }
+  .management-browse-toolbar > .el-input {
+    width: 100%;
+  }
+  .management-browse-toolbar > .el-select {
+    width: 160px;
+    max-width: 100%;
+  }
+  .management-context-bar {
+    padding: 14px;
+  }
+  .management-context-bar > .context-more {
+    margin-left: 0;
+  }
+  .management-table th,
+  .management-table td {
+    padding: 14px 12px;
+  }
+  .management-table .account-id {
+    display: none;
+  }
+  .management-heading .management-actions {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .management-card {
+    transition: none;
+  }
+}
+
+.management-disclosure {
+  margin-top: 24px;
+  border-top: 1px solid var(--app-border);
+  padding-top: 16px;
+}
+.management-disclosure > summary {
+  cursor: pointer;
+  font-weight: 500;
+  padding: 8px 0;
+}
+.management-instance-details {
+  margin-bottom: 24px;
+}
+.management-editor-main > .el-form > .management-tabs {
+  margin-top: -8px;
+}

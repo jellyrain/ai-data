@@ -90,6 +90,10 @@ describe("SQL Server 平均值小数语义", () => {
         rows: [{ overall_mean: 1.5 }],
         row_count: 1,
         truncated: false,
+        execution_sql: expect.objectContaining({
+          dialect: "sqlserver",
+          sql: expect.stringContaining("AVG(CAST"),
+        }),
       });
     } finally {
       await connector.close();

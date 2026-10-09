@@ -12,6 +12,7 @@ import {
   reportRevisionInputSchema,
   reportVersionListSchema,
   savedReportSchema,
+  saveReportInputSchema,
   saveReportDefinitionInputSchema,
   reportSharingSchema,
   reportShareCandidatesInputSchema,
@@ -482,7 +483,33 @@ function registerWebReportFixture(
     auth,
     {
       metrics: { list: unavailable, get: unavailable, execute: unavailable },
-      reports: { save: unavailable, get: getSnapshot },
+      reports: {
+        save: async (context: AuthContext, input: unknown) => {
+          const value = saveReportInputSchema.parse(input);
+          const run = await analysis.runs.get(context, value.analysis_run_id);
+          if (run.status !== "completed") throw new ApplicationError("CONFLICT", "请等待分析完成");
+          const ids = new Set(
+            value.sections.flatMap((section) =>
+              section.blocks.flatMap((block) => block.evidence_ids),
+            ),
+          );
+          const sources = (await analysis.runs.evidence(context, value.analysis_run_id)).filter(
+            (item) => ids.has(item.evidence_id),
+          );
+          const snapshot = savedReportSchema.parse({
+            ...value,
+            report_id: `saved-${randomUUID()}`,
+            version: 1,
+            organization_id: context.organizationId,
+            user_id: context.userId,
+            created_at: now(),
+            sources,
+          });
+          snapshots.set(key(context, snapshot.report_id), [snapshot]);
+          return snapshot;
+        },
+        get: getSnapshot,
+      },
     } as unknown as ApiAnalysisServices,
     { submitMetric: unavailable },
   );
@@ -566,6 +593,7 @@ function registerWebReportFixture(
         if (definition.version !== request.expected_version)
           throw new ApplicationError("CONFLICT", "报表版本已更新");
         const conversation = await analysis.conversations.create(context, "报表修改");
+        analysis.markReportConversation(conversation.id);
         const submission = await analysis.conversations.submitUserMessage(
           context,
           conversation.id,
@@ -611,6 +639,7 @@ function registerWebReportFixture(
           return { conversation_id: prior.conversation_id, analysis_run_id: prior.analysis_run_id };
         }
         const conversation = await analysis.conversations.create(context, "报表分析说明");
+        analysis.markReportConversation(conversation.id);
         const receipt = await analysis.conversations.submitUserMessage(
           context,
           conversation.id,

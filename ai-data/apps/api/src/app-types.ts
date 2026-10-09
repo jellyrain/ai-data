@@ -9,6 +9,7 @@ import type { DataAccessQueryClient } from "./data-access/data-access-query-clie
 import type { QueryAuthorizationService } from "./query/query-authorization-service";
 import type { DataAccessSessionService } from "./data-access/data-access-session-service";
 import type { DataAccessManagementClient } from "./data-access/data-access-management-client";
+import type { DataSourceLifecycle } from "./data-access/data-source-lifecycle";
 import type { AnalysisRunService } from "./analysis-runs/analysis-run-service";
 import type { MetricService } from "./metrics/metric-service";
 import type { ReportService } from "./reports/report-service";
@@ -97,7 +98,7 @@ type ApiAgentServices = {
 type ApiAnalysisServices = {
   runs: Pick<
     AnalysisRunService,
-    "get" | "events" | "evidence" | "steps" | "answer" | "cancel" | "execute"
+    "get" | "readEventBatch" | "evidence" | "steps" | "answer" | "cancel" | "execute"
   > &
     Partial<Pick<AnalysisRunService, "subscribeEvents">>;
   metrics: Pick<MetricService, "list" | "get" | "execute">;
@@ -121,7 +122,7 @@ type ApiAuthService = Pick<
 /** 会话路由使用的读写能力。 */
 type ApiConversationService = Pick<
   ConversationService,
-  "create" | "list" | "get" | "submitUserMessage"
+  "create" | "list" | "get" | "submitUserMessage" | "delete"
 >;
 /** 用户目录读取与管理员配置维护所需的能力。 */
 type ApiCatalogService = Pick<
@@ -169,7 +170,11 @@ type ApiDependencies = {
       | "listRegisteredServices"
     >;
     catalogClient: DataAccessCatalogClient;
-    managementClient: Pick<DataAccessManagementClient, "execute" | "read" | "sqlServerTransport">;
+    sourceLifecycle: Pick<DataSourceLifecycle, "execute">;
+    managementClient: Pick<
+      DataAccessManagementClient,
+      "execute" | "read" | "sqlServerTransport" | "connection"
+    >;
   };
   /** 业务目录服务及角色权限持久化。 */
   catalog: {

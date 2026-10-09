@@ -11,7 +11,17 @@ type RunTimelineItem =
       final?: boolean;
       phase?: "commentary" | "final_answer";
     }
-  | { kind: "tool"; key: string; name: string; input?: string; output?: string; success?: boolean }
+  | {
+      kind: "tool";
+      key: string;
+      name: string;
+      /** 保留服务端调用标识，供依据面板精确关联。 */
+      callId?: string;
+      input?: string;
+      output?: string;
+      success?: boolean;
+      durationMs?: number;
+    }
   | { kind: "table"; key: string; event: Extract<SseEvent, { type: "table" }> }
   | { kind: "clarification"; key: string; question: string; answer?: string }
   | { kind: "progress"; key: string; content: string };

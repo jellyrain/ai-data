@@ -90,6 +90,59 @@ describe("SQL Server：部门授权与分析运行", () => {
       client: { execute: async () => ({ columns: [], rows: [], row_count: 0, truncated: false }) },
     } as unknown as ConstructorParameters<typeof AnalysisRunService>[0]);
   }
+  it("批量删除检查归属和活跃运行，整批提交且删除后运行不可读取", async () => {
+    const idle = await conversations.create(context, "待删除");
+    const { conversation, submitted } = await submit();
+    await expect(conversations.delete(context, [idle.id, conversation.id])).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    expect(await conversations.get(context, idle.id)).not.toBeNull();
+    await expect(
+      conversations.delete({ ...context, userId: "someone-else" }, [idle.id]),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(
+      conversations.delete({ ...context, organizationId: "another-org" }, [idle.id]),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await runService().cancel(context, submitted.analysisRun.id);
+    await conversations.delete(context, [conversation.id, idle.id]);
+    expect(await conversations.get(context, conversation.id)).toBeNull();
+    expect(
+      (await conversations.list(context)).some((item) =>
+        [conversation.id, idle.id].includes(item.id),
+      ),
+    ).toBe(false);
+    await expect(repository.get(context, submitted.analysisRun.id)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    expect(
+      await conversations.submitUserMessage(context, conversation.id, "继续", "deleted"),
+    ).toBeNull();
+    await conversations.delete(context, [idle.id]);
+  });
+  it("报表执行与修改会话按既有持久化关联从工作台分离", async () => {
+    const normal = await conversations.create(context, "普通分析");
+    const report = await submit();
+    await database.execute({
+      sql: "INSERT INTO dbo.analysis_report_contexts(analysis_run_id,organization_id,user_id,report_id,expected_version,context_json) VALUES(@run,@org,@user,'report',1,@json)",
+      parameters: [
+        { name: "run", type: "string", value: report.submitted.analysisRun.id },
+        { name: "org", type: "string", value: context.organizationId },
+        { name: "user", type: "string", value: context.userId },
+        {
+          name: "json",
+          type: "string",
+          value: JSON.stringify({ mode: "narrative", report_id: "report", expected_version: 1 }),
+        },
+      ],
+    });
+    expect((await conversations.list(context)).map((item) => item.id)).toContain(normal.id);
+    expect((await conversations.list(context)).map((item) => item.id)).not.toContain(
+      report.conversation.id,
+    );
+    await expect(conversations.delete(context, [report.conversation.id])).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
   it("流式文字跨仓储恢复连续序号，最终事务失败不发布完成或唤醒", async () => {
     const { submitted } = await submit();
     const id = submitted.analysisRun.id;
@@ -148,6 +201,11 @@ describe("SQL Server：部门授权与分析运行", () => {
     const lease = await runService().claim(context, id, "codex-worker");
     const runtime = new SqlRuntimeRepository(database);
     const input = await runtime.loadInput(context, id, "tools-v1");
+    expect(await runtime.loadContextHash(context, "tools-v1")).toBe(input.context_hash);
+    expect(await runtime.loadContextHash(context, "tools-v2")).not.toBe(input.context_hash);
+    expect(await runtime.loadContextHash({ ...context, roleIds: [] }, "tools-v1")).not.toBe(
+      input.context_hash,
+    );
     await runtime.saveThread(context, id, lease, input.context_hash, "official-thread");
     expect(
       (await new SqlRuntimeRepository(database).loadInput(context, id, "tools-v1")).thread_id,

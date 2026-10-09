@@ -42,7 +42,8 @@ class SqlAnalysisRunRepository implements AnalysisRunRepository {
     const result = await executor.execute({
       sql: `SELECT s.state_json,r.agent_id,r.agent_version FROM dbo.analysis_run_states s ${lock ? "WITH (UPDLOCK, HOLDLOCK)" : ""}
         JOIN dbo.analysis_runs r ON r.id = s.analysis_run_id
-        WHERE r.id = @id AND r.user_id = @user AND r.organization_id = @org`,
+        WHERE r.id = @id AND r.user_id = @user AND r.organization_id = @org
+        AND EXISTS (SELECT 1 FROM dbo.conversations c WHERE c.id=r.conversation_id AND c.status <> 'deleted')`,
       parameters: parameters(context, runId),
     });
     if (!result.rows[0]) throw new ApplicationError("NOT_FOUND", "分析运行不存在");

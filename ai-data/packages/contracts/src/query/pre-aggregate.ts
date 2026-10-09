@@ -3,7 +3,10 @@ import { z } from "zod";
 /** 对象内预聚合的输入字段必须以一个对象别名限定，字段存在性与授权由 API 和 DAS 检查。 */
 const inputField = z
   .string()
-  .regex(/^[A-Za-z_][A-Za-z0-9_]*\.[A-Za-z_][A-Za-z0-9_]*$/, "字段必须是 alias.field 引用");
+  .regex(
+    /^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_$]*\.[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_$]*$/u,
+    "字段必须是 alias.field 引用",
+  );
 
 /** 对象内预聚合的输出列，仅接受声明字段；每项必须声明可供外层引用的单段列名。 */
 const preAggregateSelectSchema = z
@@ -16,7 +19,7 @@ const preAggregateSelectSchema = z
     as: z
       .string()
       .min(1, "as 不能为空")
-      .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "as 必须是单段安全标识符"),
+      .regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_$]*$/u, "as 必须是单段安全标识符"),
   })
   .strict();
 

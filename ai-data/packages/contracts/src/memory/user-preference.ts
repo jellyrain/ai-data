@@ -4,7 +4,7 @@ import { filterConditionSchema } from "../query/query-dsl";
 import { memoryScopeSchema, memorySourceSchema } from "./memory-common";
 
 const id = z.string().min(1).max(128);
-const field = z.string().regex(/^[A-Za-z_][A-Za-z0-9_.]*$/);
+const field = z.string().regex(/^[\p{Script=Han}A-Za-z_][\p{Script=Han}A-Za-z0-9_.$]*$/u);
 /** 相对日历范围在使用时按东八区计算；固定日期保持原值，端点包含在范围内。 */
 const preferenceTimeRangeSchema = z.discriminatedUnion("type", [
   z

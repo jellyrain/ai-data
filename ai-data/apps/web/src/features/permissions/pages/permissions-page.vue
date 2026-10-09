@@ -77,8 +77,9 @@ onMounted(list);
       </div>
       <ElButton :loading="scope.state.busy" @click="list">刷新选项</ElButton>
     </header>
-    <div class="management-toolbar">
-      <ElSelect
+    <div class="management-context-bar">
+      <span class="muted">权限范围</span
+      ><ElSelect
         :model-value="sourceId"
         placeholder="数据源"
         aria-label="策略数据源"
@@ -134,13 +135,17 @@ onMounted(list);
             :role-id="roleId"
             :dataset="selected"
             :current="current"
-            @saved="current = $event" /><PolicyPreview
-            :key="`preview:${sourceId}:${roleId}:${selected.object_id}`"
-            :source-id="sourceId"
-            :role-id="roleId"
-            :object-id="selected.object_id"
-            :field="selected.columns[0]?.name ?? ''"
-        /></template>
+            @saved="current = $event" />
+          <details class="management-disclosure">
+            <summary>预览权限规则</summary>
+            <PolicyPreview
+              :key="`preview:${sourceId}:${roleId}:${selected.object_id}`"
+              :source-id="sourceId"
+              :role-id="roleId"
+              :object-id="selected.object_id"
+              :field="selected.columns[0]?.name ?? ''"
+            /></details
+        ></template>
         <div v-else class="management-empty">选择数据源、角色与对象后开始配置。</div>
       </main>
     </div>

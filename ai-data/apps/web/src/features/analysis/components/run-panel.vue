@@ -1,27 +1,28 @@
 <script setup lang="ts">
-import type { QueryEvidence } from "@ai-data/contracts";
-import SaveResultReport from "../../reports/components/save-result-report.vue";
 import { computed, ref, watch } from "vue";
 import { ElButton } from "element-plus";
 import { Check, ChevronRight, LoaderCircle, Wrench, CircleAlert, Square } from "lucide-vue-next";
 import type { RunView } from "../stores/analysis-workspace-types";
 import { projectRunTimeline } from "../stores/run-timeline";
+import { toolActivityLabel } from "../models/tool-activity";
 import type { RunTimelineItem } from "../stores/run-timeline-types";
 import { isTerminal } from "../../../shared/stream/run-stream";
 import MarkdownContent from "../../../shared/content/markdown-content.vue";
-import ResultTable from "../../../shared/results/result-table.vue";
+import QueryResults from "./query-results.vue";
 import ClarificationForm from "./clarification-form.vue";
-const savingEvidence = ref<QueryEvidence>();
 const props = defineProps<{
   run: RunView;
   fallback?: string;
   answering: boolean;
   cancelling: boolean;
+  selectedTool?: string;
 }>();
 defineEmits<{
   reconnect: [];
   cancel: [];
   evidence: [];
+  loadResults: [];
+  tool: [key: string];
   answer: [value: { option_id?: string; custom_input?: string }];
 }>();
 const labels: Record<string, string> = {
@@ -50,15 +51,14 @@ function isProcessItem(item: RunTimelineItem) {
 }
 const hasProcess = computed(() => timeline.value.some(isProcessItem));
 const toolCount = computed(() => timeline.value.filter((item) => item.kind === "tool").length);
-// 完成后将正文和表格放在过程之后；稳定的条目 key 保留表格和工具展开状态。
+// 原始结果由查询数据面板统一呈现；完成后保留过程与最终正文的顺序。
 const displayedTimeline = computed(() =>
   status.value === "completed"
     ? [
         ...timeline.value.filter(isProcessItem),
         ...timeline.value.filter((item) => item.kind === "message" && item.final),
-        ...timeline.value.filter((item) => item.kind === "table"),
       ]
-    : timeline.value,
+    : timeline.value.filter((item) => item.kind !== "table"),
 );
 function outputActive(item: RunTimelineItem) {
   return (
@@ -82,15 +82,6 @@ const compaction = computed(
       "started",
 );
 const tables = computed(() => props.run.events.filter((event) => event.type === "table"));
-const extraEvidence = computed(() =>
-  props.run.evidence.filter(
-    (item) => !tables.value.some((table) => table.evidence_id === item.evidence_id),
-  ),
-);
-function evidence(id?: string) {
-  return id ? props.run.evidence.find((item) => item.evidence_id === id) : undefined;
-}
-const hasChart = computed(() => props.run.events.some((event) => event.type === "chart"));
 </script>
 <template>
   <section class="run-panel" :aria-label="`分析运行 ${run.id}`">
@@ -135,33 +126,22 @@ const hasChart = computed(() => props.run.events.some((event) => event.type === 
             status === "cancelled" ? "输出已停止" : "输出未完成"
           }}</span>
         </div>
-        <details
+        <button
           v-else-if="item.kind === 'tool'"
           v-show="processVisible"
+          type="button"
           class="tool-record"
+          :class="{ 'tool-failed': item.success === false, selected: selectedTool === item.key }"
           :data-tool-key="item.key"
+          :aria-label="`${toolActivityLabel(item, finished)}，查看调用详情`"
+          :aria-pressed="selectedTool === item.key"
+          @click="$emit('tool', item.key)"
         >
-          <summary>
-            <Wrench :size="14" /><span>{{ item.name }}</span>
-            <span class="tool-status muted"
-              ><LoaderCircle
-                v-if="item.success === undefined && !finished"
-                :size="12"
-                class="spin"
-              />{{
-                item.success === true
-                  ? "已完成"
-                  : item.success === false
-                    ? "执行失败"
-                    : finished
-                      ? "结果未记录"
-                      : "执行中"
-              }}</span
-            >
-          </summary>
-          <pre v-if="item.input" class="plain-content">{{ item.input }}</pre>
-          <pre v-if="item.output" class="plain-content">{{ item.output }}</pre>
-        </details>
+          <LoaderCircle v-if="item.success === undefined && !finished" :size="14" class="spin" />
+          <CircleAlert v-else-if="item.success === false" :size="14" />
+          <Wrench v-else :size="14" />
+          <span>{{ toolActivityLabel(item, finished) }}</span>
+        </button>
         <p v-else-if="item.kind === 'progress'" v-show="processVisible" class="progress-summary">
           {{ item.content }}
         </p>
@@ -173,31 +153,10 @@ const hasChart = computed(() => props.run.events.some((event) => event.type === 
           <span class="muted">已补充 · {{ item.question }}</span>
           <p>{{ item.answer }}</p>
         </div>
-        <ResultTable
-          v-else-if="item.kind === 'table'"
-          :table="evidence(item.event.evidence_id)?.result ?? item.event"
-          :row-count="
-            evidence(item.event.evidence_id)?.result.row_count ?? item.event.result_row_count
-          "
-          :sampled="!evidence(item.event.evidence_id) && item.event.sampled"
-          :truncated="
-            evidence(item.event.evidence_id)?.result.truncated ?? item.event.result_truncated
-          "
-          :can-load="!!item.event.evidence_id && !run.evidenceLoaded"
-          :loading="run.evidenceLoading"
-          @load="$emit('evidence')"
-        />
       </template>
     </div>
     <MarkdownContent v-if="legacyAnswer" :text="legacyAnswer" />
-    <p v-if="hasChart" class="muted">可在结果中选择图表和字段查看。</p>
-    <ResultTable
-      v-for="item in extraEvidence"
-      :key="item.evidence_id"
-      :table="item.result"
-      :row-count="item.result.row_count"
-      :truncated="item.result.truncated"
-    />
+    <QueryResults :run="run" @load="$emit('loadResults')" />
     <ClarificationForm
       v-if="run.snapshot?.clarification && status === 'waiting_clarification'"
       :key="run.snapshot.clarification.clarification_id"
@@ -211,19 +170,6 @@ const hasChart = computed(() => props.run.events.some((event) => event.type === 
     <p v-if="run.error" role="alert" class="inline-error">
       {{ run.error }} <ElButton text @click="$emit('reconnect')">重新连接</ElButton>
     </p>
-    <div v-if="status === 'completed' && run.evidence.length" class="save-results-actions">
-      <ElButton
-        v-for="(item, index) in run.evidence"
-        :key="item.evidence_id"
-        @click="savingEvidence = item"
-        >保存结果 {{ index + 1 }} 为报表</ElButton
-      >
-    </div>
-    <SaveResultReport
-      v-if="savingEvidence"
-      :evidence="savingEvidence"
-      @close="savingEvidence = undefined"
-    />
     <div class="run-actions">
       <ElButton
         v-if="!finished"
@@ -236,11 +182,7 @@ const hasChart = computed(() => props.run.events.some((event) => event.type === 
         v-if="tables.length || run.snapshot?.evidence_ids.length || finished"
         text
         @click="$emit('evidence')"
-        >{{
-          status === "completed" && !run.evidenceLoaded
-            ? "读取结果以保存报表 / 查看依据"
-            : "查看分析依据"
-        }}</ElButton
+        >查看分析依据</ElButton
       >
     </div>
     <p v-if="status === 'failed' || status === 'cancelled'" class="muted">
@@ -271,22 +213,6 @@ const hasChart = computed(() => props.run.events.some((event) => event.type === 
 }
 .run-timeline > .progress-summary {
   margin: 0;
-}
-.tool-record {
-  margin: 0;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 8px;
-  background: var(--el-fill-color-extra-light);
-  padding: 8px 12px;
-}
-.tool-record summary {
-  min-height: 24px;
-}
-.tool-status {
-  margin-left: auto;
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
 }
 .message-output-status {
   display: block;

@@ -1,4 +1,5 @@
 import DOMPurify from "dompurify";
+import { createUuid } from "../identity/create-uuid";
 import { safeDiagramSource } from "./markdown";
 
 let queue: Promise<unknown> = Promise.resolve();
@@ -24,7 +25,7 @@ function renderDiagram(source: string, print = false): Promise<string> {
     const { default: mermaid } = await import("mermaid");
     const root = document.documentElement;
     const style = getComputedStyle(root);
-    const id = `diagram-${crypto.randomUUID()}`;
+    const id = `diagram-${createUuid()}`;
     mermaid.initialize({
       startOnLoad: false,
       securityLevel: "strict",

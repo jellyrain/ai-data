@@ -107,6 +107,7 @@ function exportDocument(
         : conversationExportContentSchema.parse(input);
   const document: ExportDocument = { title: "", metadata: [], tables: [], blocks: [] };
   const tables = new Map<string, ExportTable>();
+  const conditions = new Map<string, string[]>();
   function add(evidence: QueryEvidence, title: string) {
     if (evidence.organization_id !== organizationId) throw new Error("导出证据组织不匹配");
     const existing = tables.get(evidence.evidence_id);
@@ -122,11 +123,11 @@ function exportDocument(
       createdAt: evidence.created_at,
       result: evidence.result,
     });
-    document.metadata.push(
-      ...queryConditions(evidence.authorized_query).map(
-        (condition) => `${title} · 查询筛选 ${condition}`,
-      ),
+    const entries = queryConditions(evidence.authorized_query).map(
+      (condition) => `${title} · 查询筛选 ${condition}`,
     );
+    conditions.set(evidence.evidence_id, entries);
+    document.metadata.push(...entries);
   }
   function snapshot(report: SavedReport) {
     if (report.organization_id !== organizationId) throw new Error("报表组织不匹配");
@@ -255,6 +256,18 @@ function exportDocument(
     }
   }
   document.tables = [...tables.values()];
+  if (source.kind === "conversation" && source.evidenceId) {
+    const selected = document.tables.find((table) => table.id === source.evidenceId);
+    if (!selected) throw new Error("本表来源已不可用，请重新读取结果");
+    document.tables = [selected];
+    document.blocks = [];
+    document.title = `${document.title} · 本表结果`;
+    document.metadata = [
+      `会话 ${source.id}`,
+      `证据 ${source.evidenceId}`,
+      ...(conditions.get(selected.id) ?? []),
+    ];
+  }
   document.metadata.push(
     ...document.tables.map(
       (table) =>

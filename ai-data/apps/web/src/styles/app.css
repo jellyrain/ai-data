@@ -297,6 +297,7 @@ p {
   padding: 16px 8px;
   color: var(--app-muted);
   font-size: 12px;
+  text-align: left;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -327,6 +328,45 @@ p {
   color: var(--app-text);
   font-weight: 500;
   margin-bottom: 2px;
+}
+.connection-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  margin-top: 4px;
+  padding: 2px 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--app-muted);
+  font-size: 12px;
+  text-align: left;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.connection-status:hover {
+  background: var(--app-hover);
+}
+.connection-status svg {
+  flex-shrink: 0;
+}
+.connection-warning {
+  color: #916015;
+}
+.connection-secure {
+  color: #2d6d4b;
+}
+.dark .connection-warning {
+  color: #e8bb6e;
+}
+.dark .connection-secure {
+  color: #8dcca8;
+}
+.connection-explanation p {
+  margin-top: 6px;
+  color: var(--app-text);
+  line-height: 1.7;
 }
 .workspace {
   min-width: 0;

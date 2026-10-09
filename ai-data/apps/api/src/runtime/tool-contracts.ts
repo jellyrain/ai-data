@@ -82,11 +82,31 @@ const toolInputs = {
     .object({
       metric_id: z.string().min(1),
       version: metricExecutionInputSchema.shape.version,
-      start: metricExecutionInputSchema.shape.start,
-      end: metricExecutionInputSchema.shape.end,
-      dimensions: metricExecutionInputSchema.shape.dimensions,
+      start: metricExecutionInputSchema.shape.start.describe(
+        "范围起点，包含该值。匹配 describe_metric 返回的 date_basis.data_type：date 使用 YYYY-MM-DD；datetime 使用 YYYY-MM-DD HH:mm:ss（空格分隔，UTC+8）。按当前用户要求填写。",
+      ),
+      end: metricExecutionInputSchema.shape.end.describe(
+        "范围终点，包含该值且不能早于 start。匹配 describe_metric 返回的 date_basis.data_type：date 使用 YYYY-MM-DD；datetime 使用 YYYY-MM-DD HH:mm:ss（空格分隔，UTC+8）。与 start 使用相同格式，按当前用户要求填写。",
+      ),
+      dimensions: metricExecutionInputSchema.shape.dimensions.describe(
+        "从 describe_metric 返回的 dimensions 中选择完整字段名（含别名），每项只传一次；[] 表示全量汇总。",
+      ),
     })
-    .strict(),
+    .strict()
+    .superRefine((value, context) => {
+      if (value.start.length !== value.end.length)
+        context.addIssue({
+          code: "custom",
+          path: ["end"],
+          message: "start 和 end 必须使用相同的日期格式，并匹配指标时间类型",
+        });
+      else if (value.end < value.start)
+        context.addIssue({
+          code: "custom",
+          path: ["end"],
+          message: "end 不能早于 start，请按用户要求核对时间范围",
+        });
+    }),
   request_clarification: z
     .object({
       question: clarificationSchema.shape.question,
@@ -129,8 +149,10 @@ const toolDescriptions: Record<keyof typeof toolInputs, string> = {
   describe_dataset: "读取数据集字段、查询能力和批准的业务关联。",
   query_dataset: "执行受控 DSL 查询，返回有界结果及证据标识。",
   list_metrics: "搜索或分页浏览授权指标摘要和固定时间依据；选定后用 describe_metric 读取完整口径。",
-  describe_metric: "读取指定指标版本的定义、时间依据和统计规则。",
-  query_metric: "按指标固定口径查询分组和完整总计，并保存证据。",
+  describe_metric:
+    "读取指定指标版本的定义、时间依据、统计规则及 query_requirements 调用要求（时间格式、合法维度和格式示例）。",
+  query_metric:
+    "按指标固定口径查询分组和完整总计，并保存证据。先读取 describe_metric 的 query_requirements，按实际时间类型填写 start/end；维度使用已发布字段名。",
   request_clarification: "保存一个需要用户回答的业务问题并暂停本次运行。",
   save_report: "将当前运行的证据与结论保存为个人报告快照。",
 };

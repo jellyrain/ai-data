@@ -2,6 +2,8 @@
 import { computed, ref, watch } from "vue";
 import { ElButton, ElDialog } from "element-plus";
 import { stableStringify, type ReportDefinitionVersion } from "@ai-data/contracts";
+import { createUuid } from "../../../shared/identity/create-uuid";
+import { sha256Hex } from "../../../shared/crypto/sha256";
 import { useServices } from "../../../app/services";
 import { KnowledgeApi } from "../../knowledge/api/knowledge-api";
 import { useManagementPage } from "../../../shared/management/use-management-page";
@@ -32,13 +34,8 @@ async function submit() {
     const definition = props.definition,
       content = stableStringify(definition.definition),
       fingerprint = definition.report_id + ":" + definition.version + ":" + content;
-    if (attempt.content !== fingerprint)
-      attempt = { content: fingerprint, id: crypto.randomUUID() };
-    const hash = [
-      ...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(content))),
-    ]
-      .map((value) => value.toString(16).padStart(2, "0"))
-      .join("");
+    if (attempt.content !== fingerprint) attempt = { content: fingerprint, id: createUuid() };
+    const hash = await sha256Hex(content);
     const saved = await new KnowledgeApi(request).submit({
       idempotency_key: attempt.id,
       scope: {},

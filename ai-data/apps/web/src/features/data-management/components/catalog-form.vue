@@ -3,7 +3,9 @@ import { ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElButton } from "eleme
 import type { Dataset, ManagedRole } from "@ai-data/contracts";
 import type { CatalogDraft } from "../stores/catalog-draft-types";
 import CatalogFields from "./catalog-fields.vue";
-import JsonField from "../../../shared/management/json-field.vue";
+import QueryCapabilityEditor from "./query-capability-editor.vue";
+import ParameterPolicyEditor from "./parameter-policy-editor.vue";
+import PermissionBindingEditor from "./permission-binding-editor.vue";
 const draft = defineModel<CatalogDraft>({ required: true });
 defineProps<{ dataset: Dataset; roles: ManagedRole[]; disabled: boolean }>();
 </script>
@@ -42,33 +44,37 @@ defineProps<{ dataset: Dataset; roles: ManagedRole[]; disabled: boolean }>();
     <CatalogFields v-model="draft.config" :dataset="dataset" :roles="roles" :disabled="disabled" />
     <details class="management-section">
       <summary>高级能力与参数策略</summary>
-      <JsonField
-        v-model="draft.capabilities"
-        label="业务查询能力"
-        hint="留空表示继承 DAS 能力。可填写 sortable_fields、groupable_fields、filter_conditions、aggregations；空数组明确禁用对应能力。"
-        :disabled="disabled"
-      /><JsonField
-        v-model="draft.parameters"
-        label="参数策略"
-        hint='留空继承。示例：[{"name":"department_id","allowed_ops":["eq"],"required":true}]，按实际参数定义填写。'
-        :disabled="disabled"
-      /><JsonField
-        v-model="draft.bindings"
-        label="已验收的权限参数绑定"
-        hint='示例：[{"field":"department_id","parameter":"department_id","operator":"eq"}]。仅在数据源已保证输出字段与参数精确对应时配置。'
-        :disabled="disabled"
-      />
-      <h4>当前源能力和参数</h4>
-      <pre class="management-code">{{
-        JSON.stringify(
-          {
-            query_capabilities: dataset.query_capabilities,
-            query_parameters: dataset.query_parameters,
-          },
-          null,
-          2,
-        )
-      }}</pre>
-    </details></ElForm
-  >
+      <div class="catalog-advanced">
+        <QueryCapabilityEditor
+          v-model="draft.config.query_capabilities"
+          title="业务查询能力"
+          :columns="dataset.columns"
+          :base="dataset.query_capabilities"
+          inherit
+          :disabled="disabled"
+        />
+        <ParameterPolicyEditor
+          v-model="draft.config.query_parameter_policies"
+          :dataset="dataset"
+          :disabled="disabled"
+        />
+        <PermissionBindingEditor
+          v-model="draft.config.query_permission_bindings"
+          :dataset="dataset"
+          :policies="draft.config.query_parameter_policies"
+          :disabled="disabled"
+        />
+      </div></details
+  ></ElForm>
 </template>
+<style scoped>
+.catalog-advanced {
+  margin-top: 24px;
+  display: grid;
+  gap: 28px;
+}
+.catalog-advanced > :not(:first-child) {
+  border-top: 1px solid var(--app-border);
+  padding-top: 24px;
+}
+</style>

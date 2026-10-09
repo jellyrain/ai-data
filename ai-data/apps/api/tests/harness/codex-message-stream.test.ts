@@ -34,12 +34,123 @@ function setup() {
   return { router, request, events, controller, notify, item };
 }
 
+it("慢提交时持续合并待处理正文，模型结束后在有限尾批内完整交付", async () => {
+  vi.useFakeTimers();
+  const h = setup();
+  const committed: HarnessMessage[] = [];
+  h.request.onMessage = async (event) => {
+    const snapshot = { ...event };
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    expect(event).toEqual(snapshot);
+    committed.push(snapshot);
+  };
+  h.notify("item/started", { item: h.item("answer", "", "final_answer") });
+  for (let index = 0; index < 90; index++) {
+    await vi.advanceTimersByTimeAsync(1000 / 30);
+    h.notify("item/agentMessage/delta", { itemId: "answer", delta: "字" });
+  }
+  h.notify("item/completed", { item: h.item("answer", "字".repeat(90), "final_answer") });
+  h.notify("turn/completed", { turn: { id: "turn", status: "completed" } });
+  let completed = false;
+  void h.router.result.then(() => {
+    completed = true;
+  });
+  // 一个在途批次、一个待处理批次和完整正文校准，最多三个提交周期。
+  await vi.advanceTimersByTimeAsync(750);
+  expect(completed).toBe(true);
+  expect(
+    committed
+      .filter((event) => event.status === "delta")
+      .map((event) => event.content)
+      .join(""),
+  ).toBe("字".repeat(90));
+  expect(committed.at(-1)).toMatchObject({ status: "completed", content: "字".repeat(90) });
+});
+
+it("阻塞期间超过原队列条数的同段文字仍可合并，压缩和工具保持顺序边界", async () => {
+  vi.useFakeTimers();
+  const h = setup();
+  let release!: () => void;
+  const blocked = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const order: string[] = [];
+  h.request.onMessage = async (event) => {
+    if (event.status === "started") await blocked;
+    order.push(`${event.status}:${event.content}`);
+  };
+  h.request.onCompaction = async () => {
+    order.push("compaction");
+  };
+  h.request.executeTool = async () => {
+    order.push("tool");
+    return { success: true, output: {} };
+  };
+  h.notify("item/started", { item: h.item("a") });
+  for (let i = 0; i < 150; i++) {
+    h.notify("item/agentMessage/delta", { itemId: "a", delta: "甲" });
+    await vi.advanceTimersByTimeAsync(120);
+  }
+  h.notify("item/started", { item: { type: "contextCompaction", id: "compact" } });
+  h.notify("item/agentMessage/delta", { itemId: "a", delta: "乙" });
+  const call = h.router.call("item/tool/call", {
+    threadId: "thread",
+    turnId: "turn",
+    callId: "call",
+    tool: "query",
+    arguments: {},
+  });
+  void call.catch(() => {});
+  h.notify("item/agentMessage/delta", { itemId: "a", delta: "丙" });
+  h.notify("item/completed", { item: h.item("a", "甲".repeat(150) + "乙丙") });
+  h.notify("turn/completed", { turn: { id: "turn", status: "completed" } });
+  release();
+  await call;
+  await h.router.result;
+  expect(order).toEqual([
+    "started:",
+    `delta:${"甲".repeat(150)}`,
+    "compaction",
+    "delta:乙",
+    "tool",
+    "delta:丙",
+    `completed:${"甲".repeat(150)}乙丙`,
+  ]);
+});
+
 it("最终段落缺少完成事件时不能把前一段说明当成最终回答", async () => {
   const h = setup();
   h.notify("item/completed", { item: h.item("comment", "开始查询") });
   h.notify("item/agentMessage/delta", { itemId: "answer", delta: "未完成回答" });
   h.notify("turn/completed", { turn: { id: "turn", status: "completed" } });
   await expect(h.router.result).rejects.toMatchObject({ code: "INTERNAL_ERROR" });
+});
+
+it("取消或提交失败后不交付已经合并的待处理正文", async () => {
+  vi.useFakeTimers();
+  for (const reason of ["cancel", "failure"]) {
+    const h = setup();
+    let release!: () => void;
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const delivered: HarnessMessage[] = [];
+    h.request.onMessage = async (event) => {
+      await blocked;
+      if (reason === "failure") throw new Error("提交失败");
+      delivered.push({ ...event });
+    };
+    h.notify("item/started", { item: h.item("a") });
+    for (const delta of ["甲", "乙", "丙"]) {
+      h.notify("item/agentMessage/delta", { itemId: "a", delta });
+      await vi.advanceTimersByTimeAsync(120);
+    }
+    if (reason === "cancel") h.controller.abort();
+    release();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(delivered.some((event) => event.status === "delta")).toBe(false);
+    if (reason === "failure") await expect(h.router.result).rejects.toThrow("提交失败");
+  }
 });
 
 it("完成前交付合并文字，工具前后各段按原顺序持久化，完成文本校准该段", async () => {

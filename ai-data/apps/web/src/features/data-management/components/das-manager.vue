@@ -1,17 +1,23 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { ElButton, ElInput, ElSelect, ElOption } from "element-plus";
+import { Server } from "lucide-vue-next";
 import type { ManagedDataAccessService } from "@ai-data/contracts";
 import { useServices } from "../../../app/services";
 import { DataAccessApi } from "../api/data-access-api";
 import DataSourceManager from "./data-source-manager.vue";
+import DatabaseConnectionManager from "./database-connection-manager.vue";
 import ManagementFeedback from "../../../shared/management/management-feedback.vue";
 import { useManagementPage } from "../../../shared/management/use-management-page";
+const showDetails = ref(false);
+defineProps<{ view?: "connections" | "sources" }>();
+const emit = defineEmits<{ connections: []; sources: [] }>();
 const services = ref<ManagedDataAccessService[]>([]),
   selectedId = ref(""),
   credentialId = ref(""),
   credential = ref("");
 const sourceManager = ref<InstanceType<typeof DataSourceManager>>();
+const connectionManager = ref<InstanceType<typeof DatabaseConnectionManager>>();
 const { auth } = useServices();
 const isAdmin = computed(() => auth.state.context?.roles.includes("system_admin") ?? false);
 const { scope, discard } = useManagementPage(
@@ -27,7 +33,10 @@ const selected = computed(() =>
   services.value.find((item) => item.service_id === selectedId.value),
 );
 async function canLeave() {
-  return (await discard()) && (await (sourceManager.value?.canLeave() ?? true));
+  return (
+    (await discard()) &&
+    (await (sourceManager.value?.canLeave() ?? connectionManager.value?.canLeave() ?? true))
+  );
 }
 async function list() {
   if (!(await canLeave())) return;
@@ -52,7 +61,8 @@ defineExpose({ canLeave });
 </script>
 <template>
   <section>
-    <div class="management-toolbar">
+    <div class="management-context-bar">
+      <Server :size="18" aria-hidden="true" /><span>DAS 实例</span>
       <ElSelect
         :model-value="selectedId"
         filterable
@@ -64,32 +74,22 @@ defineExpose({ canLeave });
           :key="item.service_id"
           :value="item.service_id"
           :label="`${item.service_id} · ${item.connection_status === 'online' ? '在线' : item.connection_status === 'unhealthy' ? '异常' : '失联'}`" /></ElSelect
-      ><ElButton :loading="scope.state.busy" @click="list">刷新实例</ElButton>
+      ><ElButton :loading="scope.state.busy" @click="list">刷新实例</ElButton
+      ><ElButton
+        text
+        class="context-more"
+        :aria-expanded="showDetails"
+        @click="
+          showDetails = !showDetails;
+          credential = '';
+        "
+        >{{ showDetails ? "收起实例详情" : "查看实例详情" }}</ElButton
+      >
     </div>
     <ManagementFeedback v-bind="scope.state" />
-    <details v-if="isAdmin" class="management-section">
-      <summary>领取实例注册凭据</summary>
-      <p class="management-help">输入部署配置中已批准的实例 ID，领取该实例当前版本的接入凭据。</p>
-      <div class="management-inline-row">
-        <ElInput
-          v-model="credentialId"
-          placeholder="实例 ID"
-          aria-label="领取凭据的实例 ID"
-          autocomplete="off"
-        /><ElButton :disabled="!credentialId || scope.state.busy" @click="issue">领取凭据</ElButton>
-      </div>
-      <ElInput
-        v-if="credential"
-        :model-value="credential"
-        type="password"
-        show-password
-        readonly
-        autocomplete="off"
-        aria-label="实例注册凭据"
-      /><ElButton v-if="credential" text @click="credential = ''">清除显示</ElButton>
-    </details>
-    <template v-if="selected"
-      ><dl class="management-definition">
+    <section v-if="showDetails" class="management-panel management-instance-details">
+      <h2>实例详情</h2>
+      <dl v-if="selected" class="management-definition">
         <dt>实例地址</dt>
         <dd>{{ selected.service_url }}</dd>
         <dt>版本 / 状态</dt>
@@ -113,11 +113,45 @@ defineExpose({ canLeave });
           }}
         </dd>
       </dl>
+      <details v-if="isAdmin" class="management-section">
+        <summary>领取实例注册凭据</summary>
+        <p class="management-help">输入部署配置中已批准的实例 ID，领取该实例当前版本的接入凭据。</p>
+        <div class="management-inline-row">
+          <ElInput
+            v-model="credentialId"
+            placeholder="实例 ID"
+            aria-label="领取凭据的实例 ID"
+            autocomplete="off"
+          /><ElButton :disabled="!credentialId || scope.state.busy" @click="issue"
+            >领取凭据</ElButton
+          >
+        </div>
+        <ElInput
+          v-if="credential"
+          :model-value="credential"
+          type="password"
+          show-password
+          readonly
+          autocomplete="off"
+          aria-label="实例注册凭据"
+        /><ElButton v-if="credential" text @click="credential = ''">清除显示</ElButton>
+      </details>
+    </section>
+
+    <template v-if="selected">
+      <DatabaseConnectionManager
+        v-if="selected.connection_status === 'online' && view === 'connections'"
+        :key="selected.service_id"
+        ref="connectionManager"
+        :service-id="selected.service_id"
+        @sources="emit('sources')"
+      />
       <DataSourceManager
-        v-if="selected.connection_status === 'online'"
+        v-else-if="selected.connection_status === 'online'"
         :key="selected.service_id"
         ref="sourceManager"
         :service-id="selected.service_id"
+        @connections="emit('connections')"
       />
       <p v-else class="management-empty">
         实例当前不可用于管理调用，请恢复 DAS 注册和心跳后刷新。

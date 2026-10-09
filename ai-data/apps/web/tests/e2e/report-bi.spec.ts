@@ -117,8 +117,8 @@ test("对话中只保存所选结果，提交失败保留输入并可重试", as
   await page.getByRole("button", { name: "发送问题", exact: true }).click();
   await page.getByRole("button", { name: "本年", exact: true }).click();
   await expect(page.getByText("分析完成", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "读取完整已保存结果" }).click();
-  await page.getByRole("button", { name: "保存结果 1 为报表", exact: true }).click();
+  await page.locator(".query-results-toggle").click();
+  await page.getByRole("button", { name: "保存为报表", exact: true }).click();
   await page.getByLabel("报表名称", { exact: true }).fill("门诊趋势分析");
   await page.getByLabel("简短说明", { exact: true }).fill("按科室查看门诊人数");
   await shot(page, "11-从对话保存报表");

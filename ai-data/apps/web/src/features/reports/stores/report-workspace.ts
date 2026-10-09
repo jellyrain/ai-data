@@ -8,6 +8,7 @@ import {
   savedReportSchema,
 } from "@ai-data/contracts";
 import type { ReportExecution } from "@ai-data/contracts";
+import { createUuid } from "../../../shared/identity/create-uuid";
 import { ApiError } from "../../../shared/http/api-error";
 import type { ParameterValues } from "../models/parameter-types";
 import type { ReportDependencies, ReportState } from "./report-workspace-types";
@@ -303,7 +304,7 @@ class ReportWorkspace {
         body: reportExecutionInputSchema.parse({
           definition_version: definitionVersion,
           parameters: ordered,
-          idempotency_key: crypto.randomUUID(),
+          idempotency_key: createUuid(),
         }),
       };
     const generation = this.generation,

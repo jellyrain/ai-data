@@ -18,6 +18,7 @@ import {
   type MetricDefinition,
   type MemorySource,
 } from "@ai-data/contracts";
+import { createUuid } from "../../../shared/identity/create-uuid";
 import { useServices } from "../../../app/services";
 import ResourceList from "../../../shared/management/resource-list.vue";
 import ManagementFeedback from "../../../shared/management/management-feedback.vue";
@@ -53,6 +54,7 @@ const candidates = ref<KnowledgeCandidate[]>([]),
   sources = ref<KnowledgeSourceRecord[]>([]),
   template = ref<ReportDefinitionVersion | null>(null),
   owners = ref<KnowledgeOwnerOption[]>([]);
+const detailTab = ref("content");
 const ownerSearch = ref(""),
   ownerId = ref(""),
   statusFilter = ref(""),
@@ -65,7 +67,7 @@ const ownerSearch = ref(""),
   blocked = ref(false),
   supplemental = ref<MemorySource>({ evidence_ids: [] });
 const fresh = (): KnowledgeCandidateInput => ({
-  idempotency_key: crypto.randomUUID(),
+  idempotency_key: createUuid(),
   content: { type: "business_rule", title: "", body: "" },
   scope: {},
   source: { evidence_ids: [] },
@@ -202,6 +204,8 @@ async function detail(api: KnowledgeApi, id: string) {
 }
 async function open(id: string) {
   if (!(await discard())) return;
+  if (id !== (candidate.value?.candidate_id ?? record.value?.knowledge_id))
+    detailTab.value = "content";
   await scope.run(async (request) => detail(new KnowledgeApi(request), id));
 }
 async function create() {
@@ -214,7 +218,7 @@ async function create() {
 async function edit() {
   if (!candidate.value || !(await discard())) return;
   draft.value = {
-    idempotency_key: crypto.randomUUID(),
+    idempotency_key: createUuid(),
     knowledge_id: candidate.value.knowledge_id,
     content: JSON.parse(JSON.stringify(candidate.value.content)),
     scope: { ...candidate.value.scope },
@@ -388,7 +392,7 @@ async function rollback() {
       effective_at: effective.value,
     };
     const content = stableStringify(payload);
-    if (rollbackAttempt.content !== content) rollbackAttempt = { content, id: crypto.randomUUID() };
+    if (rollbackAttempt.content !== content) rollbackAttempt = { content, id: createUuid() };
     try {
       await api.rollback(item.knowledge_id, { ...payload, idempotency_key: rollbackAttempt.id });
       await detail(api, item.knowledge_id);
@@ -408,7 +412,7 @@ onMounted(async () => {
 defineExpose({ discard, busy: computed(() => scope.state.busy) });
 </script>
 <template>
-  <div class="management-toolbar">
+  <div class="management-toolbar" :class="{ 'management-context-bar': admin }">
     <ElButton
       v-if="mode === 'candidates'"
       type="primary"
@@ -416,7 +420,7 @@ defineExpose({ discard, busy: computed(() => scope.state.busy) });
       @click="create"
       >提交知识候选</ElButton
     ><ElButton :loading="scope.state.busy" @click="load">刷新列表</ElButton
-    ><ElSelect v-model="typeFilter" aria-label="知识类型"
+    ><ElSelect v-model="typeFilter" aria-label="知识类型" placeholder="全部类型"
       ><ElOption value="" label="全部类型" /><ElOption
         value="business_rule"
         label="业务规则" /><ElOption value="metric" label="指标" /><ElOption
@@ -426,6 +430,7 @@ defineExpose({ discard, busy: computed(() => scope.state.busy) });
       v-if="['candidates', 'assigned'].includes(mode)"
       v-model="statusFilter"
       aria-label="候选状态"
+      placeholder="全部状态"
       ><ElOption value="" label="全部状态" /><ElOption
         v-for="(label, value) in statuses"
         :key="value"
@@ -536,8 +541,31 @@ defineExpose({ discard, busy: computed(() => scope.state.busy) });
             Object.values(candidate?.scope ?? record?.scope ?? {}).join(" / ") || "通用"
           }}
         </p>
-        <KnowledgeContent :content="content" :template="template" :show-heading="false" />
-        <div class="management-actions">
+        <nav
+          v-if="admin && candidate"
+          class="management-tabs knowledge-review-tabs"
+          aria-label="审核详情"
+        >
+          <ElButton
+            :type="detailTab === 'content' ? 'primary' : 'default'"
+            @click="detailTab = 'content'"
+            >知识内容</ElButton
+          >
+          <ElButton
+            :type="detailTab === 'review' ? 'primary' : 'default'"
+            @click="detailTab = 'review'"
+            >负责人和审核</ElButton
+          >
+          <ElButton
+            :type="detailTab === 'history' ? 'primary' : 'default'"
+            @click="detailTab = 'history'"
+            >来源与记录</ElButton
+          >
+        </nav>
+        <div v-show="!admin || !candidate || detailTab === 'content'">
+          <KnowledgeContent :content="content" :template="template" :show-heading="false" />
+        </div>
+        <div v-show="!admin || !candidate || detailTab === 'content'" class="management-actions">
           <ElButton v-if="mayEdit" :disabled="scope.state.busy || blocked" @click="edit"
             >修改候选</ElButton
           ><ElButton
@@ -562,107 +590,116 @@ defineExpose({ discard, busy: computed(() => scope.state.busy) });
           ><ElButton v-if="blocked && head" @click="open(head.knowledge_id)">核对发布版本</ElButton>
         </div>
         <template v-if="candidate"
-          ><section
-            v-if="isManager && !['published', 'withdrawn'].includes(candidate.status)"
-            class="management-section"
-          >
-            <h3>分配负责人</h3>
-            <div class="management-toolbar">
-              <ElInput
-                v-model="ownerSearch"
-                aria-label="搜索负责人"
-                placeholder="姓名或账号"
-              /><ElButton :disabled="scope.state.busy" @click="searchOwners">搜索负责人</ElButton>
-            </div>
-            <ElSelect v-model="ownerId" filterable aria-label="负责人"
-              ><ElOption
-                v-for="item in owners"
-                :key="item.user_id"
-                :value="item.user_id"
-                :label="item.display_name + ' · ' + item.username" /></ElSelect
-            ><ElButton :disabled="!ownerId || scope.state.busy || blocked" @click="action('owner')"
-              >分配负责人</ElButton
+          ><div v-show="!admin || detailTab === 'review'" class="knowledge-review-controls">
+            <section
+              v-if="isManager && !['published', 'withdrawn'].includes(candidate.status)"
+              class="management-section"
             >
-            <p class="management-help">分配后候选进入待审状态；负责人须已有相关数据访问权限。</p>
-          </section>
-          <section v-if="mayReview && candidate.status === 'pending'" class="management-section">
-            <h3>审核当前版本</h3>
-            <ElInput
-              v-model="comment"
-              type="textarea"
-              :rows="3"
-              maxlength="2000"
-              placeholder="填写审核意见"
-              aria-label="审核意见"
-            />
-            <div class="management-actions">
-              <ElButton
-                type="primary"
-                :disabled="!comment.trim() || scope.state.busy || blocked"
-                @click="action('review', 'approve')"
-                >审核通过</ElButton
+              <h3>分配负责人</h3>
+              <div class="management-toolbar">
+                <ElInput
+                  v-model="ownerSearch"
+                  aria-label="搜索负责人"
+                  placeholder="姓名或账号"
+                /><ElButton :disabled="scope.state.busy" @click="searchOwners">搜索负责人</ElButton>
+              </div>
+              <ElSelect v-model="ownerId" filterable aria-label="负责人"
+                ><ElOption
+                  v-for="item in owners"
+                  :key="item.user_id"
+                  :value="item.user_id"
+                  :label="item.display_name + ' · ' + item.username" /></ElSelect
               ><ElButton
-                :disabled="!comment.trim() || scope.state.busy || blocked"
-                @click="action('review', 'reject')"
-                >驳回</ElButton
+                :disabled="!ownerId || scope.state.busy || blocked"
+                @click="action('owner')"
+                >分配负责人</ElButton
               >
-            </div>
-          </section>
-          <section v-if="mayReview && candidate.status === 'approved'" class="management-section">
-            <h3>发布</h3>
-            <label
-              >生效时间（东八区）<ElInput
-                v-model="effective"
-                aria-label="知识生效时间"
-                placeholder="YYYY-MM-DD HH:mm:ss" /></label
-            ><ElButton
-              type="primary"
-              :disabled="scope.state.busy || blocked"
-              @click="action('publish')"
-              >发布知识</ElButton
-            >
-          </section>
-          <section class="management-section">
-            <h3>来源与支持</h3>
-            <p v-if="!sources.length" class="muted">暂无当前可读来源。</p>
-            <div v-for="(item, index) in sources" :key="index" class="knowledge-source">
-              <span>{{ item.user_id }}</span
-              ><RouterLink
-                v-if="item.user_id === auth.state.context?.userId && item.source.conversation_id"
-                :to="'/analysis/' + encodeURIComponent(item.source.conversation_id)"
-                >打开来源会话</RouterLink
-              >
-              <p class="management-help">
-                {{
-                  item.source.analysis_run_id ? "运行 " + item.source.analysis_run_id : "手动提交"
-                }}
-                · {{ item.source.evidence_ids.length }} 条证据
-              </p>
-            </div>
-            <details v-if="candidate.status !== 'withdrawn'">
-              <summary>补充来源</summary>
-              <SourcePicker v-model="supplemental" /><ElButton
+              <p class="management-help">分配后候选进入待审状态；负责人须已有相关数据访问权限。</p>
+            </section>
+            <section v-if="mayReview && candidate.status === 'pending'" class="management-section">
+              <h3>审核当前版本</h3>
+              <ElInput
+                v-model="comment"
+                type="textarea"
+                :rows="3"
+                maxlength="2000"
+                placeholder="填写审核意见"
+                aria-label="审核意见"
+              />
+              <div class="management-actions">
+                <ElButton
+                  type="primary"
+                  :disabled="!comment.trim() || scope.state.busy || blocked"
+                  @click="action('review', 'approve')"
+                  >审核通过</ElButton
+                ><ElButton
+                  :disabled="!comment.trim() || scope.state.busy || blocked"
+                  @click="action('review', 'reject')"
+                  >驳回</ElButton
+                >
+              </div>
+            </section>
+            <section v-if="mayReview && candidate.status === 'approved'" class="management-section">
+              <h3>发布</h3>
+              <label
+                >生效时间（东八区）<ElInput
+                  v-model="effective"
+                  aria-label="知识生效时间"
+                  placeholder="YYYY-MM-DD HH:mm:ss" /></label
+              ><ElButton
+                type="primary"
                 :disabled="scope.state.busy || blocked"
-                @click="support"
-                >保存来源</ElButton
+                @click="action('publish')"
+                >发布知识</ElButton
               >
-            </details>
-          </section>
-          <section class="management-section">
-            <h3>审核记录</h3>
-            <p v-if="!reviews.length" class="muted">尚无审核记录。</p>
-            <article v-for="review in reviews" :key="review.review_id" class="knowledge-review">
-              <p>
-                v{{ review.candidate.version }} ·
-                {{ review.decision === "approve" ? "通过" : "驳回" }} · {{ review.reviewed_by }} ·
-                {{ review.reviewed_at }}
-              </p>
-              <p>{{ review.comment }}</p>
-              <details>
-                <summary>当时审核的内容</summary>
-                <KnowledgeContent :content="review.candidate.content" />
+            </section>
+            <p v-if="admin && !mayReview && !isManager" class="management-help">
+              审核由指定负责人处理。
+            </p>
+          </div>
+          <div v-show="!admin || detailTab === 'history'">
+            <section class="management-section">
+              <h3>来源与支持</h3>
+              <p v-if="!sources.length" class="muted">暂无当前可读来源。</p>
+              <div v-for="(item, index) in sources" :key="index" class="knowledge-source">
+                <span>{{ item.user_id }}</span
+                ><RouterLink
+                  v-if="item.user_id === auth.state.context?.userId && item.source.conversation_id"
+                  :to="'/analysis/' + encodeURIComponent(item.source.conversation_id)"
+                  >打开来源会话</RouterLink
+                >
+                <p class="management-help">
+                  {{
+                    item.source.analysis_run_id ? "运行 " + item.source.analysis_run_id : "手动提交"
+                  }}
+                  · {{ item.source.evidence_ids.length }} 条证据
+                </p>
+              </div>
+              <details v-if="candidate.status !== 'withdrawn'">
+                <summary>补充来源</summary>
+                <SourcePicker v-model="supplemental" /><ElButton
+                  :disabled="scope.state.busy || blocked"
+                  @click="support"
+                  >保存来源</ElButton
+                >
               </details>
-            </article></section
+            </section>
+            <section class="management-section">
+              <h3>审核记录</h3>
+              <p v-if="!reviews.length" class="muted">尚无审核记录。</p>
+              <article v-for="review in reviews" :key="review.review_id" class="knowledge-review">
+                <p>
+                  v{{ review.candidate.version }} ·
+                  {{ review.decision === "approve" ? "通过" : "驳回" }} · {{ review.reviewed_by }} ·
+                  {{ review.reviewed_at }}
+                </p>
+                <p>{{ review.comment }}</p>
+                <details>
+                  <summary>当时审核的内容</summary>
+                  <KnowledgeContent :content="review.candidate.content" />
+                </details>
+              </article>
+            </section></div
         ></template>
         <section v-if="head" class="management-section">
           <h3>版本管理</h3>

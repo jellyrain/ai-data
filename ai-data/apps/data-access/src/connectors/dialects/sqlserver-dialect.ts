@@ -27,11 +27,22 @@ const sqlServerDialect: DatabaseDialect = {
       c.COLUMN_NAME AS column_name,
       c.DATA_TYPE AS data_type,
       c.IS_NULLABLE AS is_nullable,
-      c.ORDINAL_POSITION AS ordinal_position
+      c.ORDINAL_POSITION AS ordinal_position,
+      CONVERT(nvarchar(max), object_note.value) AS object_description,
+      CONVERT(nvarchar(max), column_note.value) AS column_description
     FROM INFORMATION_SCHEMA.TABLES t
     JOIN INFORMATION_SCHEMA.COLUMNS c
       ON c.TABLE_SCHEMA = t.TABLE_SCHEMA
       AND c.TABLE_NAME = t.TABLE_NAME
+    LEFT JOIN sys.schemas s ON s.name = t.TABLE_SCHEMA
+    LEFT JOIN sys.objects o ON o.schema_id = s.schema_id AND o.name = t.TABLE_NAME
+    LEFT JOIN sys.columns sc ON sc.object_id = o.object_id AND sc.name = c.COLUMN_NAME
+    LEFT JOIN sys.extended_properties object_note
+      ON object_note.class = 1 AND object_note.major_id = o.object_id
+      AND object_note.minor_id = 0 AND object_note.name = N'MS_Description'
+    LEFT JOIN sys.extended_properties column_note
+      ON column_note.class = 1 AND column_note.major_id = o.object_id
+      AND column_note.minor_id = sc.column_id AND column_note.name = N'MS_Description'
     WHERE t.TABLE_SCHEMA NOT IN ('sys', 'INFORMATION_SCHEMA')
     UNION ALL
     SELECT
@@ -41,9 +52,14 @@ const sqlServerDialect: DatabaseDialect = {
       NULL AS column_name,
       NULL AS data_type,
       NULL AS is_nullable,
-      NULL AS ordinal_position
+      NULL AS ordinal_position,
+      CONVERT(nvarchar(max), object_note.value) AS object_description,
+      NULL AS column_description
     FROM sys.procedures p
     JOIN sys.schemas s ON s.schema_id = p.schema_id
+    LEFT JOIN sys.extended_properties object_note
+      ON object_note.class = 1 AND object_note.major_id = p.object_id
+      AND object_note.minor_id = 0 AND object_note.name = N'MS_Description'
     WHERE p.is_ms_shipped = 0
     ORDER BY schema_name, object_name, ordinal_position;
   `,
