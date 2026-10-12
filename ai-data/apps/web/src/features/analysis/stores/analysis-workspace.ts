@@ -5,6 +5,8 @@ import {
   clarificationAnswerSchema,
   createConversationSchema,
   submitMessageSchema,
+  imageAttachmentLimits,
+  imageAttachmentSchema,
 } from "@ai-data/contracts";
 import type { AgentVersion, AnalysisRunState, SseEvent } from "@ai-data/contracts";
 import { createUuid } from "../../../shared/identity/create-uuid";
@@ -24,6 +26,7 @@ import type {
   RunView,
   WorkspaceDependencies,
   WorkspaceState,
+  DraftImage,
 } from "./analysis-workspace-types";
 
 function initialState(): WorkspaceState {
@@ -34,6 +37,8 @@ function initialState(): WorkspaceState {
     boundAgent: null,
     runs: {},
     draft: "",
+    images: [],
+    preparingImages: false,
     loading: false,
     sending: false,
     creating: false,
@@ -58,6 +63,7 @@ class AnalysisWorkspace {
   private selected = "";
   private page = new AbortController();
   private drafts = new Map<string, string>();
+  private imageDrafts = new Map<string, DraftImage[]>();
   private pending = new Map<string, PendingMessage>();
   private answers = new Map<string, { value: string; key: string }>();
   private subscriptions = new Map<string, AbortController>();
@@ -90,12 +96,93 @@ class AnalysisWorkspace {
       this.drafts.delete(this.selected);
       this.state.draft = "";
       this.state.pendingMessage = false;
+      this.clearImages(this.selected);
     }
     this.state.error = errorText(error);
   }
   setDraft(value: string): void {
     this.state.draft = value;
     this.drafts.set(this.selected, value);
+  }
+  /** 浏览器先解码尺寸，API 再复核文件结构与容量；异步结果受页面代次约束。 */
+  async addImages(files: File[]): Promise<void> {
+    if (
+      this.state.pendingMessage ||
+      this.state.sending ||
+      this.state.creating ||
+      this.state.preparingImages
+    )
+      return;
+    const generation = this.generation;
+    this.state.preparingImages = true;
+    try {
+      for (const file of files) {
+        try {
+          if (!["image/png", "image/jpeg", "image/webp"].includes(file.type))
+            throw new ApiError("请选择 JPG、PNG 或 WebP 图片");
+          if (!file.size || file.size > imageAttachmentLimits.fileBytes)
+            throw new ApiError("单张图片需大于 0 且不超过 10 MB");
+          const bitmap = await createImageBitmap(file);
+          const { width, height } = bitmap;
+          bitmap.close();
+          if (!this.current(generation)) return;
+          if (
+            width > imageAttachmentLimits.dimension ||
+            height > imageAttachmentLimits.dimension ||
+            width * height > imageAttachmentLimits.pixels
+          )
+            throw new ApiError("图片长宽不能超过 8192 像素，总像素不能超过 2000 万");
+          if (this.state.images.length >= imageAttachmentLimits.count)
+            throw new ApiError("每条消息最多添加 4 张图片");
+          if (
+            file.size + this.state.images.reduce((sum, image) => sum + image.file.size, 0) >
+            imageAttachmentLimits.messageBytes
+          )
+            throw new ApiError("每条消息图片合计不能超过 20 MB");
+          const image: DraftImage = shallowReactive({
+            id: createUuid(),
+            file,
+            preview: URL.createObjectURL(file),
+            status: "ready",
+            error: "",
+          });
+          this.state.images = [...this.state.images, image];
+          this.imageDrafts.set(this.selected, this.state.images);
+          this.state.error = "";
+        } catch (error) {
+          if (this.current(generation))
+            this.state.error =
+              error instanceof ApiError ? error.message : "图片无法读取，请选择有效的图片文件";
+        }
+      }
+    } finally {
+      if (generation === this.generation) this.state.preparingImages = false;
+    }
+  }
+  removeImage(id: string): void {
+    if (this.state.pendingMessage || this.state.sending) return;
+    const image = this.state.images.find((item) => item.id === id);
+    if (!image) return;
+    URL.revokeObjectURL(image.preview);
+    this.state.images = this.state.images.filter((item) => item.id !== id);
+    this.imageDrafts.set(this.selected, this.state.images);
+    if (image.status !== "ready") {
+      const generation = this.generation;
+      void this.dependencies
+        .request(`/api/attachments/${encodeURIComponent(id)}`, {
+          method: "DELETE",
+          signal: this.page.signal,
+        })
+        .catch((error: unknown) => {
+          if (this.current(generation) && !(error instanceof ApiError && error.status === 404))
+            this.state.error = errorText(error);
+        });
+    }
+  }
+  private clearImages(id: string): void {
+    for (const image of this.imageDrafts.get(id) ?? []) URL.revokeObjectURL(image.preview);
+    this.imageDrafts.delete(id);
+    if (this.selected === id) this.state.images = [];
   }
   leave(): void {
     this.page.abort();
@@ -107,6 +194,7 @@ class AnalysisWorkspace {
     this.state.boundAgent = null;
     this.state.loading = false;
     this.state.sending = false;
+    this.state.preparingImages = false;
     this.state.answering = false;
     this.state.cancelling = false;
     this.state.creating = false;
@@ -114,6 +202,7 @@ class AnalysisWorkspace {
   }
   reset(): void {
     this.leave();
+    for (const id of this.imageDrafts.keys()) this.clearImages(id);
     this.drafts.clear();
     this.pending.clear();
     this.answers.clear();
@@ -133,6 +222,7 @@ class AnalysisWorkspace {
     this.selected = id;
     const generation = this.generation;
     this.state.draft = this.drafts.get(id) ?? "";
+    this.state.images = this.imageDrafts.get(id) ?? [];
     this.state.pendingMessage = this.pending.has(id);
     this.state.error = "";
     this.state.loading = true;
@@ -199,7 +289,13 @@ class AnalysisWorkspace {
   }
   /** 创建请求不自动重试；不确定时先显示已复核列表，再由用户明确再建。 */
   async create(agent: AgentVersion): Promise<string | null> {
-    if (this.state.creating || this.state.creationUncertain || !agent.enabled) return null;
+    if (
+      this.state.creating ||
+      this.state.preparingImages ||
+      this.state.creationUncertain ||
+      !agent.enabled
+    )
+      return null;
     const generation = this.generation;
     const draft = this.state.draft;
     this.state.creating = true;
@@ -224,6 +320,8 @@ class AnalysisWorkspace {
       this.state.boundAgent = agent;
       this.drafts.set(conversation.id, draft);
       this.drafts.delete("");
+      this.imageDrafts.set(conversation.id, this.imageDrafts.get("") ?? []);
+      this.imageDrafts.delete("");
       this.state.pendingMessage = false;
       this.state.conversations = [
         conversation,
@@ -266,6 +364,7 @@ class AnalysisWorkspace {
       this.state.conversations = this.state.conversations.filter((item) => !removed.has(item.id));
       for (const id of ids) {
         this.drafts.delete(id);
+        this.clearImages(id);
         this.pending.delete(id);
       }
       if (removed.has(this.selected)) {
@@ -296,6 +395,7 @@ class AnalysisWorkspace {
     if (
       !detail ||
       this.state.sending ||
+      this.state.preparingImages ||
       this.activeRun() ||
       detail.conversation.status !== "active"
     )
@@ -303,17 +403,61 @@ class AnalysisWorkspace {
     const id = detail.conversation.id;
     const existing = this.pending.get(id);
     const content = existing?.content ?? this.state.draft.trim();
-    if (!content || content.length > 64000) return;
-    const submission = existing ?? { content, key: createUuid() };
-    this.pending.set(id, submission);
-    this.state.pendingMessage = true;
+    if (
+      (!content && !this.state.images.length && !existing?.attachmentIds?.length) ||
+      content.length > 64000
+    )
+      return;
     const generation = this.generation;
     this.state.sending = true;
     this.state.error = "";
     try {
+      if (!existing) {
+        for (const image of this.state.images) {
+          if (image.attachment) continue;
+          image.status = "uploading";
+          image.error = "";
+          try {
+            const attachment = imageAttachmentSchema.parse(
+              await this.dependencies.request(
+                `/api/conversations/${encodeURIComponent(id)}/attachments/${image.id}?name=${encodeURIComponent(image.file.name.slice(0, 255))}`,
+                {
+                  method: "PUT",
+                  binaryBody: image.file,
+                  signal: this.page.signal,
+                  timeoutMs: 120000,
+                },
+              ),
+            );
+            if (!this.current(generation)) {
+              image.status = "ready";
+              return;
+            }
+            if (attachment.attachment_id !== image.id)
+              throw new ApiError("图片回执不一致", 0, "INVALID_RESPONSE");
+            image.attachment = attachment;
+            image.status = "uploaded";
+          } catch (error) {
+            image.status = "error";
+            image.error = errorText(error);
+            throw error;
+          }
+        }
+      }
+      if (!this.current(generation)) return;
+      const submission: PendingMessage = existing ?? {
+        content,
+        key: createUuid(),
+        ...(this.state.images.length
+          ? { attachmentIds: this.state.images.map((image) => image.id) }
+          : {}),
+      };
+      this.pending.set(id, submission);
+      this.state.pendingMessage = true;
       const body = submitMessageSchema.parse({
         content: submission.content,
         idempotency_key: submission.key,
+        ...(submission.attachmentIds?.length ? { attachment_ids: submission.attachmentIds } : {}),
       });
       const receipt = submittedMessageSchema.parse(
         await this.dependencies.request(`/api/conversations/${encodeURIComponent(id)}/messages`, {
@@ -328,6 +472,7 @@ class AnalysisWorkspace {
       this.pending.delete(id);
       this.state.pendingMessage = false;
       this.setDraft("");
+      this.clearImages(id);
       const message = { ...receipt.message, analysisRunId: receipt.analysisRun.id };
       this.state.detail = {
         ...detail,
@@ -340,6 +485,11 @@ class AnalysisWorkspace {
         if (error instanceof ApiError && error.status === 400) {
           this.pending.delete(id);
           this.state.pendingMessage = false;
+          for (const image of this.state.images) {
+            image.id = createUuid();
+            image.attachment = undefined;
+            image.status = "ready";
+          }
         }
         this.failed(error);
         if (error instanceof ApiError && error.status === 409) await this.enter(id, true);

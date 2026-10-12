@@ -4,6 +4,7 @@ import type {
   AnalysisStep,
   QueryEvidence,
   SseEvent,
+  ImageAttachment,
 } from "@ai-data/contracts";
 import type { Conversation, ConversationDetail } from "../api/analysis-types";
 import type { SessionResources } from "../../../shared/session/session-resources";
@@ -31,6 +32,8 @@ type WorkspaceState = {
   boundAgent: AgentVersion | null;
   runs: Record<string, RunView>;
   draft: string;
+  images: DraftImage[];
+  preparingImages: boolean;
   loading: boolean;
   sending: boolean;
   creating: boolean;
@@ -50,5 +53,14 @@ type WorkspaceDependencies = {
   identity: () => { userId: string; organizationId: string } | null;
 };
 /** 不确定的写入保留原内容与键，重试不能生成第二轮。 */
-type PendingMessage = { content: string; key: string };
-export type { RunView, WorkspaceState, WorkspaceDependencies, PendingMessage };
+type PendingMessage = { content: string; key: string; attachmentIds?: string[] };
+/** 未发送图片按会话保存在当前身份内存，文件上传重试复用同一标识。 */
+type DraftImage = {
+  id: string;
+  file: File;
+  preview: string;
+  status: "ready" | "uploading" | "uploaded" | "error";
+  error: string;
+  attachment?: ImageAttachment;
+};
+export type { RunView, WorkspaceState, WorkspaceDependencies, PendingMessage, DraftImage };

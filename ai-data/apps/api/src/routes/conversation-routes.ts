@@ -69,6 +69,7 @@ function registerConversationRoutes(
       (request.params as { id: string }).id,
       input.content,
       input.idempotency_key,
+      ...(input.attachment_ids?.length ? [input.attachment_ids] : []),
     );
     if (!submitted) throw new ApplicationError("NOT_FOUND", "会话不存在或不可用");
     return reply.code(201).send(submitted);

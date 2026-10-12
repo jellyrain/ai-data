@@ -2,6 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { savedReportSchema } from "@ai-data/contracts";
 import { ReportManagementService } from "../../src/reports/report-management-service";
 import { ApplicationError } from "../../src/errors/application-error";
+import type { AuthContext } from "../../src/auth/auth-types";
+import { BusinessCatalogService } from "../../src/catalog/business-catalog-service";
+import type {
+  CatalogPermissionRepository,
+  RawCatalogReader,
+} from "../../src/catalog/catalog-types";
 import { context } from "../support/api-fixtures";
 
 const report = savedReportSchema.parse({
@@ -51,8 +57,9 @@ const report = savedReportSchema.parse({
   ],
 });
 
-function setup() {
-  const get = vi.fn(async (_context, id: string) => {
+function setup(authorize?: (context: AuthContext) => Promise<void>) {
+  const get = vi.fn(async (context: AuthContext, id: string) => {
+    await authorize?.(context);
     if (id === "hidden") throw new ApplicationError("POLICY_REJECTED", "来源权限不足");
     return { ...report, report_id: id };
   });
@@ -133,5 +140,147 @@ describe("报表列表、产物和导出内容", () => {
     expect(output.messages.map((item) => item.message_id)).toEqual(["u", "a"]);
     expect(output.artifacts).toHaveLength(1);
     expect(output.tables[0].availability).toBe("truncated");
+  });
+});
+
+/** 目录替身仅提供数据，合并权限和请求复用走正式服务实现。 */
+function catalogSetup() {
+  const raw = {
+    listRawCatalog: vi.fn<RawCatalogReader["listRawCatalog"]>(async (sourceId) => [
+      {
+        source_id: sourceId,
+        object_id: "visit",
+        name: "visit",
+        kind: "table",
+        columns: [
+          { name: "id", data_type: "integer", nullable: false },
+          { name: "name", data_type: "string", nullable: false },
+        ],
+        query_parameters: [],
+      },
+    ]),
+  };
+  const config = {
+    find: async () => null,
+    listBySourceId: vi.fn(async () => []),
+    save: async () => {},
+  };
+  const permissions = {
+    listObjectPermissions: vi.fn<CatalogPermissionRepository["listObjectPermissions"]>(async () => [
+      { role_id: "reader", object_id: "visit", effect: "allow" },
+    ]),
+    listColumnPermissions: vi.fn<CatalogPermissionRepository["listColumnPermissions"]>(async () => [
+      { role_id: "reader", object_id: "visit", column: "name", effect: "deny" },
+    ]),
+    listRowPolicies: vi.fn(async () => []),
+    saveObjectPermission: async () => {},
+    saveColumnPermission: async () => {},
+    saveRowPolicy: async () => {},
+  };
+  return {
+    raw,
+    config,
+    permissions,
+    catalog: new BusinessCatalogService(raw, config, permissions),
+  };
+}
+
+describe("报表列表的目录读取范围", () => {
+  it("同一次列表中逐报表校验权限，同一数据源的并发和重复读取只发现一次目录", async () => {
+    const c = catalogSetup();
+    const authorize = vi.fn(async (identity: AuthContext) => {
+      const items = await Promise.all([
+        c.catalog.getAuthorized(identity, "s", "visit"),
+        c.catalog.getAuthorized(identity, "s", "visit"),
+      ]);
+      expect(items.every((item) => item?.dataset.object_id === "visit")).toBe(true);
+    });
+    const page = await setup(authorize).service.list(context);
+    expect(page.items.map((item) => item.report_id)).toEqual(["a", "z"]);
+    expect(authorize).toHaveBeenCalledTimes(3);
+    expect(c.raw.listRawCatalog).toHaveBeenCalledTimes(1);
+    expect(c.permissions.listObjectPermissions).toHaveBeenCalledTimes(1);
+  });
+
+  it("下一次列表重新读取权限，撤销对象访问后不再返回卡片", async () => {
+    const c = catalogSetup();
+    const reader = { ...context, roles: ["reader"], roleIds: ["reader"] };
+    const h = setup(async (identity) => {
+      const item = await c.catalog.getAuthorized(identity, "s", "visit");
+      if (!item) throw new ApplicationError("POLICY_REJECTED", "来源权限不足");
+      expect(item.dataset.columns.map((column) => column.name)).toEqual(["id"]);
+    });
+    expect((await h.service.list(reader)).items).toHaveLength(2);
+    c.permissions.listObjectPermissions.mockResolvedValue([]);
+    expect((await h.service.list(reader)).items).toEqual([]);
+    expect(c.raw.listRawCatalog).toHaveBeenCalledTimes(2);
+  });
+
+  it("并发列表分别读取目录，管理员与无权限用户的结果互不复用", async () => {
+    const c = catalogSetup();
+    const h = setup(async (identity) => {
+      if (!(await c.catalog.getAuthorized(identity, "s", "visit")))
+        throw new ApplicationError("POLICY_REJECTED", "来源权限不足");
+    });
+    const [first, second, denied] = await Promise.all([
+      h.service.list(context),
+      h.service.list(context),
+      h.service.list({ ...context, userId: "other", roles: [], roleIds: [] }),
+    ]);
+    expect(first.items).toHaveLength(2);
+    expect(second).toEqual(first);
+    expect(denied.items).toEqual([]);
+    expect(c.raw.listRawCatalog).toHaveBeenCalledTimes(3);
+  });
+
+  it("同一读取范围内也按身份、授权上下文、数据源和目录服务隔离", async () => {
+    const c = catalogSetup();
+    const other = catalogSetup();
+    const h = setup(async (identity) => {
+      const reader = { ...identity, roles: ["reader"], roleIds: ["reader"] };
+      expect((await c.catalog.getAuthorized(identity, "s", "visit"))?.dataset.columns).toHaveLength(
+        2,
+      );
+      expect((await c.catalog.getAuthorized(reader, "s", "visit"))?.dataset.columns).toHaveLength(
+        1,
+      );
+      expect(await c.catalog.getAuthorized({ ...reader, roleIds: [] }, "s", "visit")).toBeNull();
+      expect((await c.catalog.getAuthorized(identity, "other", "visit"))?.dataset.source_id).toBe(
+        "other",
+      );
+      await c.catalog.getAuthorized({ ...identity, organizationId: "other-org" }, "s", "visit");
+      await c.catalog.getAuthorized({ ...identity, userId: "other-user" }, "s", "visit");
+      await other.catalog.getAuthorized(identity, "s", "visit");
+    });
+    await h.service.list(context);
+    expect(c.raw.listRawCatalog).toHaveBeenCalledTimes(6);
+    expect(other.raw.listRawCatalog).toHaveBeenCalledTimes(1);
+  });
+
+  it("目录读取失败后可重读，失败请求结束后下一次列表重新读取", async () => {
+    const c = catalogSetup();
+    c.raw.listRawCatalog.mockRejectedValueOnce(new ApplicationError("CONFLICT", "目录变更"));
+    const h = setup(async (identity) => {
+      await c.catalog.getAuthorized(identity, "s", "visit");
+    });
+    expect((await h.service.list(context)).items.map((item) => item.report_id)).toEqual(["z"]);
+    expect(c.raw.listRawCatalog).toHaveBeenCalledTimes(2);
+    c.raw.listRawCatalog.mockRejectedValueOnce(new Error("DAS unavailable"));
+    await expect(h.service.list(context)).rejects.toThrow("DAS unavailable");
+    expect((await h.service.list(context)).items).toHaveLength(2);
+    expect(c.raw.listRawCatalog).toHaveBeenCalledTimes(4);
+  });
+
+  it("调用方修改返回目录不影响后续报表，列表之外的读取仍获取最新目录", async () => {
+    const c = catalogSetup();
+    const h = setup(async (identity) => {
+      const item = (await c.catalog.getAuthorized(identity, "s", "visit"))!;
+      expect(item.dataset.columns).toHaveLength(2);
+      item.dataset.columns.length = 0;
+    });
+    await h.service.list(context);
+    await c.catalog.listAuthorized(context, "s");
+    await c.catalog.listAuthorized(context, "s");
+    expect(c.raw.listRawCatalog).toHaveBeenCalledTimes(3);
   });
 });

@@ -1,3 +1,4 @@
+import { withCatalogReadScope } from "../catalog/catalog-read-scope";
 import {
   savedReportSchema,
   reportDefinitionVersionSchema,
@@ -106,25 +107,27 @@ function createReportServices(dependencies: {
     executor: MetadataQueryExecutor,
     isCompleted: boolean,
   ) => {
-    const existing = await repository.find(
-      "report",
-      context.organizationId,
-      snapshot.report_id,
-      undefined,
-      executor,
-    );
-    const definition = await builder.fromSnapshot(context, snapshot, executor);
-    await definitions.save(
-      context,
-      {
-        definition,
-        shared_with: existing?.shared_with ?? snapshot.shared_with,
-        ...(isCompleted ? { source_analysis_run_id: snapshot.analysis_run_id } : {}),
-      },
-      snapshot.report_id,
-      existing?.version ?? 0,
-      executor,
-    );
+    return withCatalogReadScope(async () => {
+      const existing = await repository.find(
+        "report",
+        context.organizationId,
+        snapshot.report_id,
+        undefined,
+        executor,
+      );
+      const definition = await builder.fromSnapshot(context, snapshot, executor);
+      await definitions.save(
+        context,
+        {
+          definition,
+          shared_with: existing?.shared_with ?? snapshot.shared_with,
+          ...(isCompleted ? { source_analysis_run_id: snapshot.analysis_run_id } : {}),
+        },
+        snapshot.report_id,
+        existing?.version ?? 0,
+        executor,
+      );
+    });
   };
   const reports = new ReportService(
     new SqlReportRepository(dependencies.database),
@@ -155,22 +158,24 @@ function createReportServices(dependencies: {
     executor: MetadataQueryExecutor,
     content: string,
   ) => {
-    await revisions.complete(context, runId, executor, content);
-    const result = await executor.execute({
-      sql: "SELECT r.report_json FROM dbo.saved_reports r WHERE r.organization_id=@org AND r.user_id=@user AND JSON_VALUE(r.report_json,'$.analysis_run_id')=@run AND NOT EXISTS(SELECT 1 FROM dbo.report_templates t WHERE t.organization_id=r.organization_id AND t.report_id=r.report_id)",
-      parameters: [
-        { name: "org", type: "string", value: context.organizationId },
-        { name: "user", type: "string", value: context.userId },
-        { name: "run", type: "string", value: runId },
-      ],
+    return withCatalogReadScope(async () => {
+      await revisions.complete(context, runId, executor, content);
+      const result = await executor.execute({
+        sql: "SELECT r.report_json FROM dbo.saved_reports r WHERE r.organization_id=@org AND r.user_id=@user AND JSON_VALUE(r.report_json,'$.analysis_run_id')=@run AND NOT EXISTS(SELECT 1 FROM dbo.report_templates t WHERE t.organization_id=r.organization_id AND t.report_id=r.report_id)",
+        parameters: [
+          { name: "org", type: "string", value: context.organizationId },
+          { name: "user", type: "string", value: context.userId },
+          { name: "run", type: "string", value: runId },
+        ],
+      });
+      for (const row of result.rows)
+        await saveSnapshotDefinition(
+          context,
+          parseStoredRecord(() => savedReportSchema.parse(JSON.parse(String(row.report_json)))),
+          executor,
+          false,
+        );
     });
-    for (const row of result.rows)
-      await saveSnapshotDefinition(
-        context,
-        parseStoredRecord(() => savedReportSchema.parse(JSON.parse(String(row.report_json)))),
-        executor,
-        false,
-      );
   };
   const sharing = new ReportSharingService({
     definitions,

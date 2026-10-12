@@ -1,5 +1,6 @@
+import { withFreshCatalogReadScope } from "../catalog/catalog-read-scope";
 import { createHash, randomUUID } from "node:crypto";
-import { stableStringify } from "@ai-data/contracts";
+import { stableStringify, imageAttachmentLimits } from "@ai-data/contracts";
 import type { AuthContext } from "../auth/auth-types";
 import { ApplicationError } from "../errors/application-error";
 import type { ExecutorDependencies } from "./runtime-types";
@@ -56,33 +57,62 @@ class AnalysisExecutor {
       const tools = configured?.tools ?? this.dependencies.tools;
       const instructions = configured?.instructions ?? this.dependencies.instructions;
       const definitions = tools.definitions();
-      const memory = await this.dependencies.loadMemory?.(context);
-      const memoryFingerprint = await this.dependencies.loadMemoryFingerprint?.(context);
-      const reportContext = await this.dependencies.loadReportContext?.(context, runId);
-      const runtimeKey = createHash("sha256")
-        .update(
-          stableStringify({
-            tools: definitions,
-            instructions,
-            memory,
-            memoryFingerprint,
-            runtime: configured?.runtimeKey ?? this.dependencies.runtimeKey ?? "",
-          }),
-        )
-        .digest("hex");
-      const input = await repository.loadInput(context, runId, runtimeKey);
-      const evidence = [];
-      // 恢复官方线程前，复核其所属业务会话内全部历史证据。
-      for (const id of input.run_ids) {
-        await runs.get(context, id);
-        for (const item of await runs.evidence(context, id))
-          evidence.push({
-            evidence_id: item.evidence_id,
-            analysis_run_id: id,
-            metric: item.metric,
-            result: modelQueryResult(item.result),
-          });
-      }
+      const { memory, memoryFingerprint, reportContext, runtimeKey, input, images, evidence } =
+        await withFreshCatalogReadScope(async () => {
+          const memory = await this.dependencies.loadMemory?.(context);
+          const memoryFingerprint = await this.dependencies.loadMemoryFingerprint?.(context);
+          const reportContext = await this.dependencies.loadReportContext?.(context, runId);
+          const runtimeKey = createHash("sha256")
+            .update(
+              stableStringify({
+                tools: definitions,
+                instructions,
+                memory,
+                memoryFingerprint,
+                runtime: configured?.runtimeKey ?? this.dependencies.runtimeKey ?? "",
+              }),
+            )
+            .digest("hex");
+          const input = await repository.loadInput(context, runId, runtimeKey);
+          const images: { path: string; label: string }[] = [];
+          let imageBytes = 0;
+          // 复用线程也复核图片归属和文件；仅重建线程时重放历史图片。
+          for (const [messageIndex, message] of input.messages.entries()) {
+            for (const [imageIndex, attachment] of (message.attachments ?? []).entries()) {
+              if (!this.dependencies.attachments)
+                throw new ApplicationError("INTERNAL_ERROR", "图片存储未装配");
+              const stored = await this.dependencies.attachments.read(
+                context,
+                attachment.attachment_id,
+              );
+              if (!input.thread_id || messageIndex === input.messages.length - 1) {
+                imageBytes += stored.metadata.size_bytes;
+                if (imageBytes > imageAttachmentLimits.messageBytes || images.length >= 20)
+                  throw new ApplicationError(
+                    "QUERY_LIMIT_EXCEEDED",
+                    "需要恢复的图片超过分析容量，请新建会话并重新添加本次需要的图片",
+                  );
+                images.push({
+                  path: stored.path,
+                  label: `会话第 ${messageIndex + 1} 条消息，第 ${imageIndex + 1} 张图片（附件 ${attachment.attachment_id}）`,
+                });
+              }
+            }
+          }
+          const evidence = [];
+          // 恢复官方线程前，复核其所属业务会话内全部历史证据。
+          for (const id of input.run_ids) {
+            await runs.get(context, id);
+            for (const item of await runs.evidence(context, id))
+              evidence.push({
+                evidence_id: item.evidence_id,
+                analysis_run_id: id,
+                metric: item.metric,
+                result: modelQueryResult(item.result),
+              });
+          }
+          return { memory, memoryFingerprint, reportContext, runtimeKey, input, images, evidence };
+        });
       const prompt = JSON.stringify(
         input.thread_id
           ? {
@@ -135,19 +165,22 @@ class AnalysisExecutor {
           await repository.saveThread(context, runId, lease, input.context_hash, threadId);
         },
         input: prompt,
+        ...(images.length ? { images } : {}),
         instructions,
         ...(configured ? { configuration: configured.configuration } : {}),
         tools: definitions,
         signal: controller.signal,
-        onMessage: async (event) => {
-          const current = await deliveryContext();
-          if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "分析已中断");
-          await runs.recordMessage(current, runId, lease, event);
-        },
-        onCompaction: async (event) => {
-          if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "分析已中断");
-          await runs.recordCompaction(context, runId, lease, event);
-        },
+        onMessage: (event) =>
+          withFreshCatalogReadScope(async () => {
+            const current = await deliveryContext();
+            if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "分析已中断");
+            await runs.recordMessage(current, runId, lease, event);
+          }),
+        onCompaction: (event) =>
+          withFreshCatalogReadScope(async () => {
+            if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "分析已中断");
+            await runs.recordCompaction(context, runId, lease, event);
+          }),
         executeTool: async (name, value, callId) => {
           if (controller.signal.aborted) throw new ApplicationError("CANCELLED", "分析已中断");
           if (++calls > (configured?.maxToolCalls ?? this.dependencies.maxToolCalls ?? 50))
@@ -160,10 +193,12 @@ class AnalysisExecutor {
       if (result.status === "completed") {
         if (!result.content.trim() || result.content.length > 64000)
           throw new ApplicationError("QUERY_LIMIT_EXCEEDED", "分析结论为空或超过容量");
-        const current = await deliveryContext();
-        if (result.messageId)
-          await runs.complete(current, runId, lease, result.content, undefined, result.messageId);
-        else await runs.complete(current, runId, lease, result.content);
+        await withFreshCatalogReadScope(async () => {
+          const current = await deliveryContext();
+          if (result.messageId)
+            await runs.complete(current, runId, lease, result.content, undefined, result.messageId);
+          else await runs.complete(current, runId, lease, result.content);
+        });
       }
     } catch (error) {
       if (this.closing) await runs.release(context, runId, lease);

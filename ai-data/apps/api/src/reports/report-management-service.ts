@@ -22,11 +22,16 @@ import type { AuthContext } from "../auth/auth-types";
 import { ApplicationError } from "../errors/application-error";
 import { runTime } from "../analysis-runs/run-time";
 import type { ReportManagementDependencies } from "./report-management-types";
+import { withCatalogReadScope } from "../catalog/catalog-read-scope";
 
 /** 列表、历史与导出共用正式读取授权，任一来源不足时不交付整份内容。 */
 class ReportManagementService {
   constructor(private readonly dependencies: ReportManagementDependencies) {}
   async list(context: AuthContext, input: unknown = {}): Promise<ReportList> {
+    return withCatalogReadScope(() => this.listPage(context, input));
+  }
+  /** 摘要仍逐份执行定义和快照授权，重复的目录读取只在本次列表内合并。 */
+  private async listPage(context: AuthContext, input: unknown): Promise<ReportList> {
     const request = reportListInputSchema.parse(input);
     const items: ReportSummary[] = [];
     let cursor = request.cursor;
@@ -55,17 +60,19 @@ class ReportManagementService {
     });
   }
   async versions(context: AuthContext, id: string): Promise<ReportVersionList> {
-    const definitions =
-      (await this.optional(() => this.dependencies.definitions.versions(context, id))) ?? [];
-    const snapshots = [];
-    for (const version of await this.dependencies.repository.snapshotVersions(
-      context.organizationId,
-      id,
-    ))
-      snapshots.push(await this.dependencies.reports.get(context, id, version));
-    if (!definitions.length && !snapshots.length)
-      throw new ApplicationError("NOT_FOUND", "报表不存在");
-    return reportVersionListSchema.parse({ definitions, snapshots });
+    return withCatalogReadScope(async () => {
+      const definitions =
+        (await this.optional(() => this.dependencies.definitions.versions(context, id))) ?? [];
+      const snapshots = [];
+      for (const version of await this.dependencies.repository.snapshotVersions(
+        context.organizationId,
+        id,
+      ))
+        snapshots.push(await this.dependencies.reports.get(context, id, version));
+      if (!definitions.length && !snapshots.length)
+        throw new ApplicationError("NOT_FOUND", "报表不存在");
+      return reportVersionListSchema.parse({ definitions, snapshots });
+    });
   }
   async share(
     context: AuthContext,
@@ -79,70 +86,76 @@ class ReportManagementService {
       : this.dependencies.reports.share(context, id, request.expected_version, request.shared_with);
   }
   async artifacts(context: AuthContext, runId: string): Promise<AnalysisArtifact[]> {
-    await this.dependencies.source(context, runId, true);
-    const artifacts = await this.dependencies.repository.artifacts(context.organizationId, runId);
-    const result: AnalysisArtifact[] = [];
-    for (const artifact of artifacts) {
-      const report = await this.dependencies.reports.get(
-        context,
-        artifact.report.report_id,
-        artifact.report.version,
-      );
-      if (report.analysis_run_id !== runId)
-        throw new ApplicationError("INTERNAL_ERROR", "产物来源记录不一致");
-      result.push(analysisArtifactSchema.parse({ ...artifact, report }));
-    }
-    return result;
+    return withCatalogReadScope(async () => {
+      await this.dependencies.source(context, runId, true);
+      const artifacts = await this.dependencies.repository.artifacts(context.organizationId, runId);
+      const result: AnalysisArtifact[] = [];
+      for (const artifact of artifacts) {
+        const report = await this.dependencies.reports.get(
+          context,
+          artifact.report.report_id,
+          artifact.report.version,
+        );
+        if (report.analysis_run_id !== runId)
+          throw new ApplicationError("INTERNAL_ERROR", "产物来源记录不一致");
+        result.push(analysisArtifactSchema.parse({ ...artifact, report }));
+      }
+      return result;
+    });
   }
   async exportReport(
     context: AuthContext,
     id: string,
     version?: number,
   ): Promise<ReportExportContent> {
-    const report = await this.dependencies.reports.get(context, id, version);
-    return reportExportContentSchema.parse({
-      kind: "report",
-      report,
-      tables: report.sources.map((evidence) => this.exportEvidence(evidence)),
+    return withCatalogReadScope(async () => {
+      const report = await this.dependencies.reports.get(context, id, version);
+      return reportExportContentSchema.parse({
+        kind: "report",
+        report,
+        tables: report.sources.map((evidence) => this.exportEvidence(evidence)),
+      });
     });
   }
   async exportConversation(context: AuthContext, id: string): Promise<ConversationExportContent> {
-    const detail = await this.dependencies.conversations.get(context, id);
-    if (!detail) throw new ApplicationError("NOT_FOUND", "会话不存在");
-    const messages = detail.messages
-      .filter((message) => ["user", "assistant"].includes(message.role))
-      .sort((a, b) => a.sequence - b.sequence);
-    const runIds = [
-      ...new Set(
-        messages.flatMap((message) => (message.analysisRunId ? [message.analysisRunId] : [])),
-      ),
-    ];
-    const runs = [];
-    const artifacts: AnalysisArtifact[] = [];
-    const tables = new Map<string, QueryEvidence>();
-    for (const runId of runIds) {
-      const state = await this.dependencies.runs.get(context, runId);
-      runs.push({ analysis_run_id: runId, status: state.status });
-      if (state.status !== "completed") continue;
-      artifacts.push(...(await this.artifacts(context, runId)));
-      for (const evidence of await this.dependencies.runs.evidence(context, runId))
-        tables.set(evidence.evidence_id, evidence);
-    }
-    return conversationExportContentSchema.parse({
-      kind: "conversation",
-      conversation_id: detail.conversation.id,
-      title: detail.conversation.title,
-      messages: messages.map((message) => ({
-        message_id: message.id,
-        role: message.role,
-        sequence: message.sequence,
-        content: message.content,
-        created_at: runTime(message.createdAt),
-        ...(message.analysisRunId ? { analysis_run_id: message.analysisRunId } : {}),
-      })),
-      runs,
-      artifacts,
-      tables: [...tables.values()].map((evidence) => this.exportEvidence(evidence)),
+    return withCatalogReadScope(async () => {
+      const detail = await this.dependencies.conversations.get(context, id);
+      if (!detail) throw new ApplicationError("NOT_FOUND", "会话不存在");
+      const messages = detail.messages
+        .filter((message) => ["user", "assistant"].includes(message.role))
+        .sort((a, b) => a.sequence - b.sequence);
+      const runIds = [
+        ...new Set(
+          messages.flatMap((message) => (message.analysisRunId ? [message.analysisRunId] : [])),
+        ),
+      ];
+      const runs = [];
+      const artifacts: AnalysisArtifact[] = [];
+      const tables = new Map<string, QueryEvidence>();
+      for (const runId of runIds) {
+        const state = await this.dependencies.runs.get(context, runId);
+        runs.push({ analysis_run_id: runId, status: state.status });
+        if (state.status !== "completed") continue;
+        artifacts.push(...(await this.artifacts(context, runId)));
+        for (const evidence of await this.dependencies.runs.evidence(context, runId))
+          tables.set(evidence.evidence_id, evidence);
+      }
+      return conversationExportContentSchema.parse({
+        kind: "conversation",
+        conversation_id: detail.conversation.id,
+        title: detail.conversation.title,
+        messages: messages.map((message) => ({
+          message_id: message.id,
+          role: message.role,
+          sequence: message.sequence,
+          content: message.content,
+          created_at: runTime(message.createdAt),
+          ...(message.analysisRunId ? { analysis_run_id: message.analysisRunId } : {}),
+        })),
+        runs,
+        artifacts,
+        tables: [...tables.values()].map((evidence) => this.exportEvidence(evidence)),
+      });
     });
   }
   private exportEvidence(evidence: QueryEvidence) {

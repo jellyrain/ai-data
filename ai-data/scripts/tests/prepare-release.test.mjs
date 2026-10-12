@@ -1,10 +1,20 @@
 import process from "node:process";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mkdtemp, mkdir, writeFile, readFile, rm, access, symlink } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  writeFile,
+  readFile,
+  rm,
+  access,
+  symlink,
+  readdir,
+  rename,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
-import { prepareRelease, releaseTarget } from "../prepare-release.mjs";
+import { prepareRelease, releaseTarget, replaceReleaseDirectory } from "../prepare-release.mjs";
 
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), "ai-data-release-test-"));
@@ -34,9 +44,16 @@ async function fixture(t) {
   }
   await put("packages/skills/query-dsl/SKILL.md", "entry");
   await put("packages/skills/query-dsl/references/query.md", "reference");
+  await put("apps/web/package.json", JSON.stringify({ name: "web", version: "1.0.0" }));
+  await put("apps/web/dist/index.html", '<script type="module" src="/assets/app.js"></script>');
+  await put("apps/web/dist/assets/app.js", "console.log('web');");
+  await put("apps/web/dist/assets/export-worker.js", "postMessage('export');");
+  await put("apps/web/dist/fonts/noto/font.otf", "font fixture");
+  await put("apps/web/dist/fonts/noto/OFL.txt", "font license");
+  await put("apps/web/.env.local", "private build configuration");
   return { root, put };
 }
-test("按平台生成两个独立目录，完整携带示例迁移和 Skill，重复整理不影响另一服务", async (t) => {
+test("按平台生成三个独立目录，携带后端运行资源和 Web 静态资源，单项整理保留其余应用", async (t) => {
   const f = await fixture(t);
   await prepareRelease({ workspaceDirectory: f.root });
   const target = join(f.root, "release", releaseTarget());
@@ -51,9 +68,64 @@ test("按平台生成两个独立目录，完整携带示例迁移和 Skill，�
   );
   await assert.rejects(access(join(target, "api/secrets/private")));
   await assert.rejects(access(join(target, "das/config/das.config.json")));
+  assert.equal(await readFile(join(target, "web/assets/app.js"), "utf8"), "console.log('web');");
+  assert.equal(await readFile(join(target, "web/fonts/noto/OFL.txt"), "utf8"), "font license");
+  await assert.rejects(access(join(target, "web/.env.local")));
   await writeFile(join(target, "das/unchanged"), "marker");
+  await writeFile(join(target, "web/unchanged"), "web marker");
   await prepareRelease({ workspaceDirectory: f.root, applications: ["api"] });
   assert.equal(await readFile(join(target, "das/unchanged"), "utf8"), "marker");
+  assert.equal(await readFile(join(target, "web/unchanged"), "utf8"), "web marker");
+});
+test("Web 重复封包完整复制 dist 并清除旧资源，保留原始构建与其他应用", async (t) => {
+  const f = await fixture(t);
+  await prepareRelease({ workspaceDirectory: f.root });
+  const target = join(f.root, "release", releaseTarget());
+  await f.put(`release/${releaseTarget()}/api/unchanged`, "api marker");
+  await f.put(`release/${releaseTarget()}/web/assets/old.js`, "stale asset");
+  await f.put("apps/web/dist/assets/new.js", "new asset");
+  await prepareRelease({ workspaceDirectory: f.root, applications: ["web"] });
+  const source = join(f.root, "apps/web/dist");
+  const files = await readdir(source, { recursive: true, withFileTypes: true });
+  for (const entry of files.filter((entry) => entry.isFile())) {
+    const relative = join(entry.parentPath, entry.name).slice(source.length + 1);
+    assert.deepEqual(
+      await readFile(join(target, "web", relative)),
+      await readFile(join(source, relative)),
+    );
+  }
+  await assert.rejects(access(join(target, "web/assets/old.js")));
+  assert.equal(await readFile(join(target, "api/unchanged"), "utf8"), "api marker");
+  await access(join(target, "das/dist/index.js"));
+});
+test("缺少 Web 入口时拒绝封包并保留已发布文件", async (t) => {
+  const f = await fixture(t);
+  await prepareRelease({ workspaceDirectory: f.root, applications: ["web"] });
+  await rm(join(f.root, "apps/web/dist/index.html"));
+  await assert.rejects(
+    prepareRelease({ workspaceDirectory: f.root, applications: ["web"] }),
+    /index.html/,
+  );
+  await access(join(f.root, "release", releaseTarget(), "web/index.html"));
+});
+test("新产物重命名失败时恢复旧发布目录，成功替换后清理旧目录", async (t) => {
+  const f = await fixture(t);
+  await f.put("release/staged/index.html", "new release");
+  await f.put("release/web/index.html", "old release");
+  const temporary = join(f.root, "release/staged");
+  const destination = join(f.root, "release/web");
+  const failPublish = async (source, target) => {
+    if (source === temporary) throw Object.assign(new Error("模拟目录占用"), { code: "EPERM" });
+    return rename(source, target);
+  };
+  await assert.rejects(
+    replaceReleaseDirectory(f.root, temporary, destination, failPublish),
+    /目录占用/,
+  );
+  assert.equal(await readFile(join(destination, "index.html"), "utf8"), "old release");
+  await replaceReleaseDirectory(f.root, temporary, destination);
+  assert.equal(await readFile(join(destination, "index.html"), "utf8"), "new release");
+  assert.deepEqual(await readdir(join(f.root, "release")), ["web"]);
 });
 test("缺失依赖时保留原发布目录，拒绝未知应用或架构", async (t) => {
   const f = await fixture(t);

@@ -1,0 +1,107 @@
+{
+  "measured_at": "2026-10-10T08:14:56.424Z",
+  "note": "正式 ConversationService、AnalysisRunService、DAS 目录 HTTP 路由与驱动读取现有数据；临时回环端口，未启动完整 API/Web，也未运行迁移或业务数据查询。",
+  "target": {
+    "conversation_id": "07f2b64e-240a-4c08-89b4-dd1f2398af97",
+    "messages": 7,
+    "runs": 5,
+    "evidence": 7
+  },
+  "cases": [
+    {
+      "phase": "reopen_1",
+      "ms": 1125.4,
+      "identical_response": true,
+      "das_calls": 1
+    },
+    {
+      "phase": "reopen_2",
+      "ms": 796.6,
+      "identical_response": true,
+      "das_calls": 1
+    },
+    {
+      "phase": "reopen_3",
+      "ms": 634.5,
+      "identical_response": true,
+      "das_calls": 1
+    },
+    {
+      "phase": "event_batch_1",
+      "ms": 698.5,
+      "events": 13,
+      "status": "completed",
+      "das_calls": 1
+    },
+    {
+      "phase": "event_batch_2",
+      "ms": 693.6,
+      "events": 13,
+      "status": "completed",
+      "das_calls": 1
+    },
+    {
+      "phase": "event_batch_3",
+      "ms": 623.6,
+      "events": 13,
+      "status": "completed",
+      "das_calls": 1
+    }
+  ],
+  "events": [
+    {
+      "kind": "physical_catalog_sql",
+      "ms": 821
+    },
+    {
+      "phase": "reopen_1",
+      "kind": "das_catalog_http",
+      "ms": 978.7
+    },
+    {
+      "kind": "physical_catalog_sql",
+      "ms": 608.9
+    },
+    {
+      "phase": "reopen_2",
+      "kind": "das_catalog_http",
+      "ms": 674.5
+    },
+    {
+      "kind": "physical_catalog_sql",
+      "ms": 476
+    },
+    {
+      "phase": "reopen_3",
+      "kind": "das_catalog_http",
+      "ms": 530.6
+    },
+    {
+      "kind": "physical_catalog_sql",
+      "ms": 582.6
+    },
+    {
+      "phase": "event_batch_1",
+      "kind": "das_catalog_http",
+      "ms": 643.2
+    },
+    {
+      "kind": "physical_catalog_sql",
+      "ms": 599.6
+    },
+    {
+      "phase": "event_batch_2",
+      "kind": "das_catalog_http",
+      "ms": 653.9
+    },
+    {
+      "kind": "physical_catalog_sql",
+      "ms": 535.1
+    },
+    {
+      "phase": "event_batch_3",
+      "kind": "das_catalog_http",
+      "ms": 595.7
+    }
+  ]
+}

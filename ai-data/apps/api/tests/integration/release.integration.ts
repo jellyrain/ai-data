@@ -35,32 +35,47 @@ it("独立发布包完成首建、注册、查询和官方线程恢复，程序�
     select: [{ field: "v.visit_id", aggregation: "count_distinct", as: "visits" }],
   };
   const model = createServer(async (request, response) => {
+    // 当前模型配置会探测窗口；能力请求与 Responses 对话分别计数。
+    if (request.method === "GET") {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(
+        JSON.stringify(
+          request.url?.startsWith("/props")
+            ? { model_alias: "release-fixture", default_generation_settings: { n_ctx: 32768 } }
+            : { data: [{ id: "release-fixture", meta: { n_ctx: 32768 } }] },
+        ),
+      );
+      return;
+    }
     let body = "";
     for await (const chunk of request) body += String(chunk);
     payloads.push(JSON.parse(body) as Record<string, unknown>);
     authorizations.push(request.headers.authorization);
     const number = payloads.length;
-    const args =
-      number === 1
-        ? { skill_name: "query-dsl", relative_path: "references/relational-query.md" }
-        : { query };
-    const text = number === 3 ? "发布查询完成，共 3 人次。" : "沿用上次查询结果，共 3 人次。";
-    const item =
-      number <= 2
-        ? {
-            type: "function_call",
-            id: `fc-${number}`,
-            call_id: `call-${number}`,
-            name: number === 1 ? "read_skill_reference" : "query_dataset",
-            arguments: JSON.stringify(args),
-          }
-        : {
-            type: "message",
-            id: `message-${number}`,
-            role: "assistant",
-            status: "completed",
-            content: [{ type: "output_text", text, annotations: [] }],
-          };
+    const call = [
+      {
+        name: "read_skill_reference",
+        args: { skill_name: "query-dsl", relative_path: "references/relational-query.md" },
+      },
+      { name: "get_tool_schema", args: { tool_name: "query_dataset" } },
+      { name: "query_dataset", args: { arguments_json: JSON.stringify({ query }) } },
+    ][number - 1];
+    const text = number === 4 ? "发布查询完成，共 3 人次。" : "沿用上次查询结果，共 3 人次。";
+    const item = call
+      ? {
+          type: "function_call",
+          id: `fc-${number}`,
+          call_id: `call-${number}`,
+          name: call.name,
+          arguments: JSON.stringify(call.args),
+        }
+      : {
+          type: "message",
+          id: `message-${number}`,
+          role: "assistant",
+          status: "completed",
+          content: [{ type: "output_text", text, annotations: [] }],
+        };
     response.writeHead(200, { "content-type": "text/event-stream" });
     const emit = (type: string, fields: Record<string, unknown>) =>
       response.write(`event: ${type}\ndata: ${JSON.stringify({ type, ...fields })}\n\n`);
@@ -69,13 +84,13 @@ it("独立发布包完成首建、注册、查询和官方线程恢复，程序�
     });
     emit("response.output_item.added", {
       output_index: 0,
-      item: number <= 2 ? { ...item, arguments: "" } : { ...item, content: [] },
+      item: call ? { ...item, arguments: "" } : { ...item, content: [] },
     });
-    emit(number <= 2 ? "response.function_call_arguments.delta" : "response.output_text.delta", {
+    emit(call ? "response.function_call_arguments.delta" : "response.output_text.delta", {
       item_id: item.id,
       output_index: 0,
-      ...(number <= 2 ? {} : { content_index: 0 }),
-      delta: number <= 2 ? JSON.stringify(args) : text,
+      ...(call ? {} : { content_index: 0 }),
+      delta: call ? JSON.stringify(call.args) : text,
     });
     emit("response.output_item.done", { output_index: 0, item });
     emit("response.completed", {
@@ -297,7 +312,7 @@ it("独立发布包完成首建、注册、查询和官方线程恢复，程序�
       return submitted.analysisRun.id;
     };
     const firstRun = await run("先读查询 Skill 子文档，再查询就诊总人次。");
-    expect(payloads).toHaveLength(3);
+    expect(payloads).toHaveLength(4);
     expect(JSON.stringify(payloads[0].input)).toContain(
       "将业务问题转换为 API 工具可接收的结构化查询 DSL",
     );
@@ -372,13 +387,13 @@ it("独立发布包完成首建、注册、查询和官方线程恢复，程序�
     await das.ready(dasBase);
     await waitRegistration(true);
     await run("沿用上次的查询结果说明总人次。");
-    expect(payloads).toHaveLength(4);
-    expect(authorizations).toEqual(Array(4).fill("Bearer release-test-key"));
+    expect(payloads).toHaveLength(5);
+    expect(authorizations).toEqual(Array(5).fill("Bearer release-test-key"));
     expect(await call("/models")).toMatchObject({
       items: [{ model_id: "release-model", version: 1 }],
     });
     expect(await threads()).toEqual(beforeThreads);
-    expect(JSON.stringify(payloads[3].input)).toContain("发布查询完成，共 3 人次。");
+    expect(JSON.stringify(payloads[4].input)).toContain("发布查询完成，共 3 人次。");
     expect((await audits()).rows).toHaveLength(2);
     expect(await hashes()).toEqual(beforeHashes);
   } finally {

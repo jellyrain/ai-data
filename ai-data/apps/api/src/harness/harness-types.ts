@@ -19,6 +19,8 @@ type HarnessRequest = {
   /** 合并后的助手文字与工具共用有序提交队列。 */
   onMessage?: (event: HarnessMessage) => Promise<void>;
   input: string;
+  /** 由 API 完成归属和文件校验的本地图片；标签对应原消息与图片顺序。 */
+  images?: { path: string; label: string }[];
   instructions: string;
   tools: HarnessTool[];
   signal: AbortSignal;

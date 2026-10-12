@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { withFreshCatalogReadScope } from "../catalog/catalog-read-scope";
 import dayjs from "dayjs";
 import { z } from "zod";
 import {
@@ -37,6 +38,20 @@ const memoryTools = new Set([
   "save_user_preference",
   "get_published_knowledge",
   "create_knowledge_candidate",
+]);
+
+/** 目录读取只覆盖本次发现或说明，查询工具自行划分执行前后的授权批次。 */
+const catalogReadTools = new Set([
+  "list_sources",
+  "search_catalog",
+  "list_datasets",
+  "describe_dataset",
+  "list_metrics",
+  "describe_metric",
+  "get_user_preferences",
+  "get_published_knowledge",
+  "get_report_definition",
+  "get_report_execution",
 ]);
 
 /** 工具调用依赖服务层的授权、证据和报告能力。 */
@@ -176,7 +191,10 @@ class AnalysisTools {
         );
         return { success: true, output: { clarification_id: stableId }, stop: true };
       }
-      const output = await this.invoke(context, runId, lease, name, parsed, stableId);
+      const invoke = () => this.invoke(context, runId, lease, name, parsed, stableId);
+      const output = await (catalogReadTools.has(name)
+        ? withFreshCatalogReadScope(invoke)
+        : invoke());
       if (name === "save_user_preference") {
         const saved = saveUserPreferenceResultSchema.parse(output);
         if (saved.status === "confirmation_required") {
@@ -499,13 +517,16 @@ class AnalysisTools {
       case "query_metric": {
         const { metric_id, ...request } = toolInputs.query_metric.parse(input);
         if (this.dependencies.memory) {
-          const metric = await this.dependencies.metrics.get(context, metric_id, request.version);
-          const unread = await this.unreadRules(
-            context,
-            runId,
-            lease,
-            queryScopes(metric.query).map((scope) => ({ ...scope, metric_id })),
-          );
+          const unread = await withFreshCatalogReadScope(async () => {
+            const metric = await this.dependencies.metrics.get(context, metric_id, request.version);
+            const unread = await this.unreadRules(
+              context,
+              runId,
+              lease,
+              queryScopes(metric.query).map((scope) => ({ ...scope, metric_id })),
+            );
+            return unread;
+          });
           if (unread.length)
             return {
               status: "rules_required",

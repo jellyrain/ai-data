@@ -586,3 +586,5 @@ export type {
   UpdateDatabaseConnection,
   TestDatabaseConnection,
 } from "./data-access/database-connection-types";
+export { imageAttachmentSchema, imageAttachmentLimits } from "./analysis-runs/image-attachment";
+export type { ImageAttachment } from "./analysis-runs/image-attachment-types";

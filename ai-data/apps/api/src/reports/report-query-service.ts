@@ -1,3 +1,4 @@
+import { withCatalogReadScope } from "../catalog/catalog-read-scope";
 import dayjs from "dayjs";
 import {
   filterConditionSchema,
@@ -41,100 +42,106 @@ class ReportQueryService {
     snapshot: SavedReport,
     executor?: MetadataQueryExecutor,
   ): Promise<ReportDefinition> {
-    const dependencies = executor ? this.dependencies.forExecutor?.(executor) : this.dependencies;
-    if (!dependencies) throw new ApplicationError("INTERNAL_ERROR", "报表事务授权未配置");
-    const queries: ReportDefinition["queries"] = [];
-    const ids = new Map<string, string>();
-    for (const [index, evidence] of snapshot.sources.entries()) {
-      const queryId = `query_${index + 1}`;
-      ids.set(evidence.evidence_id, queryId);
-      const query = structuredClone(evidence.requested_query);
-      if (evidence.metric) {
-        const metric = await dependencies.metrics.get(
-          context,
-          evidence.metric.metric_id,
-          evidence.metric.version,
-        );
-        queries.push({ query_id: queryId, query: restoreMetricQuery(metric, query), bindings: [] });
-        continue;
-      }
-      if (query.type === "parameterized_query") {
-        queries.push({ query_id: queryId, query, bindings: [] });
-        continue;
-      }
-      const aliases = new Map([[query.from.alias, query.from.object_id]]);
-      const joins: Extract<ReportQueryItem["query"], { type: "relational_query" }>["joins"] = [];
-      for (const join of query.joins) {
-        const { on, ...fields } = join;
-        const candidates = [];
-        for (const [alias, object] of aliases) {
-          const config = await dependencies.catalog.getAuthorizedConfig(
+    return withCatalogReadScope(async () => {
+      const dependencies = executor ? this.dependencies.forExecutor?.(executor) : this.dependencies;
+      if (!dependencies) throw new ApplicationError("INTERNAL_ERROR", "报表事务授权未配置");
+      const queries: ReportDefinition["queries"] = [];
+      const ids = new Map<string, string>();
+      for (const [index, evidence] of snapshot.sources.entries()) {
+        const queryId = `query_${index + 1}`;
+        ids.set(evidence.evidence_id, queryId);
+        const query = structuredClone(evidence.requested_query);
+        if (evidence.metric) {
+          const metric = await dependencies.metrics.get(
             context,
-            query.source_id,
-            object,
+            evidence.metric.metric_id,
+            evidence.metric.version,
           );
-          for (const relation of config?.approved_relations ?? []) {
-            const pairs = relation.column_pairs
-              .map((pair) => `${alias}.${pair.source_column}=${join.alias}.${pair.target_column}`)
-              .sort();
-            const actual = on
-              .map((pair) =>
-                pair.left.startsWith(`${join.alias}.`)
-                  ? `${pair.right}=${pair.left}`
-                  : `${pair.left}=${pair.right}`,
-              )
-              .sort();
-            if (
-              relation.relation_id &&
-              relation.target_object_id === join.object_id &&
-              (!join.relation_id || relation.relation_id === join.relation_id) &&
-              stableStringify(pairs) === stableStringify(actual)
-            )
-              candidates.push({ alias, relation });
-          }
+          queries.push({
+            query_id: queryId,
+            query: restoreMetricQuery(metric, query),
+            bindings: [],
+          });
+          continue;
         }
-        if (candidates.length !== 1)
-          throw new ApplicationError("POLICY_REJECTED", "快照关系不能唯一映射到批准关系");
-        joins.push({
-          ...fields,
-          relation_id: candidates[0].relation.relation_id!,
-          source_alias: candidates[0].alias,
-        });
-        aliases.set(join.alias, join.object_id);
+        if (query.type === "parameterized_query") {
+          queries.push({ query_id: queryId, query, bindings: [] });
+          continue;
+        }
+        const aliases = new Map([[query.from.alias, query.from.object_id]]);
+        const joins: Extract<ReportQueryItem["query"], { type: "relational_query" }>["joins"] = [];
+        for (const join of query.joins) {
+          const { on, ...fields } = join;
+          const candidates = [];
+          for (const [alias, object] of aliases) {
+            const config = await dependencies.catalog.getAuthorizedConfig(
+              context,
+              query.source_id,
+              object,
+            );
+            for (const relation of config?.approved_relations ?? []) {
+              const pairs = relation.column_pairs
+                .map((pair) => `${alias}.${pair.source_column}=${join.alias}.${pair.target_column}`)
+                .sort();
+              const actual = on
+                .map((pair) =>
+                  pair.left.startsWith(`${join.alias}.`)
+                    ? `${pair.right}=${pair.left}`
+                    : `${pair.left}=${pair.right}`,
+                )
+                .sort();
+              if (
+                relation.relation_id &&
+                relation.target_object_id === join.object_id &&
+                (!join.relation_id || relation.relation_id === join.relation_id) &&
+                stableStringify(pairs) === stableStringify(actual)
+              )
+                candidates.push({ alias, relation });
+            }
+          }
+          if (candidates.length !== 1)
+            throw new ApplicationError("POLICY_REJECTED", "快照关系不能唯一映射到批准关系");
+          joins.push({
+            ...fields,
+            relation_id: candidates[0].relation.relation_id!,
+            source_alias: candidates[0].alias,
+          });
+          aliases.set(join.alias, join.object_id);
+        }
+        queries.push({ query_id: queryId, query: { ...query, joins }, bindings: [] });
       }
-      queries.push({ query_id: queryId, query: { ...query, joins }, bindings: [] });
-    }
-    const definition = reportDefinitionSchema.parse({
-      title: snapshot.title,
-      description: snapshot.description,
-      queries,
-      presentation: snapshot.sections.map((section) => ({
-        ...section,
-        blocks: section.blocks.flatMap((block) => {
-          const { evidence_ids, ...presentation } = block;
-          const queryIds = evidence_ids.map((id) => ids.get(id)!);
-          if (block.type === "text")
-            return [
-              {
-                ...presentation,
-                query_ids: queryIds,
-                source_execution_id:
-                  snapshot.execution_id ??
-                  createHash("sha256")
-                    .update(`snapshot:${snapshot.report_id}:${snapshot.version}`)
-                    .digest("hex"),
-              },
-            ];
-          return queryIds.map((query_id, index) => ({
-            ...presentation,
-            block_id: queryIds.length === 1 ? block.block_id : `${block.block_id}_${index + 1}`,
-            query_ids: [query_id],
-          }));
-        }),
-      })),
+      const definition = reportDefinitionSchema.parse({
+        title: snapshot.title,
+        description: snapshot.description,
+        queries,
+        presentation: snapshot.sections.map((section) => ({
+          ...section,
+          blocks: section.blocks.flatMap((block) => {
+            const { evidence_ids, ...presentation } = block;
+            const queryIds = evidence_ids.map((id) => ids.get(id)!);
+            if (block.type === "text")
+              return [
+                {
+                  ...presentation,
+                  query_ids: queryIds,
+                  source_execution_id:
+                    snapshot.execution_id ??
+                    createHash("sha256")
+                      .update(`snapshot:${snapshot.report_id}:${snapshot.version}`)
+                      .digest("hex"),
+                },
+              ];
+            return queryIds.map((query_id, index) => ({
+              ...presentation,
+              block_id: queryIds.length === 1 ? block.block_id : `${block.block_id}_${index + 1}`,
+              query_ids: [query_id],
+            }));
+          }),
+        })),
+      });
+      await this.validate(context, definition, executor);
+      return definition;
     });
-    await this.validate(context, definition, executor);
-    return definition;
   }
 
   async build(
@@ -143,138 +150,141 @@ class ReportQueryService {
     inputValues: BuiltReport["parameters"],
     options: { validation?: boolean; executor?: MetadataQueryExecutor } = {},
   ): Promise<BuiltReport> {
-    const definition = reportDefinitionSchema.parse(input);
-    const dependencies = options.executor
-      ? this.dependencies.forExecutor?.(options.executor)
-      : this.dependencies;
-    if (!dependencies) throw new ApplicationError("INTERNAL_ERROR", "报表事务授权未配置");
-    const values = reportExecutionInputSchema.shape.parameters.parse(inputValues);
-    if (Object.keys(values).some((name) => !definition.parameters.some((p) => p.name === name)))
-      throw new ApplicationError("INVALID_INPUT", "包含未声明的报表参数");
-    const parameters: BuiltReport["parameters"] = {};
-    for (const parameter of definition.parameters) {
-      let value = values[parameter.name] ?? parameter.default_value;
-      if (values[parameter.name] === null) value = null;
-      if (value === undefined && parameter.relative_time) {
-        const range = resolvePreferenceTimeRange(
-          parameter.relative_time.range,
-          this.dependencies.now?.() ?? dayjs().valueOf(),
+    return withCatalogReadScope(async () => {
+      const definition = reportDefinitionSchema.parse(input);
+      const dependencies = options.executor
+        ? this.dependencies.forExecutor?.(options.executor)
+        : this.dependencies;
+      if (!dependencies) throw new ApplicationError("INTERNAL_ERROR", "报表事务授权未配置");
+      const values = reportExecutionInputSchema.shape.parameters.parse(inputValues);
+      if (Object.keys(values).some((name) => !definition.parameters.some((p) => p.name === name)))
+        throw new ApplicationError("INVALID_INPUT", "包含未声明的报表参数");
+      const parameters: BuiltReport["parameters"] = {};
+      for (const parameter of definition.parameters) {
+        let value = values[parameter.name] ?? parameter.default_value;
+        if (values[parameter.name] === null) value = null;
+        if (value === undefined && parameter.relative_time) {
+          const range = resolvePreferenceTimeRange(
+            parameter.relative_time.range,
+            this.dependencies.now?.() ?? dayjs().valueOf(),
+          );
+          const start = range.start + (parameter.data_type === "datetime" ? " 00:00:00" : "");
+          const end = range.end + (parameter.data_type === "datetime" ? " 23:59:59" : "");
+          value =
+            parameter.relative_time.part === "range"
+              ? [start, end]
+              : parameter.relative_time.part === "start"
+                ? start
+                : end;
+        }
+        if (value === undefined && options.validation)
+          value = sampleParameter(parameter, definition);
+        if (value === undefined) {
+          if (parameter.required)
+            throw new ApplicationError("INVALID_INPUT", `缺少报表参数：${parameter.name}`);
+          continue;
+        }
+        validateParameter(parameter, value);
+        parameters[parameter.name] = value;
+      }
+      const queries: BuiltReport["queries"] = [];
+      const metrics = new Map<string, MetricDefinition>();
+      for (const item of definition.queries) {
+        const bound = structuredClone(item.query);
+        let query: QueryDsl;
+        let metric: MetricDefinition | undefined;
+        if (bound.type === "metric_query") {
+          for (const binding of item.bindings) {
+            if (binding.target.type !== "metric_date")
+              throw new ApplicationError(
+                "INVALID_INPUT",
+                "指标查询只能绑定日期，统计口径由指标定义固定",
+              );
+            const value = parameters[binding.parameter];
+            if (value !== undefined) {
+              if (typeof value !== "string")
+                throw new ApplicationError("INVALID_INPUT", "指标日期必须为单个日期值");
+              bound[binding.target.part] = value;
+            }
+          }
+          if (bound.start > bound.end)
+            throw new ApplicationError("INVALID_INPUT", "指标开始日期不能晚于结束日期");
+          const key = `${bound.metric_id}:${bound.version ?? "latest"}`;
+          metric =
+            metrics.get(key) ??
+            (await dependencies.metrics.get(context, bound.metric_id, bound.version));
+          metrics.set(key, metric);
+          query = buildMetricQueries(metric, {
+            analysis_run_id: "report-build",
+            idempotency_key: item.query_id,
+            start: bound.start,
+            end: bound.end,
+            dimensions: bound.dimensions,
+          })[bound.output];
+        } else {
+          query =
+            bound.type === "parameterized_query"
+              ? queryDslSchema.parse(bound)
+              : await this.buildRelations(context, bound, dependencies);
+          for (const binding of item.bindings) {
+            const parameter = definition.parameters.find((p) => p.name === binding.parameter)!;
+            const value = parameters[binding.parameter];
+            if (binding.target.type === "metric_date")
+              throw new ApplicationError("INVALID_INPUT", "该查询不是指标查询");
+            if (binding.target.type === "parameter") {
+              if (query.type !== "parameterized_query")
+                throw new ApplicationError("INVALID_INPUT", "命名输入必须绑定参数化数据集");
+              const name = binding.target.name;
+              query.parameters = query.parameters.filter((p) => p.name !== name);
+              if (value !== undefined)
+                query.parameters.push({ name, data_type: parameter.data_type, value });
+              continue;
+            }
+            if (query.type !== "relational_query")
+              throw new ApplicationError("INVALID_INPUT", "固定输出数据集不能追加任意筛选字段");
+            const target = binding.target;
+            const condition =
+              value === undefined
+                ? undefined
+                : filterConditionSchema.parse({
+                    field: target.field,
+                    op: target.op,
+                    data_type: parameter.data_type,
+                    value,
+                  });
+            if (target.scope === "on") {
+              const join = query.joins.find((join) => join.alias === target.alias);
+              if (!join) throw new ApplicationError("INVALID_INPUT", "ON 条件必须绑定连接别名");
+              join.on_filters = bindFilter(join.on_filters, target.field, target.op, condition);
+            } else {
+              const object =
+                target.scope === "query"
+                  ? query
+                  : target.scope === "from"
+                    ? query.from
+                    : query.joins.find((join) => join.alias === target.alias);
+              if (!object) throw new ApplicationError("INVALID_INPUT", "参数绑定的查询对象不存在");
+              object.filters = bindFilter(object.filters, target.field, target.op, condition);
+            }
+          }
+        }
+        query = parseAnalysisQuery(query);
+        const authorized = await dependencies.authorization.authorize(query, context);
+        await this.validatePresentation(
+          context,
+          definition,
+          item.query_id,
+          authorized.request.query,
+          dependencies,
         );
-        const start = range.start + (parameter.data_type === "datetime" ? " 00:00:00" : "");
-        const end = range.end + (parameter.data_type === "datetime" ? " 23:59:59" : "");
-        value =
-          parameter.relative_time.part === "range"
-            ? [start, end]
-            : parameter.relative_time.part === "start"
-              ? start
-              : end;
+        queries.push({
+          query_id: item.query_id,
+          query,
+          ...(metric ? { metric: { metric_id: metric.metric_id, version: metric.version } } : {}),
+        });
       }
-      if (value === undefined && options.validation) value = sampleParameter(parameter, definition);
-      if (value === undefined) {
-        if (parameter.required)
-          throw new ApplicationError("INVALID_INPUT", `缺少报表参数：${parameter.name}`);
-        continue;
-      }
-      validateParameter(parameter, value);
-      parameters[parameter.name] = value;
-    }
-    const queries: BuiltReport["queries"] = [];
-    const metrics = new Map<string, MetricDefinition>();
-    for (const item of definition.queries) {
-      const bound = structuredClone(item.query);
-      let query: QueryDsl;
-      let metric: MetricDefinition | undefined;
-      if (bound.type === "metric_query") {
-        for (const binding of item.bindings) {
-          if (binding.target.type !== "metric_date")
-            throw new ApplicationError(
-              "INVALID_INPUT",
-              "指标查询只能绑定日期，统计口径由指标定义固定",
-            );
-          const value = parameters[binding.parameter];
-          if (value !== undefined) {
-            if (typeof value !== "string")
-              throw new ApplicationError("INVALID_INPUT", "指标日期必须为单个日期值");
-            bound[binding.target.part] = value;
-          }
-        }
-        if (bound.start > bound.end)
-          throw new ApplicationError("INVALID_INPUT", "指标开始日期不能晚于结束日期");
-        const key = `${bound.metric_id}:${bound.version ?? "latest"}`;
-        metric =
-          metrics.get(key) ??
-          (await dependencies.metrics.get(context, bound.metric_id, bound.version));
-        metrics.set(key, metric);
-        query = buildMetricQueries(metric, {
-          analysis_run_id: "report-build",
-          idempotency_key: item.query_id,
-          start: bound.start,
-          end: bound.end,
-          dimensions: bound.dimensions,
-        })[bound.output];
-      } else {
-        query =
-          bound.type === "parameterized_query"
-            ? queryDslSchema.parse(bound)
-            : await this.buildRelations(context, bound, dependencies);
-        for (const binding of item.bindings) {
-          const parameter = definition.parameters.find((p) => p.name === binding.parameter)!;
-          const value = parameters[binding.parameter];
-          if (binding.target.type === "metric_date")
-            throw new ApplicationError("INVALID_INPUT", "该查询不是指标查询");
-          if (binding.target.type === "parameter") {
-            if (query.type !== "parameterized_query")
-              throw new ApplicationError("INVALID_INPUT", "命名输入必须绑定参数化数据集");
-            const name = binding.target.name;
-            query.parameters = query.parameters.filter((p) => p.name !== name);
-            if (value !== undefined)
-              query.parameters.push({ name, data_type: parameter.data_type, value });
-            continue;
-          }
-          if (query.type !== "relational_query")
-            throw new ApplicationError("INVALID_INPUT", "固定输出数据集不能追加任意筛选字段");
-          const target = binding.target;
-          const condition =
-            value === undefined
-              ? undefined
-              : filterConditionSchema.parse({
-                  field: target.field,
-                  op: target.op,
-                  data_type: parameter.data_type,
-                  value,
-                });
-          if (target.scope === "on") {
-            const join = query.joins.find((join) => join.alias === target.alias);
-            if (!join) throw new ApplicationError("INVALID_INPUT", "ON 条件必须绑定连接别名");
-            join.on_filters = bindFilter(join.on_filters, target.field, target.op, condition);
-          } else {
-            const object =
-              target.scope === "query"
-                ? query
-                : target.scope === "from"
-                  ? query.from
-                  : query.joins.find((join) => join.alias === target.alias);
-            if (!object) throw new ApplicationError("INVALID_INPUT", "参数绑定的查询对象不存在");
-            object.filters = bindFilter(object.filters, target.field, target.op, condition);
-          }
-        }
-      }
-      query = parseAnalysisQuery(query);
-      const authorized = await dependencies.authorization.authorize(query, context);
-      await this.validatePresentation(
-        context,
-        definition,
-        item.query_id,
-        authorized.request.query,
-        dependencies,
-      );
-      queries.push({
-        query_id: item.query_id,
-        query,
-        ...(metric ? { metric: { metric_id: metric.metric_id, version: metric.version } } : {}),
-      });
-    }
-    return { parameters, queries };
+      return { parameters, queries };
+    });
   }
 
   private async buildRelations(

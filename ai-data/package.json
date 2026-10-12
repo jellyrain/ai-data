@@ -21,6 +21,7 @@
     "format:check": "prettier --check .",
     "build": "pnpm -r build",
     "release": "node scripts/prepare-release.mjs",
+    "build:release": "pnpm run build && pnpm run release",
     "test:release": "node scripts/test-release.mjs"
   },
   "devDependencies": {

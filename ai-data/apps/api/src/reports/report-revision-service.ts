@@ -1,3 +1,4 @@
+import { withCatalogReadScope } from "../catalog/catalog-read-scope";
 import { createHash, randomUUID } from "node:crypto";
 import {
   reportRevisionInputSchema,
@@ -138,37 +139,39 @@ class ReportRevisionService {
   async stage(context: AuthContext, runId: string, lease: RunLease, input: unknown) {
     const request = stageReportDefinitionSchema.parse(input);
     return this.dependencies.runs.withLease(context, runId, lease, async (executor) => {
-      let target = await this.dependencies.repository.get(context, runId, executor);
-      if (target?.mode === "narrative")
-        throw new ApplicationError("INVALID_INPUT", "分析说明运行不能修改定义");
-      if (!target) {
-        if (request.report_id || request.expected_version)
-          throw new ApplicationError("INVALID_INPUT", "修改已有报表需从该报表发起对话修改");
-        target = { mode: "revision", report_id: randomUUID(), expected_version: 0 };
-        await this.dependencies.repository.initialize(context, runId, target, executor);
-      }
-      if (
-        (request.report_id && request.report_id !== target.report_id) ||
-        (request.expected_version && request.expected_version !== target.expected_version)
-      )
-        throw new ApplicationError("INVALID_INPUT", "提交与绑定的报表及基准版本不同");
-      if (target.expected_version > 0) {
-        const current = await this.dependencies.definitions.get(
-          context,
-          target.report_id,
-          undefined,
-          executor,
-        );
-        if (current.user_id !== context.userId || current.version !== target.expected_version)
-          throw new ApplicationError("CONFLICT", "报表已更新或不可编辑");
-      }
-      await this.dependencies.validate(context, request.definition, executor);
-      await this.dependencies.repository.stage(context, runId, request.definition, executor);
-      return {
-        report_id: target.report_id,
-        expected_version: target.expected_version,
-        status: "staged" as const,
-      };
+      return withCatalogReadScope(async () => {
+        let target = await this.dependencies.repository.get(context, runId, executor);
+        if (target?.mode === "narrative")
+          throw new ApplicationError("INVALID_INPUT", "分析说明运行不能修改定义");
+        if (!target) {
+          if (request.report_id || request.expected_version)
+            throw new ApplicationError("INVALID_INPUT", "修改已有报表需从该报表发起对话修改");
+          target = { mode: "revision", report_id: randomUUID(), expected_version: 0 };
+          await this.dependencies.repository.initialize(context, runId, target, executor);
+        }
+        if (
+          (request.report_id && request.report_id !== target.report_id) ||
+          (request.expected_version && request.expected_version !== target.expected_version)
+        )
+          throw new ApplicationError("INVALID_INPUT", "提交与绑定的报表及基准版本不同");
+        if (target.expected_version > 0) {
+          const current = await this.dependencies.definitions.get(
+            context,
+            target.report_id,
+            undefined,
+            executor,
+          );
+          if (current.user_id !== context.userId || current.version !== target.expected_version)
+            throw new ApplicationError("CONFLICT", "报表已更新或不可编辑");
+        }
+        await this.dependencies.validate(context, request.definition, executor);
+        await this.dependencies.repository.stage(context, runId, request.definition, executor);
+        return {
+          report_id: target.report_id,
+          expected_version: target.expected_version,
+          status: "staged" as const,
+        };
+      });
     });
   }
 
@@ -178,42 +181,44 @@ class ReportRevisionService {
     executor: MetadataQueryExecutor,
     content: string,
   ): Promise<void> {
-    const target = await this.dependencies.repository.get(context, runId, executor);
-    if (!target) return;
-    if (target.mode === "narrative") {
-      const execution = await this.dependencies.executions.get(
+    return withCatalogReadScope(async () => {
+      const target = await this.dependencies.repository.get(context, runId, executor);
+      if (!target) return;
+      if (target.mode === "narrative") {
+        const execution = await this.dependencies.executions.get(
+          context,
+          target.execution_id,
+          executor,
+        );
+        if (execution.status !== "completed")
+          throw new ApplicationError("CONFLICT", "分析来源未完成");
+        await this.dependencies.repository.saveNarrative(
+          context,
+          reportNarrativeSchema.parse({
+            execution_id: target.execution_id,
+            analysis_run_id: runId,
+            content,
+            query_ids: execution.results.map((result) => result.query_id),
+            created_at: runTime(),
+          }),
+          executor,
+        );
+        return;
+      }
+      const definition = await this.dependencies.repository.staged(context, runId, executor);
+      if (!definition) throw new ApplicationError("CONFLICT", "对话未提交报表定义修改");
+      const current =
+        target.expected_version > 0
+          ? await this.dependencies.definitions.get(context, target.report_id, undefined, executor)
+          : null;
+      await this.dependencies.definitions.save(
         context,
-        target.execution_id,
+        { definition, shared_with: current?.shared_with ?? [] },
+        target.report_id,
+        target.expected_version,
         executor,
       );
-      if (execution.status !== "completed")
-        throw new ApplicationError("CONFLICT", "分析来源未完成");
-      await this.dependencies.repository.saveNarrative(
-        context,
-        reportNarrativeSchema.parse({
-          execution_id: target.execution_id,
-          analysis_run_id: runId,
-          content,
-          query_ids: execution.results.map((result) => result.query_id),
-          created_at: runTime(),
-        }),
-        executor,
-      );
-      return;
-    }
-    const definition = await this.dependencies.repository.staged(context, runId, executor);
-    if (!definition) throw new ApplicationError("CONFLICT", "对话未提交报表定义修改");
-    const current =
-      target.expected_version > 0
-        ? await this.dependencies.definitions.get(context, target.report_id, undefined, executor)
-        : null;
-    await this.dependencies.definitions.save(
-      context,
-      { definition, shared_with: current?.shared_with ?? [] },
-      target.report_id,
-      target.expected_version,
-      executor,
-    );
+    });
   }
 
   async narratives(context: AuthContext, executionId: string) {

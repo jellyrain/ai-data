@@ -13,6 +13,8 @@ import { SqlUserAdminReader } from "./auth/sql-user-admin-reader";
 import { hashPassword } from "./auth/password";
 import { ConversationService } from "./conversations/conversation-service";
 import { SqlConversationRepository } from "./conversations/sql-conversation-repository";
+import { SqlAttachmentRepository } from "./conversations/sql-attachment-repository";
+import { AttachmentService } from "./conversations/attachment-service";
 import { HttpDataAccessCatalogClient } from "./data-access/data-access-catalog-client";
 import { SqlDataAccessServiceRegistry } from "./data-access/sql-data-access-service-registry";
 import { BusinessCatalogService } from "./catalog/business-catalog-service";
@@ -56,6 +58,10 @@ async function start(): Promise<void> {
     const jwt = await JwtService.create(config, config.jwt.key_directory ?? defaultJwtKeyDirectory);
     const authRepository = new SqlAuthRepository(metadataDatabase);
     const conversationRepository = new SqlConversationRepository(metadataDatabase);
+    const attachments = new AttachmentService(
+      new SqlAttachmentRepository(metadataDatabase),
+      resolve(process.cwd(), config.attachments_directory ?? "secrets/conversation-attachments"),
+    );
     const dataAccessRegistry = new DataAccessSessionService(
       new SqlDataAccessServiceRegistry(metadataDatabase),
       jwt,
@@ -107,6 +113,7 @@ async function start(): Promise<void> {
       });
     }
     memory = createMemoryServices({
+      catalog: businessCatalog,
       templates: {
         preview: (context, content, executor) =>
           reporting!.templates.preview(context, content, executor),
@@ -198,6 +205,7 @@ async function start(): Promise<void> {
           metrics,
           reports,
           reportEditing: reporting.revisions,
+          attachments,
           reportExecutions: reporting.executions,
           memory: memory.runtime,
           refreshContext: (context) => authService.refreshContext(context),
@@ -226,6 +234,7 @@ async function start(): Promise<void> {
       reporting,
       conversations,
       analysis: { runs, metrics, reports },
+      attachments,
       ...(runtime ? { runtime } : {}),
       dataAccess: {
         registry: dataAccessRegistry,

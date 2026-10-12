@@ -3,6 +3,7 @@ import type { MetadataQueryExecutor, MetadataTransactionalExecutor } from "@ai-d
 import { createHash, randomUUID } from "node:crypto";
 import { submitMessageSchema } from "@ai-data/contracts";
 import { ApplicationError } from "../errors/application-error";
+import { SqlAttachmentRepository } from "./sql-attachment-repository";
 import { workbenchConversationScope } from "./workbench-conversation-scope";
 import { insertAnalysisRun, readAnalysisRun } from "../analysis-runs/analysis-run-records";
 import type { AnalysisRun } from "../analysis-runs/analysis-run-record-types";
@@ -26,9 +27,22 @@ class SqlConversationRepository implements ConversationRepository {
     content: string,
     idempotencyKey: string,
     sessionId?: string,
+    attachmentIds?: string[],
   ): Promise<SubmittedMessage | null> {
-    const input = submitMessageSchema.parse({ content, idempotency_key: idempotencyKey });
-    const hash = createHash("sha256").update(input.content).digest("hex");
+    const input = submitMessageSchema.parse({
+      content,
+      idempotency_key: idempotencyKey,
+      ...(attachmentIds?.length ? { attachment_ids: attachmentIds } : {}),
+    });
+    // 纯文字沿用旧哈希，已提交请求升级后仍可幂等重试。
+    const hash = createHash("sha256")
+      .update(
+        input.attachment_ids?.length
+          ? JSON.stringify([input.content, input.attachment_ids])
+          : input.content,
+      )
+      .digest("hex");
+    const attachments = new SqlAttachmentRepository(this.database);
     return this.database.transaction(async (executor) => {
       const conversation = await executor.execute({
         sql: "SELECT id FROM dbo.conversations WITH (UPDLOCK,HOLDLOCK) WHERE id=@id AND user_id=@user AND organization_id=@org AND status='active'",
@@ -53,8 +67,12 @@ class SqlConversationRepository implements ConversationRepository {
           sql: "SELECT id, conversation_id, role, content, sequence, created_at FROM dbo.conversation_messages WHERE id=@id",
           parameters: [{ name: "id", type: "string", value: String(prior.rows[0].message_id) }],
         });
+        const mapped = this.mapMessage(message.rows[0]);
+        if (input.attachment_ids?.length)
+          mapped.attachments =
+            (await attachments.forMessages(executor, conversationId)).get(mapped.id) ?? [];
         return {
-          message: this.mapMessage(message.rows[0]),
+          message: mapped,
           analysisRun: await readAnalysisRun(executor, String(prior.rows[0].analysis_run_id)),
         };
       }
@@ -90,6 +108,13 @@ class SqlConversationRepository implements ConversationRepository {
         createdAt: now,
       };
       await this.appendMessage(message, executor);
+      if (input.attachment_ids?.length)
+        message.attachments = await attachments.bind(
+          executor,
+          conversationId,
+          message.id,
+          input.attachment_ids,
+        );
       await insertAnalysisRun(executor, analysisRun);
       await executor.execute({
         sql: "UPDATE r SET agent_id=c.agent_id,agent_version=c.agent_version FROM dbo.analysis_runs r JOIN dbo.conversations c ON c.id=r.conversation_id WHERE r.id=@run",
@@ -231,7 +256,14 @@ class SqlConversationRepository implements ConversationRepository {
       sql: "SELECT id, conversation_id, role, content, sequence, created_at, analysis_run_id FROM dbo.conversation_messages WHERE conversation_id = @conversation_id ORDER BY sequence",
       parameters: [{ name: "conversation_id", type: "string", value: conversationId }],
     });
-    return result.rows.map((row) => this.mapMessage(row));
+    const attachments = await new SqlAttachmentRepository(this.database).forMessages(
+      this.database,
+      conversationId,
+    );
+    return result.rows.map((row) => ({
+      ...this.mapMessage(row),
+      ...(attachments.has(row.id) ? { attachments: attachments.get(row.id)! } : {}),
+    }));
   }
 
   /** 将数据库会话行转换为会话领域对象。 */

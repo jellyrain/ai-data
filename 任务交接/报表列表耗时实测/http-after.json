@@ -1,0 +1,23 @@
+{
+  "measured_at": "2026-10-09T14:30:03.143Z",
+  "records": [
+    {
+      "label": "api_direct",
+      "status": 200,
+      "headers_ms": 3099,
+      "total_ms": 3100,
+      "bytes": 545,
+      "items": 2,
+      "has_next_page": false
+    },
+    {
+      "label": "web_dev_proxy",
+      "status": 200,
+      "headers_ms": 1651,
+      "total_ms": 1652,
+      "bytes": 545,
+      "items": 2,
+      "has_next_page": false
+    }
+  ]
+}

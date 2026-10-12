@@ -105,12 +105,17 @@ watch(
       <p class="management-help">
         选择 Skill 时需启用 read_skill_reference 工具。发布时保存资源快照。
       </p>
-      <ElCheckboxGroup v-model="draft.skill_names" class="management-checks"
-        ><div v-for="skill in skills" :key="skill.name">
+      <ElCheckboxGroup v-model="draft.skill_names" class="management-checks agent-skill-options"
+        ><div v-for="skill in skills" :key="skill.name" class="agent-skill-option">
           <ElCheckbox :value="skill.name"
             ><strong>{{ skill.name }}</strong
             ><small>{{ skill.description }}</small></ElCheckbox
-          ><ElButton text @click="$emit('preview', skill.name)">预览当前源文档</ElButton>
+          ><ElButton
+            text
+            :aria-label="`预览 ${skill.name} 当前源文档`"
+            @click="$emit('preview', skill.name)"
+            >预览当前源文档</ElButton
+          >
         </div></ElCheckboxGroup
       >
     </section>

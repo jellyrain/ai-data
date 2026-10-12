@@ -4,6 +4,7 @@ import {
   analysisRunStatusSchema,
   analysisStepSchema,
   queryEvidenceSchema,
+  imageAttachmentSchema,
 } from "@ai-data/contracts";
 
 const id = z.string().min(1);
@@ -33,6 +34,7 @@ const messageSchema = z
     conversationId: id,
     role: z.enum(["user", "assistant", "system", "tool"]),
     content: z.string(),
+    attachments: z.array(imageAttachmentSchema).max(4).optional(),
     sequence: z.number().int().nonnegative(),
     createdAt: iso,
     analysisRunId: id.optional(),

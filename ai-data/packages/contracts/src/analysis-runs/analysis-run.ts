@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { dateTimeSchema } from "../shared/data-values";
+import { imageAttachmentLimits } from "./image-attachment";
 
 const id = z.string().min(1).max(128);
 /** 运行终态稳定；澄清等待仍占用当前会话的活跃运行。 */
@@ -14,8 +15,19 @@ const analysisRunStatusSchema = z.enum([
 ]);
 /** 消息幂等键作用于当前会话；重复键必须对应完全相同的问题。 */
 const submitMessageSchema = z
-  .object({ content: z.string().trim().min(1).max(64000), idempotency_key: id })
-  .strict();
+  .object({
+    content: z.string().trim().max(64000),
+    idempotency_key: id,
+    /** 省略表示纯文字；附件由 API 复核归属和状态，顺序参与幂等校验。 */
+    attachment_ids: z.array(z.uuid()).max(imageAttachmentLimits.count).optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (!value.content && !value.attachment_ids?.length)
+      context.addIssue({ code: "custom", message: "请填写文字或添加图片" });
+    if (new Set(value.attachment_ids).size !== (value.attachment_ids?.length ?? 0))
+      context.addIssue({ code: "custom", message: "图片不能重复" });
+  });
 /** 待答问题与稳定选项随原运行持久化。 */
 const clarificationSchema = z
   .object({

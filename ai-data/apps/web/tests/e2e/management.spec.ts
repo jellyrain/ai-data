@@ -186,10 +186,10 @@ test("发布关系后两端节点在各宽度下完整可见", async ({ page }) 
   await page.locator("summary").filter({ hasText: "业务关系与关联图" }).click();
   const graph = page.getByLabel("已发布关系方向图");
   await expect(graph.locator(".vue-flow__node")).toHaveCount(1);
-  await page.getByRole("button", { name: "新建出向关系", exact: true }).click();
-  await page.getByLabel("关系标识", { exact: true }).fill("visit_department");
+  await page.getByRole("button", { name: "编辑关系画布", exact: true }).click();
+  await page.getByRole("button", { name: "新建关系", exact: true }).click();
   for (const [label, option] of [
-    ["目标对象", "departments"],
+    ["目标对象", "科室字典 · departments"],
     ["源字段 1", "department_id"],
     ["目标字段 1", "id"],
   ]) {
@@ -198,10 +198,11 @@ test("发布关系后两端节点在各宽度下完整可见", async ({ page }) 
     const listbox = page.locator(`[id="${await select.getAttribute("aria-controls")}"]`);
     await listbox.getByRole("option", { name: option, exact: true }).click();
   }
-  await page.getByLabel("业务说明", { exact: true }).last().fill("住院记录所属科室");
-  await page.getByRole("button", { name: "加入发布清单", exact: true }).click();
-  await page.getByRole("button", { name: "发布整批关系", exact: true }).click();
+  await page.getByLabel("关系业务说明", { exact: true }).fill("住院记录所属科室");
+  await page.getByRole("button", { name: "应用修改", exact: true }).click();
+  await page.getByRole("button", { name: "发布关系", exact: true }).click();
   await expect(page.getByText("关系整批已发布并回读。", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "返回业务目录", exact: true }).click();
   await expect(graph.locator(".vue-flow__node")).toHaveCount(2);
   for (const width of [1440, 1024, 390, 1440]) {
     await page.setViewportSize({ width, height: 900 });

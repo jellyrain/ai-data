@@ -4,12 +4,16 @@ import { fileURLToPath, URL } from "node:url";
 import process from "node:process";
 import { join } from "node:path";
 import { releaseTarget } from "./prepare-release.mjs";
+import { verifyWebRelease } from "./test-web-release.mjs";
 
-// 专用入口确保先有当前平台产物，再调用现有 Vitest 和隔离 SQL 验收。
+// 验收现有三部分发布产物：Web 静态站点与浏览器，再运行 API/DAS 隔离 SQL 验收。
 const workspace = fileURLToPath(new URL("../", import.meta.url));
 try {
-  for (const app of ["api", "das"])
-    await access(join(workspace, "release", releaseTarget(), app, "release-info.json"));
+  const target = join(workspace, "release", releaseTarget());
+  for (const app of ["api", "das"]) await access(join(target, app, "release-info.json"));
+  await access(join(target, "web/index.html"));
+  const web = await verifyWebRelease(join(target, "web"));
+  process.stdout.write(`Web 发布验收通过：${web.files} 个资源，${web.pageChecks} 项页面检查\n`);
   const child = spawn(
     process.execPath,
     [
@@ -31,7 +35,7 @@ try {
   });
 } catch (error) {
   process.stderr.write(
-    `发布验收未完成，请先构建当前平台产物并准备 SQL 测试配置：${error.message}\n`,
+    `发布验收未完成：${error.message}\n请先运行 pnpm build:release，并准备 SQL 测试配置和已安装的 Chromium。\n`,
   );
   process.exitCode = 1;
 }

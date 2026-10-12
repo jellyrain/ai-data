@@ -368,7 +368,14 @@ class CodexAnalysisHarness implements AnalysisHarness {
       assertActive();
       const started = await client.request("turn/start", {
         threadId,
-        input: [{ type: "text", text: request.input }, ...(request.threadId ? [] : skills)],
+        input: [
+          { type: "text", text: request.input },
+          ...(request.images ?? []).flatMap((image) => [
+            { type: "text", text: image.label },
+            { type: "localImage", path: image.path },
+          ]),
+          ...(request.threadId ? [] : skills),
+        ],
       });
       session.bindTurn(record(record(started).turn).id);
     })();

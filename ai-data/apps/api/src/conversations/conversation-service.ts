@@ -1,3 +1,4 @@
+import { withCatalogReadScope } from "../catalog/catalog-read-scope";
 import dayjs from "dayjs";
 import { z } from "zod";
 import type { CreateConversation } from "@ai-data/contracts";
@@ -71,18 +72,20 @@ class ConversationService {
 
   /** 返回会话及其按序消息；跨用户和跨组织时不暴露记录。 */
   async get(context: AuthContext, conversationId: string): Promise<ConversationDetail | null> {
-    const conversation = await this.repository.findConversation(
-      conversationId,
-      context.userId,
-      context.organizationId,
-    );
-    if (!conversation) return null;
-    const messages = await this.repository.listMessages(conversation.id);
-    for (const runId of new Set(
-      messages.flatMap((message) => (message.analysisRunId ? [message.analysisRunId] : [])),
-    ))
-      await this.runtime?.authorizeRun(context, runId);
-    return { conversation, messages };
+    return withCatalogReadScope(async () => {
+      const conversation = await this.repository.findConversation(
+        conversationId,
+        context.userId,
+        context.organizationId,
+      );
+      if (!conversation) return null;
+      const messages = await this.repository.listMessages(conversation.id);
+      for (const runId of new Set(
+        messages.flatMap((message) => (message.analysisRunId ? [message.analysisRunId] : [])),
+      ))
+        await this.runtime?.authorizeRun(context, runId);
+      return { conversation, messages };
+    });
   }
 
   /** 归属校验、幂等检查和原子写入由仓储在同一事务内完成。 */
@@ -91,6 +94,7 @@ class ConversationService {
     conversationId: string,
     content: string,
     idempotencyKey: string,
+    attachmentIds?: string[],
   ): Promise<SubmittedMessage | null> {
     const submitted = await this.repository.submitMessage(
       conversationId,
@@ -98,7 +102,8 @@ class ConversationService {
       context.organizationId,
       content,
       idempotencyKey,
-      ...(this.runtime?.dispatcher ? [context.sessionId] : []),
+      this.runtime?.dispatcher ? context.sessionId : undefined,
+      attachmentIds,
     );
     if (submitted) this.runtime?.dispatcher?.wake();
     return submitted;

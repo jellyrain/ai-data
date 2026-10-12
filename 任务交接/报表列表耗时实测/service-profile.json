@@ -1,0 +1,1556 @@
+{
+  "measured_at": "2026-10-09T14:18:29.779Z",
+  "note": "独立进程复用正式服务代码、实际元数据库和已验证在线的 DAS；复用实验仅存在本测试进程。嵌套计时不可直接相加。",
+  "cases": [
+    {
+      "mode": "baseline",
+      "total_ms": 24023.8,
+      "items": 2,
+      "identical_response": true,
+      "summary": {
+        "metadata_sql": {
+          "count": 119,
+          "total_ms": 1593.1
+        },
+        "raw_catalog": {
+          "count": 17,
+          "total_ms": 23840.1
+        },
+        "authorized_catalog": {
+          "count": 17,
+          "total_ms": 23850.4
+        },
+        "query_authorization": {
+          "count": 2,
+          "total_ms": 7387
+        },
+        "presentation": {
+          "count": 2,
+          "total_ms": 14394.3
+        },
+        "definition": {
+          "count": 2,
+          "total_ms": 23953.6
+        },
+        "snapshot": {
+          "count": 2,
+          "total_ms": 20.8
+        }
+      }
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "total_ms": 1621.8,
+      "items": 2,
+      "identical_response": true,
+      "summary": {
+        "metadata_sql": {
+          "count": 23,
+          "total_ms": 123.7
+        },
+        "raw_catalog": {
+          "count": 1,
+          "total_ms": 1539.1
+        },
+        "authorized_catalog": {
+          "count": 1,
+          "total_ms": 1539.6
+        },
+        "catalog_reuse": {
+          "count": 16,
+          "total_ms": 0
+        },
+        "query_authorization": {
+          "count": 2,
+          "total_ms": 37.8
+        },
+        "presentation": {
+          "count": 2,
+          "total_ms": 0.5
+        },
+        "definition": {
+          "count": 2,
+          "total_ms": 1599.4
+        },
+        "snapshot": {
+          "count": 2,
+          "total_ms": 14.7
+        }
+      }
+    }
+  ],
+  "events": [
+    {
+      "mode": "baseline",
+      "kind": "metadata_sql",
+      "label": "dbo.saved_reports",
+      "ms": 43.2
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.report_templates",
+      "ms": 8.1
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 23.9
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 80.7
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 100.8
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 101.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 101.8
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 23.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 2117
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 2119.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 8.7
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 4.8
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 16.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 18.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 18.8
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 20.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 20.8
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 9
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1415.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1416.2
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 10.6
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 11.6
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 12
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 13
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 13.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 7.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1478.8
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1479.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 3.9
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 2.7
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 6.9
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 8.8
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 9.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 10.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 10.7
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 6.2
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1432.1
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1433
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 5.8
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 4.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.catalog_policy_versions",
+      "ms": 5.2
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "query_authorization",
+      "label": "危急值系统数据源",
+      "ms": 4363.8
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 8.1
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 9
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 9.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 10
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 10.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 5.1
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1158.5
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1158.9
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 7.5
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 8.9
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 9.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 10.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 10.7
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 5
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1250.1
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1250.7
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 11.1
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 12.1
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 12.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 14.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 14.7
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 8.1
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1385.1
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1385.9
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 13.8
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 16.6
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 17.7
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 19.7
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 20.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 9
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1291
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1291.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 7.2
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 8.9
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 9.5
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 11
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 11.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 6.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1259.6
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1260
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 11.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 13.6
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 14.5
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 16.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 16.9
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 10.2
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1284.7
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1285
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "presentation",
+      "label": "query_1",
+      "ms": 7633
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "definition",
+      "label": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "ms": 14163.6
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.saved_reports",
+      "ms": 5.3
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.report_templates",
+      "ms": 2.4
+    },
+    {
+      "mode": "baseline",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "snapshot",
+      "label": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "error": "NOT_FOUND",
+      "ms": 10.1
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.report_templates",
+      "ms": 3.3
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 5.7
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 6.4
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 6.7
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 7.5
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 8.7
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 5.9
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1535.1
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1535.4
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 9.6
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 10.8
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 11.5
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 13.2
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 13.8
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 8.1
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1474.4
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1474.6
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 3.4
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 2
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.catalog_policy_versions",
+      "ms": 2.1
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "query_authorization",
+      "label": "危急值系统数据源",
+      "ms": 3023.2
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 7.4
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 8.3
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 8.5
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 9.4
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 9.7
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 4.2
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1220.1
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1220.5
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 11.2
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 12.9
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 13.6
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 15
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 15.5
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 6.9
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1502
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1502.4
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 11.2
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 12.5
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 12.9
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 14.1
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 14.5
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 6.9
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1340.2
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1340.5
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 7
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 8.4
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 8.7
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 9.4
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 9.6
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 3.5
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1248
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1248.6
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 10.4
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 11.4
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 11.8
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 12.2
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 13.2
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 5.2
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1448
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1448.6
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "presentation",
+      "label": "query_1",
+      "ms": 6761.3
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "definition",
+      "label": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "ms": 9790
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.saved_reports",
+      "ms": 3.9
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.report_templates",
+      "ms": 4.2
+    },
+    {
+      "mode": "baseline",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "snapshot",
+      "label": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "error": "NOT_FOUND",
+      "ms": 10.7
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "kind": "metadata_sql",
+      "label": "dbo.saved_reports",
+      "ms": 5.3
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.report_templates",
+      "ms": 3
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.data_access_services",
+      "ms": 10.6
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 11.6
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_object_permissions",
+      "ms": 12
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_column_permissions",
+      "ms": 13.2
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.role_row_policies",
+      "ms": 13.6
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 5.3
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "raw_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1539.1
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "authorized_catalog",
+      "label": "危急值系统数据源",
+      "ms": 1539.6
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 4.7
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 4.1
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 3.4
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 2.6
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 3.3
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 2.5
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.catalog_policy_versions",
+      "ms": 2.8
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "query_authorization",
+      "label": "危急值系统数据源",
+      "ms": 21.7
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "presentation",
+      "label": "query_1",
+      "ms": 0.3
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "definition",
+      "label": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "ms": 1577.3
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.saved_reports",
+      "ms": 3.5
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "metadata_sql",
+      "label": "dbo.report_templates",
+      "ms": 2.4
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "kind": "snapshot",
+      "label": "8253ff70-9810-4db6-9bd9-ac6be8c07498",
+      "error": "NOT_FOUND",
+      "ms": 7.5
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.report_templates",
+      "ms": 3.6
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.api_dataset_configs",
+      "ms": 3.2
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.approved_relations",
+      "ms": 3.1
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.catalog_policy_versions",
+      "ms": 3.9
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "query_authorization",
+      "label": "危急值系统数据源",
+      "ms": 16.1
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "catalog_reuse",
+      "label": "危急值系统数据源",
+      "ms": 0
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "presentation",
+      "label": "query_1",
+      "ms": 0.2
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "definition",
+      "label": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "ms": 22.1
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.saved_reports",
+      "ms": 3.3
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "metadata_sql",
+      "label": "dbo.report_templates",
+      "ms": 2.7
+    },
+    {
+      "mode": "request_catalog_reuse_experiment",
+      "report": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "kind": "snapshot",
+      "label": "e7ec3328-6467-49b7-aa59-3138dc567c1f",
+      "error": "NOT_FOUND",
+      "ms": 7.2
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { withCatalogReadScope, withFreshCatalogReadScope } from "../catalog/catalog-read-scope";
 import { createHash, randomUUID } from "node:crypto";
 import dayjs from "dayjs";
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
@@ -37,16 +38,19 @@ class ReportExecutionService {
         throw new ApplicationError("CONFLICT", "执行操作键已用于其他版本或参数");
       return this.get(context, previous.record.execution_id);
     }
-    const definition = await this.dependencies.definitions.get(
-      context,
-      reportId,
-      request.definition_version,
-    );
-    const built = await this.dependencies.builder.build(
-      context,
-      definition.definition,
-      request.parameters,
-    );
+    const { definition, built } = await withFreshCatalogReadScope(async () => {
+      const definition = await this.dependencies.definitions.get(
+        context,
+        reportId,
+        request.definition_version,
+      );
+      const built = await this.dependencies.builder.build(
+        context,
+        definition.definition,
+        request.parameters,
+      );
+      return { definition, built };
+    });
     const timeout = this.dependencies.timeoutMilliseconds ?? 120000;
     const deadline = runTime(dayjs(this.now()).add(timeout, "millisecond"));
     const start = await this.dependencies.repository.start(
@@ -96,78 +100,80 @@ class ReportExecutionService {
             );
           results.push({ query_id: item.query_id, evidence });
         }
-        context = await this.dependencies.refreshContext(context);
-        const current = await this.dependencies.definitions.get(context, reportId);
-        for (const result of results)
-          await this.dependencies.authorizeEvidence(context, result.evidence);
-        const sources = results.map((result) => result.evidence);
-        const sections = record.definition.presentation
-          .map((section) => ({
-            ...section,
-            blocks: section.blocks
-              .filter(
-                (block) =>
-                  block.type !== "text" || block.source_execution_id === record.execution_id,
-              )
-              .map((block) => ({
-                block_id: block.block_id,
-                type: block.type,
-                title: block.title,
-                evidence_ids: block.query_ids.map(
-                  (id) => results.find((result) => result.query_id === id)!.evidence.evidence_id,
-                ),
-                ...(block.chart ? { chart: block.chart } : {}),
-                ...(block.columns ? { columns: block.columns } : {}),
-                ...(block.content ? { content: block.content } : {}),
+        return withFreshCatalogReadScope(async () => {
+          context = await this.dependencies.refreshContext(context);
+          const current = await this.dependencies.definitions.get(context, reportId);
+          for (const result of results)
+            await this.dependencies.authorizeEvidence(context, result.evidence);
+          const sources = results.map((result) => result.evidence);
+          const sections = record.definition.presentation
+            .map((section) => ({
+              ...section,
+              blocks: section.blocks
+                .filter(
+                  (block) =>
+                    block.type !== "text" || block.source_execution_id === record.execution_id,
+                )
+                .map((block) => ({
+                  block_id: block.block_id,
+                  type: block.type,
+                  title: block.title,
+                  evidence_ids: block.query_ids.map(
+                    (id) => results.find((result) => result.query_id === id)!.evidence.evidence_id,
+                  ),
+                  ...(block.chart ? { chart: block.chart } : {}),
+                  ...(block.columns ? { columns: block.columns } : {}),
+                  ...(block.content ? { content: block.content } : {}),
+                })),
+            }))
+            .filter((section) => section.blocks.length > 0);
+          // 历史说明不复制为新结论；纯说明模板本轮仍交付全部结果表。
+          if (!sections.length)
+            sections.push({
+              section_id: "results",
+              title: record.definition.title,
+              blocks: results.map((result) => ({
+                block_id: result.query_id,
+                type: "table",
+                title: result.query_id,
+                evidence_ids: [result.evidence.evidence_id],
               })),
-          }))
-          .filter((section) => section.blocks.length > 0);
-        // 历史说明不复制为新结论；纯说明模板本轮仍交付全部结果表。
-        if (!sections.length)
-          sections.push({
-            section_id: "results",
+            });
+          const snapshot = savedReportSchema.parse({
+            report_id: record.report_id,
+            version: record.definition_version,
+            definition_version: record.definition_version,
+            execution_id: record.execution_id,
+            analysis_run_id: record.analysis_run_id,
+            organization_id: record.organization_id,
+            user_id: record.user_id,
+            created_at: runTime(this.now()),
             title: record.definition.title,
-            blocks: results.map((result) => ({
-              block_id: result.query_id,
-              type: "table",
-              title: result.query_id,
-              evidence_ids: [result.evidence.evidence_id],
-            })),
+            shared_with: current.shared_with,
+            sections,
+            sources,
           });
-        const snapshot = savedReportSchema.parse({
-          report_id: record.report_id,
-          version: record.definition_version,
-          definition_version: record.definition_version,
-          execution_id: record.execution_id,
-          analysis_run_id: record.analysis_run_id,
-          organization_id: record.organization_id,
-          user_id: record.user_id,
-          created_at: runTime(this.now()),
-          title: record.definition.title,
-          shared_with: current.shared_with,
-          sections,
-          sources,
+          let completed = reportExecutionSchema.parse({
+            ...record,
+            status: "completed",
+            completed_at: runTime(this.now()),
+            results,
+            snapshot,
+          });
+          this.assertDeadline(record, interrupted);
+          await this.dependencies.runs.complete(
+            context,
+            record.analysis_run_id,
+            activeLease,
+            "报表执行完成",
+            async (executor) => {
+              this.assertDeadline(record, interrupted);
+              completed = await this.dependencies.repository.finish(context, completed, executor);
+              this.assertDeadline(record, interrupted);
+            },
+          );
+          return completed;
         });
-        let completed = reportExecutionSchema.parse({
-          ...record,
-          status: "completed",
-          completed_at: runTime(this.now()),
-          results,
-          snapshot,
-        });
-        this.assertDeadline(record, interrupted);
-        await this.dependencies.runs.complete(
-          context,
-          record.analysis_run_id,
-          activeLease,
-          "报表执行完成",
-          async (executor) => {
-            this.assertDeadline(record, interrupted);
-            completed = await this.dependencies.repository.finish(context, completed, executor);
-            this.assertDeadline(record, interrupted);
-          },
-        );
-        return completed;
       };
       heartbeat = setInterval(() => {
         if (renewing || interrupted) return;
@@ -218,26 +224,28 @@ class ReportExecutionService {
     executionId: string,
     executor?: MetadataQueryExecutor,
   ): Promise<ReportExecution> {
-    // 事务调用方已经刷新身份，同一连接完成历史权限复核。
-    if (!executor) context = await this.dependencies.refreshContext(context);
-    let record = await this.dependencies.repository.find(context, executionId, executor);
-    if (!record) throw new ApplicationError("NOT_FOUND", "报表执行不存在");
-    await this.dependencies.definitions.get(context, record.report_id, undefined, executor);
-    if (record.status === "running" && this.now() >= runTimeMilliseconds(record.deadline))
-      record = await this.dependencies.repository.finish(
-        context,
-        reportExecutionSchema.parse({
-          ...record,
-          status: "failed",
-          results: [],
-          error_code: "QUERY_TIMEOUT",
-          completed_at: runTime(this.now()),
-        }),
-        executor,
-      );
-    for (const result of record.results)
-      await this.dependencies.authorizeEvidence(context, result.evidence, executor);
-    return record;
+    return withCatalogReadScope(async () => {
+      // 事务调用方已经刷新身份，同一连接完成历史权限复核。
+      if (!executor) context = await this.dependencies.refreshContext(context);
+      let record = await this.dependencies.repository.find(context, executionId, executor);
+      if (!record) throw new ApplicationError("NOT_FOUND", "报表执行不存在");
+      await this.dependencies.definitions.get(context, record.report_id, undefined, executor);
+      if (record.status === "running" && this.now() >= runTimeMilliseconds(record.deadline))
+        record = await this.dependencies.repository.finish(
+          context,
+          reportExecutionSchema.parse({
+            ...record,
+            status: "failed",
+            results: [],
+            error_code: "QUERY_TIMEOUT",
+            completed_at: runTime(this.now()),
+          }),
+          executor,
+        );
+      for (const result of record.results)
+        await this.dependencies.authorizeEvidence(context, result.evidence, executor);
+      return record;
+    });
   }
 
   async exportContent(context: AuthContext, executionId: string) {

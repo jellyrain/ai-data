@@ -30,6 +30,7 @@ import type { ReportExecutionService } from "./reports/report-execution-service"
 import type { ReportRevisionService } from "./reports/report-revision-service";
 import type { CatalogRelationService } from "./catalog/catalog-relation-service";
 import type { SqlUserAdminReader } from "./auth/sql-user-admin-reader";
+import type { AttachmentService } from "./conversations/attachment-service";
 
 /** 全部编辑入口共享报表定义与结果服务。 */
 type ApiReportServices = {
@@ -154,6 +155,8 @@ type ApiDependencies = {
   /** 管理选项及当前用户授权公开读取。 */
   /** 会话、消息和分析运行服务。 */
   conversations: ApiConversationService;
+  /** 图片上传、受权读取及过期草稿清理。 */
+  attachments: Pick<AttachmentService, "upload" | "read" | "remove" | "cleanup">;
   analysis: ApiAnalysisServices;
   agentConfiguration: ApiAgentServices;
   memory: ApiMemoryServices;

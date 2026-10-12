@@ -2,7 +2,8 @@ import type { AnalysisRunService } from "../analysis-runs/analysis-run-service";
 import type { AuthContext } from "../auth/auth-types";
 import type { AnalysisHarness, HarnessConfiguration } from "../harness/harness-types";
 import type { AnalysisTools } from "./analysis-tools";
-import type { RunLease } from "@ai-data/contracts";
+import type { RunLease, ImageAttachment } from "@ai-data/contracts";
+import type { AttachmentService } from "../conversations/attachment-service";
 
 /** 派发只保存会话身份引用，执行时重新从认证库加载有效授权。 */
 type PendingAnalysis = { runId: string; userId: string; organizationId: string; sessionId: string };
@@ -11,7 +12,7 @@ type AnalysisInput = {
   conversation_id: string;
   context_hash: string;
   thread_id?: string;
-  messages: { role: string; content: string }[];
+  messages: { role: string; content: string; attachments?: ImageAttachment[] }[];
   run_ids: string[];
 };
 /** 恢复扫描与上下文读取复用 SQL 元数据库。 */
@@ -44,6 +45,8 @@ type ExecutorDependencies = {
   heartbeatMs?: number;
   maxToolCalls?: number;
   maxContextBytes?: number;
+  /** 仅在历史包含图片时使用，读取同时复核当前身份与文件。 */
+  attachments?: Pick<AttachmentService, "read">;
   resolveConfiguration?: (
     context: AuthContext,
     runId: string,

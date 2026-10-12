@@ -3,7 +3,12 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch 
 import { VueFlow, useVueFlow } from "@vue-flow/core";
 import type { Connection, FlowEvents, NodeDragEvent, ViewportTransform } from "@vue-flow/core";
 import { ElButton } from "element-plus";
-import { Plus, MousePointer2, Hand, Scan, Sparkles, Minus } from "lucide-vue-next";
+import { Plus, MousePointer2, Hand, Scan, Sparkles, Minus, Zap } from "lucide-vue-next";
+import { useCanvasNavigation } from "../../../shared/canvas/use-canvas-navigation";
+import { useCanvasMotion } from "../../../shared/canvas/use-canvas-motion";
+import { useCanvasMenu } from "../../../shared/canvas/use-canvas-menu";
+import CanvasContextMenu from "../../../shared/canvas/canvas-context-menu.vue";
+import type { CanvasMenuAction } from "../../../shared/canvas/canvas-menu-types";
 import type { ReportEditor } from "../stores/report-editor";
 import type { QueryGraph } from "../models/query-graph-types";
 import { graphForQuery, moveNode } from "../models/query-graph";
@@ -19,12 +24,58 @@ const root = ref<HTMLElement>(),
   hand = ref(false),
   hidden = ref(document.hidden);
 const viewport = ref<ViewportTransform>({ x: 0, y: 0, zoom: 1 });
+const navigation = useCanvasNavigation(root);
+const motion = useCanvasMotion();
+const context = useCanvasMenu(root);
 const menu = ref<{ source: string; target?: string; x: number; y: number }>();
 const graph = computed(() => graphForQuery(props.editor.state.draft, props.queryId));
 const locked = computed(
   () => props.editor.state.locked || props.editor.state.saving || props.editor.state.uncertain,
 );
 const { fitView, zoomIn, zoomOut } = useVueFlow();
+const contextNode = computed(() =>
+  nodes.value.find((node) => node.id === context.current.value?.node),
+);
+const contextEdge = computed(() =>
+  graph.value.edges.find((edge) => edge.id === context.current.value?.edge),
+);
+const contextActions = computed<CanvasMenuAction[]>(() => [
+  ...(contextNode.value
+    ? [
+        { id: "inspect", label: "配置查询" },
+        ...(contextNode.value.data?.kind === "relational_query"
+          ? [{ id: "relation", label: "添加关联", disabled: locked.value }]
+          : []),
+        { id: "focus", label: "聚焦节点" },
+      ]
+    : contextEdge.value
+      ? [
+          { id: "edge", label: "配置关联" },
+          { id: "source", label: "查看源对象" },
+          { id: "target", label: "查看目标对象" },
+        ]
+      : [{ id: "add", label: "添加查询", disabled: locked.value }]),
+  { id: "fit", label: "适应所有节点" },
+  { id: "hand", label: "平移模式", checked: hand.value },
+  { id: "motion", label: "连线动效", checked: motion.enabled.value },
+]);
+function contextAction(id: string) {
+  const node = contextNode.value,
+    edge = contextEdge.value;
+  if (id === "inspect" && node?.data) emit("inspect", node.data.alias);
+  else if (id === "relation" && node?.data) openMenu(node.data.alias);
+  else if (id === "focus" && node) void fitView({ nodes: [node.id], maxZoom: 1, padding: 0.5 });
+  else if (id === "edge" && edge?.data) emit("inspect", edge.data.alias);
+  else if ((id === "source" || id === "target") && edge) {
+    const object = nodes.value.find(
+      (item) => item.id === (id === "source" ? edge.source : edge.target),
+    );
+    if (object?.data) emit("inspect", object.data.alias);
+  } else if (id === "add") emit("add");
+  else if (id === "fit") void fitView({ maxZoom: 1, padding: 0.25 });
+  else if (id === "hand") hand.value = !hand.value;
+  else if (id === "motion") motion.toggle();
+}
 let fitted = false;
 function initializeView() {
   if (!fitted && nodes.value.length) {
@@ -113,20 +164,31 @@ function relationAdded(alias: string) {
   <div
     ref="root"
     class="report-canvas"
-    :class="{ 'canvas-pan': hand }"
+    :class="{ 'canvas-pan': hand || navigation.panning.value }"
     :style="{
       backgroundSize: `${20 * viewport.zoom}px ${20 * viewport.zoom}px`,
       backgroundPosition: `${viewport.x}px ${viewport.y}px`,
     }"
     @keydown.esc="closeMenu"
-    @pointerdown.capture="panePointerDown"
+    @pointerdown.capture="
+      navigation.down($event);
+      panePointerDown($event);
+    "
+    @pointermove.capture="navigation.move"
+    @pointerup.capture="navigation.up"
+    @pointercancel="navigation.finish"
+    @lostpointercapture="navigation.finish"
+    @mousedown.capture="navigation.mouseDown"
+    @contextmenu.capture="context.open"
+    @click.capture="navigation.click"
   >
     <VueFlow
       v-model:nodes="nodes"
       :edges="graph.edges"
       :nodes-draggable="!locked && !hand"
       :nodes-connectable="!locked"
-      :pan-on-drag="hand ? true : [1, 2]"
+      :pan-on-drag="hand ? [0, 1] : [1]"
+      multi-selection-key-code="Shift"
       :selection-on-drag="!hand"
       :delete-key-code="null"
       :min-zoom="0.15"
@@ -139,10 +201,6 @@ function relationAdded(alias: string) {
       @viewport-change="viewport = $event"
       @node-double-click="emit('inspect', $event.node.data.alias)"
       @edge-click="emit('inspect', $event.edge.data.alias)"
-      @node-context-menu="
-        $event.event.preventDefault();
-        emit('inspect', $event.node.data.alias);
-      "
     >
       <template #node-query="node"
         ><QueryNode
@@ -152,7 +210,20 @@ function relationAdded(alias: string) {
           @inspect="emit('inspect', node.data.alias)"
           @relation="openMenu(node.data.alias)"
       /></template>
-      <template #edge-flowing="edge"><FlowingEdge v-bind="edge" :paused="hidden" /></template>
+      <template #edge-flowing="edge"
+        ><FlowingEdge v-bind="edge" :paused="hidden" :animated="motion.enabled.value">
+          <template #label
+            ><button
+              class="report-relation-action"
+              type="button"
+              :aria-label="`配置关联 ${edge.data.relationId}`"
+              @click.stop="emit('inspect', edge.data.alias)"
+            >
+              {{ edge.data.joinType.toUpperCase() }} <span>· {{ edge.data.relationId }}</span>
+            </button></template
+          >
+        </FlowingEdge></template
+      >
     </VueFlow>
     <div v-if="!nodes.length" class="canvas-empty">
       <span class="canvas-empty-symbol"><Plus :size="28" :stroke-width="1" /></span>
@@ -190,6 +261,13 @@ function relationAdded(alias: string) {
         @click="emit('add')"
       >
         <Plus :size="22" /></button
+      ><button
+        aria-label="连线动效"
+        :aria-pressed="motion.enabled.value"
+        :title="motion.enabled.value ? '关闭连线动效' : '开启连线动效'"
+        @click="motion.toggle"
+      >
+        <Zap :size="18" /></button
       ><span class="toolbar-divider" /><button
         :aria-pressed="!hand"
         aria-label="选择模式"
@@ -215,6 +293,12 @@ function relationAdded(alias: string) {
         <Sparkles :size="19" />
       </button>
     </div>
-    <span class="canvas-hint muted">{{ hand ? "拖动画布平移" : "拖动节点布局 · 双击配置" }}</span>
+    <span class="canvas-hint muted">Ctrl + 拖动平移 · 右键菜单</span>
+    <CanvasContextMenu
+      :point="context.current.value?.point"
+      :items="contextActions"
+      @close="context.close"
+      @action="contextAction"
+    />
   </div>
 </template>

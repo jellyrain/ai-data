@@ -31,6 +31,8 @@ import { registerConversationRoutes } from "../../src/routes/conversation-routes
 import { registerAnalysisRoutes } from "../../src/routes/analysis-routes";
 import { registerAgentRoutes } from "../../src/routes/agent-routes";
 import { ApplicationError } from "../../src/errors/application-error";
+import { WebImageFixture } from "./web-image-fixture";
+import { registerAttachmentRoutes } from "../../src/routes/attachment-routes";
 
 dayjs.extend(utc);
 const now = () => dayjs().utcOffset(480).format("YYYY-MM-DD HH:mm:ss");
@@ -51,6 +53,9 @@ const agent: AgentVersion = agentVersionSchema.parse({
 });
 /** 隔离 HTTP 验收数据；运行调度和 SQL 结果为确定性替身，认证与路由使用真实实现。 */
 class WebAnalysisRepository implements ConversationRepository {
+  images = new WebImageFixture((context, id) =>
+    this.findConversation(id, context.userId, context.organizationId),
+  );
   deleted = new Set<string>();
   reportConversations = new Set<string>();
   conversations = new Map<string, Conversation>();
@@ -169,13 +174,19 @@ class WebAnalysisRepository implements ConversationRepository {
     organizationId: string,
     content: string,
     key: string,
+    _sessionId?: string,
+    attachmentIds: string[] = [],
   ): Promise<SubmittedMessage | null> {
     const conversation = await this.findConversation(conversationId, userId, organizationId);
     if (!conversation) return null;
     const identity = `${conversationId}:${key}`;
     const prior = this.submissions.get(identity);
     if (prior) {
-      if (prior.message.content !== content)
+      if (
+        prior.message.content !== content ||
+        JSON.stringify(prior.message.attachments?.map((image) => image.attachment_id) ?? []) !==
+          JSON.stringify(attachmentIds)
+      )
         throw new ApplicationError("CONFLICT", "幂等内容不一致");
       return prior;
     }
@@ -195,6 +206,15 @@ class WebAnalysisRepository implements ConversationRepository {
       content,
       sequence: messages.length + 1,
       createdAt: created,
+      ...(attachmentIds.length
+        ? {
+            attachments: await this.images.bind(
+              { userId, organizationId } as AuthContext,
+              conversationId,
+              attachmentIds,
+            ),
+          }
+        : {}),
     };
     const receipt: SubmittedMessage = {
       message,
@@ -720,6 +740,7 @@ function registerWebAnalysisFixture(app: FastifyInstance, auth: ApiAuthService) 
     },
   });
   registerConversationRoutes(app, auth, conversations);
+  registerAttachmentRoutes(app, auth, repository.images);
   registerAnalysisRoutes(app, auth, runs);
   registerAgentRoutes(app, auth, {
     list: async () => [

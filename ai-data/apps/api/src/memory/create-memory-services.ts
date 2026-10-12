@@ -33,13 +33,20 @@ function createMemoryServices(dependencies: {
   catalogClient: DataAccessCatalogClient;
   dataAccessSessions: Pick<DataAccessSessionService, "listHealthyServices">;
   queryAuthorization: ApiQueryAuthorization;
+  catalog: BusinessCatalogService;
   runs: AnalysisRunService;
   refreshContext(context: AuthContext): Promise<AuthContext>;
   isForegroundBusy(): boolean;
   onError(error: unknown): void;
   templates?: KnowledgeDependencies["templates"];
 }) {
+  // 仅复用服务对象；目录内容仍由单次读取批次管理，不同事务使用独立实例。
+  const catalogs = new WeakMap<MetadataQueryExecutor, BusinessCatalogService>();
+  catalogs.set(dependencies.database, dependencies.catalog);
   const catalog = (executor: MetadataQueryExecutor) => {
+    const existing = catalogs.get(executor);
+    if (existing) return existing;
+    const owner = executor;
     if (executor !== dependencies.database) executor = serialExecutor(executor);
     const repository = new SqlCatalogRepository(executor);
     const transactionRegistry = new SqlDataAccessServiceRegistry(executor);
@@ -48,11 +55,13 @@ function createMemoryServices(dependencies: {
       listHealthyServices: () =>
         dependencies.dataAccessSessions.listHealthyServices(transactionRegistry),
     };
-    return new BusinessCatalogService(
+    const service = new BusinessCatalogService(
       new RegisteredDataAccessCatalog(registry, dependencies.catalogClient),
       repository,
       repository,
     );
+    catalogs.set(owner, service);
+    return service;
   };
   const authorization = (executor: MetadataQueryExecutor) =>
     new QueryAuthorizationService(catalog(executor), dependencies.jwt);

@@ -1,0 +1,2159 @@
+{
+  "measured_at": "2026-10-10T08:13:46.741Z",
+  "das_catalog_calls": 57,
+  "groups": {
+    "model_turn / tool": {
+      "count": 3,
+      "total_ms": 99.6
+    },
+    "model_turn / tool / execute_query": {
+      "count": 2,
+      "total_ms": 226.9
+    },
+    "model_turn / on_message_started / record_message": {
+      "count": 1,
+      "total_ms": 92.9
+    },
+    "model_turn / on_message_delta / record_message": {
+      "count": 37,
+      "total_ms": 679.1
+    },
+    "model_turn / on_message_completed / record_message": {
+      "count": 1,
+      "total_ms": 16.3
+    },
+    "model_turn / read_run": {
+      "count": 3,
+      "total_ms": 53
+    },
+    "read_run": {
+      "count": 1,
+      "total_ms": 20.3
+    },
+    "direct": {
+      "count": 1,
+      "total_ms": 22.4
+    },
+    "read_event_batch / read_run": {
+      "count": 1,
+      "total_ms": 21.3
+    },
+    "model_turn / on_message_started / read_run": {
+      "count": 1,
+      "total_ms": 17.9
+    },
+    "model_turn / on_message_delta / read_run": {
+      "count": 5,
+      "total_ms": 91.1
+    },
+    "model_turn / on_message_completed / read_run": {
+      "count": 1,
+      "total_ms": 18.2
+    }
+  },
+  "events": [
+    {
+      "chain": ["model_turn", "read_run"],
+      "started_ms": 6853.7,
+      "ms": 23.1
+    },
+    {
+      "chain": ["model_turn", "read_run"],
+      "started_ms": 7108.9,
+      "ms": 15.2
+    },
+    {
+      "chain": ["model_turn", "tool", "authorized_catalog", "das_catalog"],
+      "started_ms": 17282.9,
+      "ms": 51.1
+    },
+    {
+      "chain": ["model_turn", "tool", "authorized_catalog"],
+      "started_ms": 17282.6,
+      "ms": 52.4
+    },
+    {
+      "chain": ["model_turn", "tool"],
+      "started_ms": 17239.3,
+      "ms": 142.3
+    },
+    {
+      "chain": ["model_turn", "tool", "authorized_catalog", "das_catalog"],
+      "started_ms": 17465.3,
+      "ms": 25.3
+    },
+    {
+      "chain": ["model_turn", "tool", "authorized_catalog"],
+      "started_ms": 17465.2,
+      "ms": 25.5
+    },
+    {
+      "chain": ["model_turn", "tool"],
+      "started_ms": 17427.2,
+      "ms": 97.7
+    },
+    {
+      "chain": ["model_turn", "on_message_started", "record_message"],
+      "started_ms": 19122.6,
+      "ms": 28.8
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 19257.9,
+      "ms": 22.2
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 19397.3,
+      "ms": 35
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 19549.9,
+      "ms": 22.2
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 19720.5,
+      "ms": 26
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 19861.6,
+      "ms": 18.3
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 19987,
+      "ms": 20.5
+    },
+    {
+      "chain": ["model_turn", "on_message_completed", "record_message"],
+      "started_ms": 21742.7,
+      "ms": 22.4
+    },
+    {
+      "chain": ["model_turn", "tool", "authorized_catalog", "das_catalog"],
+      "started_ms": 21832.3,
+      "ms": 23.2
+    },
+    {
+      "chain": ["model_turn", "tool", "authorized_catalog"],
+      "started_ms": 21832.3,
+      "ms": 23.3
+    },
+    {
+      "chain": ["model_turn", "tool", "authorized_catalog"],
+      "started_ms": 21855.8,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "tool"],
+      "started_ms": 21805.8,
+      "ms": 77.7
+    },
+    {
+      "chain": ["model_turn", "tool"],
+      "started_ms": 21919.4,
+      "ms": 56.3
+    },
+    {
+      "chain": ["model_turn", "on_message_started", "record_message"],
+      "started_ms": 27379.2,
+      "ms": 33.2
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 27505.9,
+      "ms": 22.4
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 27661.2,
+      "ms": 19.7
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 27816.4,
+      "ms": 18.9
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 27970.3,
+      "ms": 16.6
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 28142.8,
+      "ms": 17.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 28315,
+      "ms": 20.9
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 28484.7,
+      "ms": 20.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 28625.3,
+      "ms": 16.3
+    },
+    {
+      "chain": ["model_turn", "on_message_completed", "record_message"],
+      "started_ms": 29955.6,
+      "ms": 25
+    },
+    {
+      "chain": ["model_turn", "tool"],
+      "started_ms": 30016,
+      "ms": 50.8
+    },
+    {
+      "chain": ["model_turn", "tool"],
+      "started_ms": 30109,
+      "ms": 56.1
+    },
+    {
+      "chain": ["model_turn", "on_message_started", "record_message"],
+      "started_ms": 36472.6,
+      "ms": 48.5
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 36604.8,
+      "ms": 46.7
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 36752.9,
+      "ms": 39.7
+    },
+    {
+      "chain": ["model_turn", "on_message_completed", "record_message"],
+      "started_ms": 39822.7,
+      "ms": 56.8
+    },
+    {
+      "chain": [
+        "model_turn",
+        "tool",
+        "execute_query",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 39961.4,
+      "ms": 125.5
+    },
+    {
+      "chain": ["model_turn", "tool", "execute_query", "authorized_catalog"],
+      "started_ms": 39961.3,
+      "ms": 125.7
+    },
+    {
+      "chain": ["model_turn", "tool", "execute_query", "authorized_catalog"],
+      "started_ms": 40087.3,
+      "ms": 0.1
+    },
+    {
+      "chain": [
+        "model_turn",
+        "tool",
+        "execute_query",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 40176.4,
+      "ms": 101.4
+    },
+    {
+      "chain": ["model_turn", "tool", "execute_query", "authorized_catalog"],
+      "started_ms": 40176.4,
+      "ms": 101.6
+    },
+    {
+      "chain": ["model_turn", "tool", "execute_query", "authorized_catalog"],
+      "started_ms": 40278,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "tool", "execute_query"],
+      "started_ms": 39947.2,
+      "ms": 364.3
+    },
+    {
+      "chain": ["model_turn", "tool"],
+      "started_ms": 39879.6,
+      "ms": 500.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_started",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 43336.8,
+      "ms": 92.9
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_started",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 43336.7,
+      "ms": 93.1
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_started",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 43429.9,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_started", "record_message"],
+      "started_ms": 43313.6,
+      "ms": 129.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 43459.5,
+      "ms": 19.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 43459.4,
+      "ms": 19.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 43479,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 43449,
+      "ms": 42.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 43632.3,
+      "ms": 18.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 43632.2,
+      "ms": 18.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 43651,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 43621.2,
+      "ms": 41.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 43764,
+      "ms": 21.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 43764,
+      "ms": 21.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 43785.4,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 43752.7,
+      "ms": 46.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 43898.4,
+      "ms": 23.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 43898.3,
+      "ms": 23.8
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 43922.1,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 43886.2,
+      "ms": 50.9
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 44052.9,
+      "ms": 20.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44052.8,
+      "ms": 20.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44073.2,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 44042.2,
+      "ms": 42.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 44211.4,
+      "ms": 22
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44211.3,
+      "ms": 22.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44233.5,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 44198.4,
+      "ms": 47.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 44348.5,
+      "ms": 21.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44348.5,
+      "ms": 21.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44370.1,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 44337.6,
+      "ms": 46.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 44516.1,
+      "ms": 21.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44516.1,
+      "ms": 21.8
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44537.9,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 44505,
+      "ms": 45
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 44640.9,
+      "ms": 24.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44640.9,
+      "ms": 24.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44665.2,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 44629.7,
+      "ms": 48.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 44833,
+      "ms": 22.8
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44833,
+      "ms": 23
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 44856.1,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 44819.5,
+      "ms": 50
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 45000.8,
+      "ms": 19.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45000.8,
+      "ms": 19.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45020.5,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 44989.8,
+      "ms": 43.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 45157.3,
+      "ms": 20.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45157.2,
+      "ms": 20.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45177.9,
+      "ms": 0
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 45147.2,
+      "ms": 42.9
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 45300.2,
+      "ms": 17.1
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45300.2,
+      "ms": 17.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45317.4,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 45286,
+      "ms": 43.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 45463.8,
+      "ms": 14.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45463.7,
+      "ms": 14.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45478.5,
+      "ms": 0.2
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 45454.6,
+      "ms": 35
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 45637,
+      "ms": 18.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45636.9,
+      "ms": 18.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45655.4,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 45627.2,
+      "ms": 39.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 45756.3,
+      "ms": 16.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45756.2,
+      "ms": 16.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45772.6,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 45747.5,
+      "ms": 35.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 45942.9,
+      "ms": 16
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45942.9,
+      "ms": 16.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 45959,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 45933.7,
+      "ms": 36
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 46098.5,
+      "ms": 17
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46098.5,
+      "ms": 17.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46115.7,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 46089.6,
+      "ms": 36.9
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 46259.1,
+      "ms": 18.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46259.1,
+      "ms": 18.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46277.7,
+      "ms": 0
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 46245.6,
+      "ms": 42.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 46409,
+      "ms": 15.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46409,
+      "ms": 15.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46424.7,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 46399.7,
+      "ms": 34.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 46572.1,
+      "ms": 16.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46572,
+      "ms": 16.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46588.6,
+      "ms": 0
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 46562.9,
+      "ms": 35.9
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 46763.8,
+      "ms": 18.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46763.7,
+      "ms": 18.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46782.3,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 46755.2,
+      "ms": 40.1
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 46938.3,
+      "ms": 18.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46938.3,
+      "ms": 18.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 46957,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 46928.8,
+      "ms": 40.1
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 47093.9,
+      "ms": 18.8
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47093.9,
+      "ms": 19
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47113,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 47084.8,
+      "ms": 47
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 47261.6,
+      "ms": 22.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47261.6,
+      "ms": 22.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47284,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 47243.3,
+      "ms": 59.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 47423.4,
+      "ms": 21.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47423.3,
+      "ms": 21.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47445.1,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 47411.7,
+      "ms": 46.1
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 47575.9,
+      "ms": 13.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47575.8,
+      "ms": 13.8
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47589.7,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 47566.9,
+      "ms": 34.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 47761.9,
+      "ms": 14.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47761.9,
+      "ms": 15
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47777,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 47752.4,
+      "ms": 36
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 47931.1,
+      "ms": 15.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47931.1,
+      "ms": 15.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 47946.9,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 47922.4,
+      "ms": 34.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 48087.9,
+      "ms": 17.9
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48087.9,
+      "ms": 18
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48105.9,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 48078.3,
+      "ms": 36.8
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 48245.2,
+      "ms": 17.1
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48245.2,
+      "ms": 17.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48262.4,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 48234.5,
+      "ms": 39.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 48413.8,
+      "ms": 15.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48413.8,
+      "ms": 15.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48429.5,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 48404.3,
+      "ms": 35.1
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 48583.3,
+      "ms": 16.9
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48583.3,
+      "ms": 17
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48600.3,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 48574.2,
+      "ms": 35.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 48754.4,
+      "ms": 14.9
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48754.3,
+      "ms": 15.1
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48769.4,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 48744.9,
+      "ms": 34.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 48925.6,
+      "ms": 15
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48925.5,
+      "ms": 15.1
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 48940.7,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 48915.8,
+      "ms": 34.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 49080.1,
+      "ms": 14.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 49080,
+      "ms": 14.8
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 49094.9,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 49070.7,
+      "ms": 35.7
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 49215.9,
+      "ms": 19.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 49215.8,
+      "ms": 19.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 49235.3,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 49205.9,
+      "ms": 40
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_completed",
+        "record_message",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 49261.2,
+      "ms": 16.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_completed",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 49261.2,
+      "ms": 16.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_completed",
+        "record_message",
+        "authorized_catalog"
+      ],
+      "started_ms": 49277.7,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_completed", "record_message"],
+      "started_ms": 49251.7,
+      "ms": 38.1
+    },
+    {
+      "chain": ["model_turn", "read_run", "authorized_catalog", "das_catalog"],
+      "started_ms": 49306.5,
+      "ms": 16.8
+    },
+    {
+      "chain": ["model_turn", "read_run", "authorized_catalog"],
+      "started_ms": 49306.5,
+      "ms": 16.9
+    },
+    {
+      "chain": ["model_turn", "read_run", "authorized_catalog"],
+      "started_ms": 49323.4,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "read_run"],
+      "started_ms": 49297.1,
+      "ms": 30.8
+    },
+    {
+      "chain": ["model_turn"],
+      "started_ms": 6843.5,
+      "ms": 42512.5
+    },
+    {
+      "chain": ["read_run", "authorized_catalog", "das_catalog"],
+      "started_ms": 49366.5,
+      "ms": 20.3
+    },
+    {
+      "chain": ["read_run", "authorized_catalog"],
+      "started_ms": 49366.5,
+      "ms": 20.4
+    },
+    {
+      "chain": ["read_run", "authorized_catalog"],
+      "started_ms": 49386.9,
+      "ms": 0.2
+    },
+    {
+      "chain": ["read_run"],
+      "started_ms": 49356.1,
+      "ms": 36.7
+    },
+    {
+      "chain": ["authorized_catalog", "das_catalog"],
+      "started_ms": 49412.5,
+      "ms": 22.4
+    },
+    {
+      "chain": ["authorized_catalog"],
+      "started_ms": 49412.4,
+      "ms": 22.5
+    },
+    {
+      "chain": ["authorized_catalog"],
+      "started_ms": 49435,
+      "ms": 0.1
+    },
+    {
+      "chain": [
+        "read_event_batch",
+        "read_run",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 49487.2,
+      "ms": 21.3
+    },
+    {
+      "chain": ["read_event_batch", "read_run", "authorized_catalog"],
+      "started_ms": 49487.1,
+      "ms": 21.5
+    },
+    {
+      "chain": ["read_event_batch", "read_run", "authorized_catalog"],
+      "started_ms": 49508.6,
+      "ms": 0.1
+    },
+    {
+      "chain": ["read_event_batch", "read_run"],
+      "started_ms": 49474.8,
+      "ms": 38.4
+    },
+    {
+      "chain": ["read_event_batch"],
+      "started_ms": 49461.3,
+      "ms": 52
+    },
+    {
+      "chain": ["model_turn", "read_run"],
+      "started_ms": 49619.3,
+      "ms": 10.1
+    },
+    {
+      "chain": ["model_turn", "read_run", "authorized_catalog", "das_catalog"],
+      "started_ms": 49709.6,
+      "ms": 18.6
+    },
+    {
+      "chain": ["model_turn", "read_run", "authorized_catalog"],
+      "started_ms": 49709.6,
+      "ms": 18.8
+    },
+    {
+      "chain": ["model_turn", "read_run", "authorized_catalog"],
+      "started_ms": 49728.4,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "read_run"],
+      "started_ms": 49698,
+      "ms": 35.5
+    },
+    {
+      "chain": ["model_turn", "authorized_catalog"],
+      "started_ms": 49745.9,
+      "ms": 0.2
+    },
+    {
+      "chain": ["model_turn", "authorized_catalog"],
+      "started_ms": 49746,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "read_run"],
+      "started_ms": 49751.2,
+      "ms": 14
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_started",
+        "read_run",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 52610.1,
+      "ms": 17.9
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_started",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 52610.1,
+      "ms": 18.1
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_started",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 52628.2,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_started", "read_run"],
+      "started_ms": 52601.2,
+      "ms": 32
+    },
+    {
+      "chain": ["model_turn", "on_message_started", "record_message"],
+      "started_ms": 52633.2,
+      "ms": 28.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 52739.4,
+      "ms": 19.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 52739.3,
+      "ms": 19.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 52758.8,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "read_run"],
+      "started_ms": 52727.4,
+      "ms": 36.3
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 52763.7,
+      "ms": 18.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 52892.7,
+      "ms": 17.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 52892.7,
+      "ms": 17.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 52910,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "read_run"],
+      "started_ms": 52882,
+      "ms": 32.7
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 52914.7,
+      "ms": 17.9
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 53049.6,
+      "ms": 19.9
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 53049.5,
+      "ms": 20
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 53069.6,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "read_run"],
+      "started_ms": 53038.4,
+      "ms": 35.5
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 53073.9,
+      "ms": 14.8
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 53189.8,
+      "ms": 16.4
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 53189.8,
+      "ms": 16.6
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 53206.4,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "read_run"],
+      "started_ms": 53179.7,
+      "ms": 31
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 53210.7,
+      "ms": 31.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 53363.7,
+      "ms": 18.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 53363.6,
+      "ms": 18.5
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_delta",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 53382.2,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "read_run"],
+      "started_ms": 53353.7,
+      "ms": 32.7
+    },
+    {
+      "chain": ["model_turn", "on_message_delta", "record_message"],
+      "started_ms": 53386.4,
+      "ms": 16
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_completed",
+        "read_run",
+        "authorized_catalog",
+        "das_catalog"
+      ],
+      "started_ms": 53419.9,
+      "ms": 18.2
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_completed",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 53419.9,
+      "ms": 18.3
+    },
+    {
+      "chain": [
+        "model_turn",
+        "on_message_completed",
+        "read_run",
+        "authorized_catalog"
+      ],
+      "started_ms": 53438.2,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "on_message_completed", "read_run"],
+      "started_ms": 53409.1,
+      "ms": 33.8
+    },
+    {
+      "chain": ["model_turn", "on_message_completed", "record_message"],
+      "started_ms": 53443,
+      "ms": 18.2
+    },
+    {
+      "chain": ["model_turn", "read_run", "authorized_catalog", "das_catalog"],
+      "started_ms": 53476.6,
+      "ms": 17.6
+    },
+    {
+      "chain": ["model_turn", "read_run", "authorized_catalog"],
+      "started_ms": 53476.6,
+      "ms": 17.8
+    },
+    {
+      "chain": ["model_turn", "read_run", "authorized_catalog"],
+      "started_ms": 53494.5,
+      "ms": 0.1
+    },
+    {
+      "chain": ["model_turn", "read_run"],
+      "started_ms": 53467.5,
+      "ms": 31.6
+    },
+    {
+      "chain": ["model_turn", "read_run"],
+      "started_ms": 53499.1,
+      "ms": 8.4
+    },
+    {
+      "chain": ["model_turn"],
+      "started_ms": 49613.4,
+      "ms": 3909.6
+    },
+    {
+      "chain": ["read_run"],
+      "started_ms": 53523.1,
+      "ms": 8.1
+    },
+    {
+      "chain": ["read_event_batch", "read_run"],
+      "started_ms": 53541.6,
+      "ms": 9.7
+    },
+    {
+      "chain": ["read_event_batch"],
+      "started_ms": 53538.4,
+      "ms": 13
+    }
+  ]
+}

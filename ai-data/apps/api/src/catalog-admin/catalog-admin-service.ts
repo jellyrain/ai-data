@@ -1,3 +1,4 @@
+import { withCatalogReadScope } from "../catalog/catalog-read-scope";
 import {
   columnPermissionSchema,
   rowPolicySchema,
@@ -128,36 +129,38 @@ class CatalogAdminService {
 
   /** 目标角色的权限与范围直接交给共享授权转换，返回最终 DSL 和输出脱敏。 */
   async previewQuery(context: AuthContext, roleId: string, query: QueryDsl) {
-    const authorization = await this.requireRole(context, roleId);
-    const previewContext: AuthContext = {
-      userId: context.userId,
-      organizationId: context.organizationId,
-      sessionId: context.sessionId,
-      ...authorization,
-    };
-    // 角色预览没有指定实际业务用户，个人绑定策略由真实用户查询时求值。
-    const objects = new Set([
-      query.from.object_id,
-      ...(query.type === "relational_query" ? query.joins.map((join) => join.object_id) : []),
-    ]);
-    for (const objectId of objects) {
-      const object = await this.dependencies.catalog.getAuthorized(
-        previewContext,
-        query.source_id,
-        objectId,
-      );
-      if (
-        object?.rowPolicies.some(
-          (policy) => policy.condition.value_from === "permission_context.user_id",
-        )
-      )
-        throw new ApplicationError(
-          "POLICY_REJECTED",
-          "策略依赖具体用户标识，请通过该用户的查询验证权限",
+    return withCatalogReadScope(async () => {
+      const authorization = await this.requireRole(context, roleId);
+      const previewContext: AuthContext = {
+        userId: context.userId,
+        organizationId: context.organizationId,
+        sessionId: context.sessionId,
+        ...authorization,
+      };
+      // 角色预览没有指定实际业务用户，个人绑定策略由真实用户查询时求值。
+      const objects = new Set([
+        query.from.object_id,
+        ...(query.type === "relational_query" ? query.joins.map((join) => join.object_id) : []),
+      ]);
+      for (const objectId of objects) {
+        const object = await this.dependencies.catalog.getAuthorized(
+          previewContext,
+          query.source_id,
+          objectId,
         );
-    }
-    const result = await this.dependencies.authorization.preview(query, previewContext);
-    return { role_id: roleId, query: result.query, output_masks: result.outputMasks };
+        if (
+          object?.rowPolicies.some(
+            (policy) => policy.condition.value_from === "permission_context.user_id",
+          )
+        )
+          throw new ApplicationError(
+            "POLICY_REJECTED",
+            "策略依赖具体用户标识，请通过该用户的查询验证权限",
+          );
+      }
+      const result = await this.dependencies.authorization.preview(query, previewContext);
+      return { role_id: roleId, query: result.query, output_masks: result.outputMasks };
+    });
   }
 
   private async requireRole(context: AuthContext, roleId: string) {

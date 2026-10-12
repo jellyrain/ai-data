@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { vNumberAccessibility } from "../../../shared/management/number-accessibility";
 import { computed, onMounted, ref } from "vue";
-import { ElButton, ElInputNumber, ElInput, ElSelect, ElOption } from "element-plus";
+import { ElButton, ElDrawer, ElInputNumber, ElInput, ElSelect, ElOption } from "element-plus";
 import {
   stableStringify,
   type AgentVersion,
@@ -338,7 +338,7 @@ onMounted(async () => {
               <dt>工具</dt>
               <dd>{{ selected.tool_names.join("、") || "无" }}</dd>
               <dt>Skill</dt>
-              <dd>
+              <dd class="agent-skill-links">
                 <ElButton
                   v-for="name in selected.skill_names"
                   :key="name"
@@ -387,9 +387,19 @@ onMounted(async () => {
             <h2>版本管理</h2>
             <p class="management-help">已发布版本保留，配置变更将生成独立版本。</p>
           </section>
-          <SkillPreview v-if="preview" :key="preview" :name="preview" />
         </aside>
       </div>
     </template>
+    <ElDrawer
+      :model-value="!!preview"
+      :title="`${preview} · 当前源文档`"
+      class="agent-skill-drawer"
+      size="min(800px, 100vw)"
+      append-to-body
+      destroy-on-close
+      @update:model-value="!$event && (preview = '')"
+    >
+      <SkillPreview v-if="preview" :key="preview" :name="preview" />
+    </ElDrawer>
   </section>
 </template>

@@ -1,3 +1,4 @@
+import { withCatalogReadScope, withFreshCatalogReadScope } from "../catalog/catalog-read-scope";
 import { createHash, randomUUID } from "node:crypto";
 import dayjs from "dayjs";
 import type { MetadataQueryExecutor } from "@ai-data/metadata";
@@ -185,27 +186,37 @@ class AnalysisRunService {
   }
 
   async get(context: AuthContext, runId: string): Promise<AnalysisRunState> {
-    context = await this.dependencies.refreshContext(context);
-    return this.readAuthorized(context, runId);
+    return withCatalogReadScope(async () => {
+      context = await this.dependencies.refreshContext(context);
+      return this.readAuthorized(context, runId);
+    });
   }
 
   /** 调用方已在本次操作刷新身份；状态和完整证据仍逐批从仓储复核。 */
   private async readAuthorized(context: AuthContext, runId: string): Promise<AnalysisRunState> {
-    const state = await this.dependencies.repository.get(context, runId);
-    const evidence = await this.dependencies.repository.listEvidence(context, runId);
-    await Promise.all(
-      evidence.map((item) => assertEvidenceAccess(item, context, this.dependencies.authorization)),
-    );
-    return state;
+    return withCatalogReadScope(async () => {
+      const state = await this.dependencies.repository.get(context, runId);
+      const evidence = await this.dependencies.repository.listEvidence(context, runId);
+      await Promise.all(
+        evidence.map((item) =>
+          assertEvidenceAccess(item, context, this.dependencies.authorization),
+        ),
+      );
+      return state;
+    });
   }
 
   async evidence(context: AuthContext, runId: string): Promise<QueryEvidence[]> {
-    const evidence = await this.dependencies.repository.listEvidence(context, runId);
-    const current = await this.dependencies.refreshContext(context);
-    await Promise.all(
-      evidence.map((item) => assertEvidenceAccess(item, current, this.dependencies.authorization)),
-    );
-    return evidence;
+    return withCatalogReadScope(async () => {
+      const evidence = await this.dependencies.repository.listEvidence(context, runId);
+      const current = await this.dependencies.refreshContext(context);
+      await Promise.all(
+        evidence.map((item) =>
+          assertEvidenceAccess(item, current, this.dependencies.authorization),
+        ),
+      );
+      return evidence;
+    });
   }
 
   async events(context: AuthContext, runId: string, after: number) {
@@ -214,14 +225,18 @@ class AnalysisRunService {
 
   /** 先读取事件，再复核当前权限和状态；SSE 同批复用该状态判断是否追平终态。 */
   async readEventBatch(context: AuthContext, runId: string, after: number) {
-    const events = await this.dependencies.repository.listEvents(context, runId, after);
-    const state = await this.get(context, runId);
-    return { state, events };
+    return withFreshCatalogReadScope(async () => {
+      const events = await this.dependencies.repository.listEvents(context, runId, after);
+      const state = await this.get(context, runId);
+      return { state, events };
+    });
   }
   async steps(context: AuthContext, runId: string) {
-    const steps = await this.dependencies.repository.listSteps(context, runId);
-    await this.get(context, runId);
-    return steps;
+    return withCatalogReadScope(async () => {
+      const steps = await this.dependencies.repository.listSteps(context, runId);
+      await this.get(context, runId);
+      return steps;
+    });
   }
 
   /** 单次结构化查询入口：认领运行、留存证据并提交终态。 */
@@ -600,10 +615,12 @@ class AnalysisRunService {
         result,
         ...(metric ? { metric } : {}),
       });
-      await assertEvidenceAccess(
-        evidence,
-        await this.dependencies.refreshContext(context),
-        this.dependencies.authorization,
+      await withFreshCatalogReadScope(async () =>
+        assertEvidenceAccess(
+          evidence,
+          await this.dependencies.refreshContext(context),
+          this.dependencies.authorization,
+        ),
       );
       await this.change(context, runId, (state) => {
         this.assertLease(state, lease);

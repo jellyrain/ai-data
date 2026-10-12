@@ -5,6 +5,7 @@ import { analysisRunSchema, stableStringify, type RunLease } from "@ai-data/cont
 import type { MetadataTransactionalExecutor } from "@ai-data/metadata";
 import type { AuthContext } from "../auth/auth-types";
 import { ApplicationError } from "../errors/application-error";
+import { SqlAttachmentRepository } from "../conversations/sql-attachment-repository";
 import { SqlAnalysisRunRepository } from "../analysis-runs/sql-analysis-run-repository";
 import { runTime, runTimeMilliseconds } from "../analysis-runs/run-time";
 import { toolAuditSchema } from "../analysis-runs/tool-audit";
@@ -21,6 +22,7 @@ const pendingSchema = z
   .strict();
 const messageSchema = z
   .object({
+    id: z.string(),
     role: z.enum(["user", "assistant", "system", "tool"]),
     content: z.string(),
     analysis_run_id: z.string().nullable(),
@@ -57,10 +59,14 @@ class SqlRuntimeRepository implements RuntimeRepository {
   async loadInput(context: AuthContext, runId: string, runtimeKey = ""): Promise<AnalysisInput> {
     const state = await this.runs.get(context, runId);
     const result = await this.database.execute({
-      sql: "SELECT TOP (200) role,content,analysis_run_id FROM dbo.conversation_messages WHERE conversation_id=@conversation ORDER BY sequence DESC",
+      sql: "SELECT TOP (200) id,role,content,analysis_run_id FROM dbo.conversation_messages WHERE conversation_id=@conversation ORDER BY sequence DESC",
       parameters: [{ name: "conversation", type: "string", value: state.conversation_id }],
     });
     const rows = result.rows.map((row) => messageSchema.parse(row)).reverse();
+    const attachments = await new SqlAttachmentRepository(this.database).forMessages(
+      this.database,
+      state.conversation_id,
+    );
     if (!rows.length) throw new ApplicationError("INVALID_INPUT", "分析运行缺少用户消息");
     const contextHash = await this.loadContextHash(context, runtimeKey);
     const saved = await this.database.execute({
@@ -78,7 +84,11 @@ class SqlRuntimeRepository implements RuntimeRepository {
       conversation_id: state.conversation_id,
       context_hash: contextHash,
       ...(saved.rows[0] ? { thread_id: z.string().min(1).parse(saved.rows[0].thread_id) } : {}),
-      messages: rows.map(({ role, content }) => ({ role, content })),
+      messages: rows.map(({ id, role, content }) => ({
+        role,
+        content,
+        ...(attachments.has(id) ? { attachments: attachments.get(id)! } : {}),
+      })),
       run_ids: history.rows.map((row) => z.string().parse(row.id)),
     };
   }

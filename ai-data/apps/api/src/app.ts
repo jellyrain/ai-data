@@ -7,6 +7,7 @@ import { ApplicationError } from "./errors/application-error";
 import { registerAuthRoutes } from "./routes/auth-routes";
 import { registerUserAdminRoutes } from "./routes/user-admin-routes";
 import { registerConversationRoutes } from "./routes/conversation-routes";
+import { registerAttachmentRoutes } from "./routes/attachment-routes";
 import { registerContractErrorHandler } from "./routes/contract-error";
 import { registerSystemRoutes } from "./routes/system-routes";
 import { registerDataAccessRoutes } from "./routes/data-access-routes";
@@ -38,6 +39,7 @@ function validateDependencies(dependencies: ApiDependencies): void {
     auth: dependencies.auth,
     userAdmin: dependencies.userAdmin,
     conversations: dependencies.conversations,
+    attachments: dependencies.attachments,
     "agentConfiguration.agents": dependencies.agentConfiguration?.agents,
     "agentConfiguration.models": dependencies.agentConfiguration?.models,
     "agentConfiguration.skills": dependencies.agentConfiguration?.skills,
@@ -99,6 +101,21 @@ async function createApp(dependencies: ApiDependencies): Promise<FastifyInstance
   registerUserAdminRoutes(app, auth);
   registerUserAssignmentRoutes(app, auth, dependencies.userAdmin);
   registerConversationRoutes(app, auth, conversations);
+  registerAttachmentRoutes(app, auth, dependencies.attachments);
+  let attachmentTimer: ReturnType<typeof setInterval> | undefined;
+  app.addHook("onReady", async () => {
+    await dependencies.attachments.cleanup();
+    attachmentTimer = setInterval(() => {
+      void dependencies.attachments
+        .cleanup()
+        .catch((error: unknown) => app.log.error({ err: error }, "附件清理失败"));
+    }, 3600000);
+    attachmentTimer.unref();
+  });
+  app.addHook("onClose", async () => {
+    clearInterval(attachmentTimer);
+    await dependencies.attachments.cleanup();
+  });
   registerAgentRoutes(app, auth, dependencies.agentConfiguration.agents);
   registerModelResourceRoutes(app, auth, dependencies.agentConfiguration);
   registerCatalogRoutes(app, auth, catalog.service, catalog.permissions, catalog.admin);

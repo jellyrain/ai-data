@@ -1,3 +1,4 @@
+import { withCatalogReadScope } from "../catalog/catalog-read-scope";
 import {
   dataAccessQueryRequestSchema,
   type QueryAccessContext,
@@ -69,32 +70,34 @@ class QueryAuthorizationService {
     input: unknown,
     context: AuthContext,
   ): Promise<{ query: QueryDsl; outputMasks: QueryAccessContext["output_masks"] }> {
-    const parsed = dataAccessQueryRequestSchema.shape.query.safeParse(input);
-    if (!parsed.success) throw new QueryAuthorizationError("查询 DSL 格式无效", "INVALID_INPUT");
-    const query = parsed.data;
-    const datasets = await this.catalog.listAuthorized(context, query.source_id);
-    const from = datasets.find((item) => item.dataset.object_id === query.from.object_id);
-    if (!from) throw new QueryAuthorizationError("主数据对象无权访问", "UNAUTHORIZED_OBJECT");
+    return withCatalogReadScope(async () => {
+      const parsed = dataAccessQueryRequestSchema.shape.query.safeParse(input);
+      if (!parsed.success) throw new QueryAuthorizationError("查询 DSL 格式无效", "INVALID_INPUT");
+      const query = parsed.data;
+      const datasets = await this.catalog.listAuthorized(context, query.source_id);
+      const from = datasets.find((item) => item.dataset.object_id === query.from.object_id);
+      if (!from) throw new QueryAuthorizationError("主数据对象无权访问", "UNAUTHORIZED_OBJECT");
 
-    let authorizedQuery: QueryDsl;
-    let outputMasks: QueryAccessContext["output_masks"];
-    if (query.type === "relational_query") {
-      const relations = await this.resolveRelations(query, datasets, context);
-      const result = authorizeRelationalQuery(query, relations, context);
-      authorizedQuery = result.query;
-      outputMasks = result.outputMasks;
-    } else {
-      const config = await this.catalog.getAuthorizedConfig(
-        context,
-        query.source_id,
-        query.from.object_id,
-      );
-      const result = authorizeParameterizedQuery(query, from, config, context);
-      authorizedQuery = result.query;
-      outputMasks = result.outputMasks;
-    }
+      let authorizedQuery: QueryDsl;
+      let outputMasks: QueryAccessContext["output_masks"];
+      if (query.type === "relational_query") {
+        const relations = await this.resolveRelations(query, datasets, context);
+        const result = authorizeRelationalQuery(query, relations, context);
+        authorizedQuery = result.query;
+        outputMasks = result.outputMasks;
+      } else {
+        const config = await this.catalog.getAuthorizedConfig(
+          context,
+          query.source_id,
+          query.from.object_id,
+        );
+        const result = authorizeParameterizedQuery(query, from, config, context);
+        authorizedQuery = result.query;
+        outputMasks = result.outputMasks;
+      }
 
-    return { query: authorizedQuery, outputMasks };
+      return { query: authorizedQuery, outputMasks };
+    });
   }
 
   /** 按别名收集当前可见对象及业务配置，拒绝重复别名和不可见的关联对象。 */

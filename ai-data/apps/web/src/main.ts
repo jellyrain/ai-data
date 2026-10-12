@@ -10,6 +10,8 @@ import { createAppRouter } from "./app/router";
 import "element-plus/theme-chalk/base.css";
 import "element-plus/theme-chalk/el-button.css";
 import "element-plus/theme-chalk/el-input.css";
+import "element-plus/theme-chalk/el-image.css";
+import "element-plus/theme-chalk/el-image-viewer.css";
 import "element-plus/theme-chalk/el-form.css";
 import "element-plus/theme-chalk/el-form-item.css";
 import "element-plus/theme-chalk/el-alert.css";

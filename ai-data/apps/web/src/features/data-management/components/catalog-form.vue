@@ -17,8 +17,11 @@ defineProps<{ dataset: Dataset; roles: ManagedRole[]; disabled: boolean }>();
       ><ElInput v-model="draft.config.grain" placeholder="例如：一条住院费用明细记录"
     /></ElFormItem>
     <section class="management-section">
-      <h3>唯一键</h3>
-      <p class="management-help">每组字段必须共同唯一标识一行，关系基数会依据这些声明校验。</p>
+      <h3>唯一键（可选）</h3>
+      <p class="management-help">
+        每组字段应能唯一确定一条原始记录。关系基数未声明时可先留空；声明为“一”的一侧需要对应的唯一键依据。
+      </p>
+      <p class="management-help">需手动配置，暂不自动读取数据库主键或唯一索引。</p>
       <div
         v-for="(key, index) in draft.config.unique_keys ?? []"
         :key="index"

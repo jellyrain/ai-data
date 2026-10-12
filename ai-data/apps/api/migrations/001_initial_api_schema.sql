@@ -603,6 +603,36 @@ BEGIN
       PRIMARY KEY (organization_id, execution_id, analysis_run_id)
     );
 
+IF OBJECT_ID(N'dbo.conversation_attachments', N'U') IS NULL
+BEGIN
+  CREATE TABLE dbo.conversation_attachments (
+    id NVARCHAR(128) NOT NULL PRIMARY KEY,
+    conversation_id NVARCHAR(128) NOT NULL REFERENCES dbo.conversations(id),
+    name NVARCHAR(255) NOT NULL,
+    mime_type NVARCHAR(32) NOT NULL CHECK (mime_type IN ('image/png','image/jpeg','image/webp')),
+    size_bytes INT NOT NULL CHECK (size_bytes>0 AND size_bytes<=10485760),
+    width INT NOT NULL CHECK (width BETWEEN 1 AND 8192),
+    height INT NOT NULL CHECK (height BETWEEN 1 AND 8192),
+    sha256 CHAR(64) NOT NULL,
+    status NVARCHAR(16) NOT NULL CHECK (status IN ('pending','attached','deleted')),
+    created_at DATETIME2(3) NOT NULL DEFAULT SYSUTCDATETIME(),
+    expires_at DATETIME2(3) NULL,
+    CONSTRAINT ck_conversation_attachment_pixels CHECK (CAST(width AS BIGINT)*height<=20000000)
+  );
+  CREATE INDEX ix_conversation_attachments_conversation ON dbo.conversation_attachments(conversation_id,status);
+  CREATE INDEX ix_conversation_attachments_expiry ON dbo.conversation_attachments(status,expires_at);
+END;
+IF OBJECT_ID(N'dbo.conversation_message_attachments', N'U') IS NULL
+BEGIN
+  CREATE TABLE dbo.conversation_message_attachments (
+    message_id NVARCHAR(128) NOT NULL REFERENCES dbo.conversation_messages(id),
+    attachment_id NVARCHAR(128) NOT NULL REFERENCES dbo.conversation_attachments(id),
+    position INT NOT NULL CHECK (position BETWEEN 0 AND 3),
+    PRIMARY KEY (message_id,position),
+    CONSTRAINT uq_conversation_message_attachment UNIQUE (attachment_id)
+  );
+END;
+
     -- DDL 与迁移标记在同一事务提交，后续启动按标记跳过已应用迁移。
     INSERT INTO dbo.schema_migrations (migration_id)
     VALUES (N'001_initial_api_schema');

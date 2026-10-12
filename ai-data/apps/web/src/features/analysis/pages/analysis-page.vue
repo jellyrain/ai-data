@@ -2,7 +2,9 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElAlert, ElButton, ElDrawer, ElInput, ElOption, ElSelect, ElSkeleton } from "element-plus";
-import { ArrowUp, History, FileSearch, MessagesSquare } from "lucide-vue-next";
+import { ArrowUp, History, FileSearch, MessagesSquare, ImagePlus } from "lucide-vue-next";
+import DraftImages from "../components/draft-images.vue";
+import MessageImages from "../components/message-images.vue";
 import { useServices } from "../../../app/services";
 import ConversationList from "../components/conversation-list.vue";
 import EvidencePanel from "../components/evidence-panel.vue";
@@ -21,6 +23,39 @@ const selectedTool = ref("");
 const evidenceTab = ref("queries");
 const agentKey = ref("");
 const composing = ref(false);
+const imageInput = ref<HTMLInputElement>();
+const canAttach = computed(
+  () =>
+    !state.sending &&
+    !state.preparingImages &&
+    !state.creating &&
+    !state.pendingMessage &&
+    !state.loading &&
+    !active.value &&
+    (!state.detail || state.detail.conversation.status === "active"),
+);
+function chooseImages(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (canAttach.value) void analysis.addImages(Array.from(input.files ?? []));
+  input.value = "";
+}
+function pasteImages(event: ClipboardEvent) {
+  const files = Array.from(event.clipboardData?.files ?? []).filter((file) =>
+    file.type.startsWith("image/"),
+  );
+  if (files.length && canAttach.value) {
+    event.preventDefault();
+    void analysis.addImages(files);
+  }
+}
+function dragImages(event: DragEvent) {
+  if (event.dataTransfer?.types.includes("Files")) event.preventDefault();
+}
+function dropImages(event: DragEvent) {
+  if (!event.dataTransfer?.files.length) return;
+  event.preventDefault();
+  if (canAttach.value) void analysis.addImages(Array.from(event.dataTransfer.files));
+}
 const messagesCount = ref(20);
 const messageArea = ref<HTMLElement>();
 const messageContent = ref<HTMLElement>();
@@ -93,10 +128,11 @@ const timeline = computed(() => {
 });
 const canSend = computed(
   () =>
-    !!state.draft.trim() &&
+    (!!state.draft.trim() || !!state.images.length) &&
     state.draft.length <= 64000 &&
     !state.loading &&
     !state.sending &&
+    !state.preparingImages &&
     !state.creating &&
     !submitting.value &&
     !active.value &&
@@ -285,10 +321,20 @@ onBeforeUnmount(() => {
                 ]"
               >
                 <strong>{{ item.message.role === "user" ? "你" : "历史消息" }}</strong>
-                <p v-if="item.message.role === 'user'" class="plain-content">
+                <MessageImages
+                  v-if="item.message.attachments?.length"
+                  :images="item.message.attachments"
+                />
+                <p
+                  v-if="item.message.role === 'user' && item.message.content"
+                  class="plain-content"
+                >
                   {{ item.message.content }}
                 </p>
-                <MarkdownContent v-else :text="item.message.content" /><small
+                <MarkdownContent
+                  v-else-if="item.message.role !== 'user'"
+                  :text="item.message.content"
+                /><small
                   v-if="!item.message.analysisRunId && item.message.role !== 'user'"
                   class="muted"
                   >此历史消息未关联运行详情。</small
@@ -361,7 +407,28 @@ onBeforeUnmount(() => {
             >重新读取</ElButton
           >
         </p>
-        <form class="question-form" @submit.prevent="submit">
+        <form
+          class="question-form"
+          @submit.prevent="submit"
+          @paste="pasteImages"
+          @dragover="dragImages"
+          @drop="dropImages"
+        >
+          <DraftImages
+            :images="state.images"
+            :disabled="!canAttach"
+            @remove="analysis.removeImage($event)"
+          />
+          <input
+            ref="imageInput"
+            class="image-file-input"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            multiple
+            aria-label="选择图片文件"
+            :disabled="!canAttach"
+            @change="chooseImages"
+          />
           <ElInput
             :model-value="state.draft"
             type="textarea"
@@ -369,19 +436,30 @@ onBeforeUnmount(() => {
             aria-label="分析问题"
             placeholder="描述你的问题，例如：本年门诊人次有哪些变化？"
             :maxlength="64000"
-            :readonly="state.pendingMessage"
+            :readonly="state.pendingMessage || state.sending"
             @update:model-value="analysis.setDraft($event)"
             @keydown="keydown"
             @compositionstart="composing = true"
             @compositionend="composing = false"
           />
           <div class="composer-footer">
+            <ElButton
+              class="attach-image-button"
+              text
+              :disabled="!canAttach || state.images.length >= 4"
+              aria-label="添加图片"
+              title="支持选择、粘贴或拖入 JPG、PNG、WebP，最多 4 张，单张 10 MB，合计 20 MB"
+              @click="imageInput?.click()"
+              ><ImagePlus :size="19" /><span>图片</span></ElButton
+            >
             <span class="muted">{{
-              active
-                ? "本轮结束后可继续提问"
-                : state.pendingMessage
-                  ? "提交未确认，重试将沿用原问题"
-                  : "Enter 发送 · Shift + Enter 换行"
+              state.preparingImages
+                ? "正在读取图片…"
+                : active
+                  ? "本轮结束后可继续提问"
+                  : state.pendingMessage
+                    ? "提交未确认，重试将沿用原问题"
+                    : "Enter 发送 · Shift + Enter 换行"
             }}</span
             ><ElButton
               native-type="submit"

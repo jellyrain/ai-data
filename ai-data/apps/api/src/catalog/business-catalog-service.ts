@@ -10,6 +10,7 @@ import type {
 import { resolveParameterDefinitions } from "./parameter-config";
 import { validateRelationConfig, validateUniqueKeys } from "./relation-config";
 import { requireCatalogAdmin } from "../catalog-admin/catalog-admin-service";
+import { readCatalogInScope } from "./catalog-read-scope";
 
 /** 用户目录中一个可用数据集与其有效行策略。 */
 type AuthorizedDataset = {
@@ -54,6 +55,15 @@ class BusinessCatalogService {
 
   /** 返回当前身份可见的一个数据源业务目录。 */
   async listAuthorized(context: AuthContext, sourceId: string): Promise<AuthorizedDataset[]> {
+    return readCatalogInScope(this, context, sourceId, () =>
+      this.readAuthorized(context, sourceId),
+    );
+  }
+
+  private async readAuthorized(
+    context: AuthContext,
+    sourceId: string,
+  ): Promise<AuthorizedDataset[]> {
     const [datasets, configs, objectPermissions, columnPermissions, rowPolicies] =
       await Promise.all([
         this.rawCatalog.listRawCatalog(sourceId),

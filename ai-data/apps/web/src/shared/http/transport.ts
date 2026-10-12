@@ -20,17 +20,31 @@ function createTransport(fetcher: typeof fetch = fetch): Transport {
         cache: "no-store",
         signal,
         headers: {
-          Accept: "application/json",
-          ...(options.body === undefined ? {} : { "Content-Type": "application/json" }),
+          Accept:
+            options.responseType === "blob"
+              ? "image/png,image/jpeg,image/webp"
+              : "application/json",
+          ...(options.binaryBody
+            ? { "Content-Type": options.binaryBody.type }
+            : options.body === undefined
+              ? {}
+              : { "Content-Type": "application/json" }),
           ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
         },
-        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+        body:
+          options.binaryBody ??
+          (options.body === undefined ? undefined : JSON.stringify(options.body)),
       });
     } catch {
       if (options.signal?.aborted) throw new ApiError("请求已取消", 0, "CANCELLED");
       throw new ApiError(timeout.aborted ? "请求超时，请重试" : "无法连接服务，请检查网络后重试");
     }
     if (response.status === 204) return undefined;
+    if (response.ok && options.responseType === "blob") {
+      if (!/^image\/(png|jpeg|webp)(?:;|$)/.test(response.headers.get("content-type") ?? ""))
+        throw new ApiError("图片响应格式异常", response.status, "INVALID_RESPONSE");
+      return response.blob();
+    }
     const body: unknown = await response.json().catch(() => null);
     if (!response.ok) {
       const error = contractErrorSchema.safeParse(body);

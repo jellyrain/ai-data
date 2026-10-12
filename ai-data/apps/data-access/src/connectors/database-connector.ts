@@ -69,6 +69,8 @@ class DatabaseConnector implements DataSourceConnector {
   readonly sourceId: string;
   readonly kind: Exclude<ConnectorKind, "http_api">;
   private readonly resources: QueryResourceGate;
+  /** 只合并当前连接器正在执行的物理目录读取，完成或失败后立即释放。 */
+  private catalogDiscovery?: Promise<DiscoveredDataset[]>;
 
   constructor(
     config: DataSourceConfig,
@@ -103,10 +105,16 @@ class DatabaseConnector implements DataSourceConnector {
 
   /** 从业务数据库系统目录构造统一目录，不返回连接凭据。 */
   async discoverCatalog(): Promise<DiscoveredDataset[]> {
-    const result = await this.resources.run((options) =>
-      this.driver.query(this.dialect.catalogSql(), [], options),
-    );
-    return groupCatalogRows(result.rows, this.kind);
+    if (!this.catalogDiscovery) {
+      this.catalogDiscovery = this.resources
+        .run((options) => this.driver.query(this.dialect.catalogSql(), [], options))
+        .then((result) => groupCatalogRows(result.rows, this.kind))
+        .finally(() => {
+          this.catalogDiscovery = undefined;
+        });
+    }
+    // 白名单仍由各请求独立读取；调用方修改对象不会污染其他等待者。
+    return structuredClone(await this.catalogDiscovery);
   }
 
   /** 编译最终 DSL，执行参数化 SQL，并转换为标准化表格结果。 */

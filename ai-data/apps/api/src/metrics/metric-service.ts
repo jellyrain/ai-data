@@ -1,3 +1,4 @@
+import { withCatalogReadScope } from "../catalog/catalog-read-scope";
 import { createHash, randomUUID } from "node:crypto";
 import {
   metricDefinitionSchema,
@@ -98,76 +99,87 @@ class MetricService {
     input: MetricDefinition,
     executor?: MetadataQueryExecutor,
   ): Promise<void> {
-    const metric = metricDefinitionSchema.parse(input);
-    const authorization = executor
-      ? this.dependencies.authorizationForExecutor?.(executor)
-      : this.authorization;
-    if (!authorization) throw new ApplicationError("INTERNAL_ERROR", "指标事务授权未配置");
-    const range =
-      metric.date_basis.data_type === "date"
-        ? ["2026-01-01", "2026-12-31"]
-        : ["2026-01-01 00:00:00", "2026-12-31 23:59:59"];
-    for (const dimensions of [[], ...metric.dimensions.map((field) => [field])]) {
-      const queries = buildMetricQueries(metric, {
-        analysis_run_id: "definition-validation",
-        idempotency_key: "definition-validation",
-        start: range[0],
-        end: range[1],
-        dimensions,
-      });
-      await authorization.authorize(queries.grouped, context);
-    }
+    return withCatalogReadScope(async () => {
+      const metric = metricDefinitionSchema.parse(input);
+      const authorization = executor
+        ? this.dependencies.authorizationForExecutor?.(executor)
+        : this.authorization;
+      if (!authorization) throw new ApplicationError("INTERNAL_ERROR", "指标事务授权未配置");
+      const range =
+        metric.date_basis.data_type === "date"
+          ? ["2026-01-01", "2026-12-31"]
+          : ["2026-01-01 00:00:00", "2026-12-31 23:59:59"];
+      for (const dimensions of [[], ...metric.dimensions.map((field) => [field])]) {
+        const queries = buildMetricQueries(metric, {
+          analysis_run_id: "definition-validation",
+          idempotency_key: "definition-validation",
+          start: range[0],
+          end: range[1],
+          dimensions,
+        });
+        await authorization.authorize(queries.grouped, context);
+      }
+    });
   }
   async get(context: AuthContext, metricId: string, version?: number): Promise<MetricDefinition> {
-    const metric = await this.repository.find(context.organizationId, metricId, version);
-    if (!metric) throw new ApplicationError("NOT_FOUND", "指标不存在");
-    const scope = await this.repository.findPublicationScope(
-      context.organizationId,
-      metric.metric_id,
-      metric.version,
-    );
-    if (!scope) throw new ApplicationError("NOT_FOUND", "指标发布记录不存在");
-    if (this.dependencies.authorizeScope) await this.dependencies.authorizeScope(context, scope);
-    else if (
-      (scope.source_id && scope.source_id !== metric.query.source_id) ||
-      (scope.object_id && scope.object_id !== metric.query.from.object_id) ||
-      (scope.metric_id && scope.metric_id !== metric.metric_id)
-    )
-      throw new ApplicationError("UNAUTHORIZED", "指标适用范围不匹配");
-    await this.validateDefinition(context, metric);
-    return metric;
+    return withCatalogReadScope(async () => {
+      const metric = await this.repository.find(context.organizationId, metricId, version);
+      if (!metric) throw new ApplicationError("NOT_FOUND", "指标不存在");
+      const scope = await this.repository.findPublicationScope(
+        context.organizationId,
+        metric.metric_id,
+        metric.version,
+      );
+      if (!scope) throw new ApplicationError("NOT_FOUND", "指标发布记录不存在");
+      if (this.dependencies.authorizeScope) await this.dependencies.authorizeScope(context, scope);
+      else if (
+        (scope.source_id && scope.source_id !== metric.query.source_id) ||
+        (scope.object_id && scope.object_id !== metric.query.from.object_id) ||
+        (scope.metric_id && scope.metric_id !== metric.metric_id)
+      )
+        throw new ApplicationError("UNAUTHORIZED", "指标适用范围不匹配");
+      await this.validateDefinition(context, metric);
+      return metric;
+    });
   }
   async list(context: AuthContext): Promise<MetricDefinition[]> {
-    const result: MetricDefinition[] = [];
-    for (const metric of await this.repository.list(context.organizationId)) {
-      try {
-        result.push(await this.get(context, metric.metric_id, metric.version));
-      } catch (error) {
-        if (
-          !(error instanceof ApplicationError) ||
-          ![
-            "UNAUTHORIZED_OBJECT",
-            "UNAUTHORIZED_COLUMN",
-            "POLICY_REJECTED",
-            "UNAUTHORIZED",
-          ].includes(error.code)
-        )
-          throw error;
+    return withCatalogReadScope(async () => {
+      const result: MetricDefinition[] = [];
+      for (const metric of await this.repository.list(context.organizationId)) {
+        try {
+          result.push(await this.get(context, metric.metric_id, metric.version));
+        } catch (error) {
+          if (
+            !(error instanceof ApplicationError) ||
+            ![
+              "UNAUTHORIZED_OBJECT",
+              "UNAUTHORIZED_COLUMN",
+              "POLICY_REJECTED",
+              "UNAUTHORIZED",
+            ].includes(error.code)
+          )
+            throw error;
+        }
       }
-    }
-    return result;
+      return result;
+    });
   }
   async execute(context: AuthContext, metricId: string, input: unknown, runLease?: RunLease) {
     const request = metricExecutionInputSchema.parse(input);
     const key = createHash("sha256").update(request.idempotency_key).digest("hex");
-    const evidence = await this.runs.evidence(context, request.analysis_run_id);
-    let grouped = evidence.find((item) => item.tool_call_id === key + "-groups");
-    let total = evidence.find((item) => item.tool_call_id === key + "-total");
-    const metric = await this.get(
-      context,
-      metricId,
-      request.version ?? grouped?.metric?.version ?? total?.metric?.version,
-    );
+    const prepared = await withCatalogReadScope(async () => {
+      const evidence = await this.runs.evidence(context, request.analysis_run_id);
+      const grouped = evidence.find((item) => item.tool_call_id === key + "-groups");
+      const total = evidence.find((item) => item.tool_call_id === key + "-total");
+      const metric = await this.get(
+        context,
+        metricId,
+        request.version ?? grouped?.metric?.version ?? total?.metric?.version,
+      );
+      return { grouped, total, metric };
+    });
+    const { metric } = prepared;
+    let { grouped, total } = prepared;
     const queries = buildMetricQueries(metric, request);
     const references = { metric_id: metric.metric_id, version: metric.version };
     const assertSame = (evidence: QueryEvidence, query: QueryDsl) => {

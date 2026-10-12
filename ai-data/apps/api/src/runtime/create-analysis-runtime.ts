@@ -16,6 +16,7 @@ import type { AgentRuntime } from "./agent-runtime";
 import type { MemoryRuntime } from "../memory/memory-runtime";
 import type { ReportRevisionService } from "../reports/report-revision-service";
 import type { ReportExecutionService } from "../reports/report-execution-service";
+import type { AttachmentService } from "../conversations/attachment-service";
 
 /** 启动服务级调度与官方进程，每次运行按会话绑定装配数据库模型及 Agent 预算。 */
 function createAnalysisRuntime(dependencies: {
@@ -34,6 +35,7 @@ function createAnalysisRuntime(dependencies: {
   memory?: MemoryRuntime;
   reportEditing?: ReportRevisionService;
   reportExecutions?: ReportExecutionService;
+  attachments?: Pick<AttachmentService, "read">;
 }) {
   const { config } = dependencies;
   const skills = new SkillResources(dependencies.skillsDirectory, []);

@@ -3,6 +3,7 @@ import { AnalysisExecutor } from "../../src/runtime/analysis-executor";
 import { ApplicationError } from "../../src/errors/application-error";
 import { context } from "../support/api-fixtures";
 import type { HarnessRequest, HarnessResult } from "../../src/harness/harness-types";
+import type { AnalysisInput } from "../../src/runtime/runtime-types";
 
 function setup(overrides: Record<string, unknown> = {}) {
   const lease = { owner: "worker", epoch: 1, expires_at: "2026-09-14 23:00:00" };
@@ -56,6 +57,91 @@ function setup(overrides: Record<string, unknown> = {}) {
 }
 
 describe("分析执行器", () => {
+  it.each([true, false])(
+    "复用线程=%s 时复核历史图片，按原消息顺序构造需要发送的图片",
+    async (resume) => {
+      const image = {
+        attachment_id: "c19d4fd0-e155-4719-94e0-f0449adbb982",
+        name: "a.png",
+        mime_type: "image/png" as const,
+        size_bytes: 50,
+        width: 64,
+        height: 64,
+      };
+      const read = vi.fn(async () => ({
+        path: "/private/image",
+        bytes: Buffer.alloc(50),
+        metadata: image,
+      }));
+      const input: AnalysisInput = {
+        conversation_id: "conversation",
+        context_hash: "scope-hash",
+        ...(resume ? { thread_id: "saved" } : {}),
+        run_ids: [],
+        messages: [
+          { role: "user", content: "首轮", attachments: [image] },
+          { role: "assistant", content: "红色" },
+          { role: "user", content: "继续" },
+        ],
+      };
+      const h = setup({
+        attachments: { read },
+        repository: {
+          loadInput: async () => input,
+          loadContextHash: async () => "scope-hash",
+          saveThread: vi.fn(),
+        },
+      });
+      await h.executor.execute(context, "run");
+      expect(read).toHaveBeenCalledExactlyOnceWith(context, image.attachment_id);
+      expect(h.harness.run.mock.calls[0]?.[0].images ?? []).toHaveLength(resume ? 0 : 1);
+      if (!resume)
+        expect(h.harness.run.mock.calls[0]?.[0].images?.[0]?.label).toContain(
+          "第 1 条消息，第 1 张图片",
+        );
+      expect(h.runs.fail).not.toHaveBeenCalled();
+    },
+  );
+  it("历史图片不可访问时阻止恢复线程", async () => {
+    const input: AnalysisInput = {
+      conversation_id: "conversation",
+      context_hash: "scope-hash",
+      thread_id: "saved",
+      run_ids: [],
+      messages: [
+        {
+          role: "user",
+          content: "图片",
+          attachments: [
+            {
+              attachment_id: "c19d4fd0-e155-4719-94e0-f0449adbb982",
+              name: "a.png",
+              mime_type: "image/png",
+              size_bytes: 50,
+              width: 64,
+              height: 64,
+            },
+          ],
+        },
+      ],
+    };
+    const h = setup({
+      attachments: {
+        read: async () => {
+          throw new ApplicationError("NOT_FOUND", "图片不可访问");
+        },
+      },
+      repository: { loadInput: async () => input },
+    });
+    await h.executor.execute(context, "run");
+    expect(h.harness.run).not.toHaveBeenCalled();
+    expect(h.runs.fail).toHaveBeenCalledWith(
+      context,
+      "run",
+      expect.anything(),
+      expect.objectContaining({ code: "NOT_FOUND" }),
+    );
+  });
   it("流式复核只读取指纹并检查历史，本轮证据由提交服务校验", async () => {
     const h = setup();
     const input = await h.repository.loadInput();

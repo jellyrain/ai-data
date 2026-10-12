@@ -69,6 +69,12 @@ function createApiDependencies() {
       get: vi.fn(async () => null),
       submitUserMessage: vi.fn(async () => null),
     },
+    attachments: {
+      upload: vi.fn(unexpectedCall),
+      read: vi.fn(unexpectedCall),
+      remove: vi.fn(unexpectedCall),
+      cleanup: vi.fn(async () => {}),
+    },
     memory: {
       preferences: {
         editState: vi.fn(unexpectedCall),

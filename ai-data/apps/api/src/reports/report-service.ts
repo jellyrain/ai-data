@@ -1,3 +1,4 @@
+import { withCatalogReadScope } from "../catalog/catalog-read-scope";
 import { saveReportInputSchema, type SavedReport } from "@ai-data/contracts";
 import type { AuthContext } from "../auth/auth-types";
 import type { ApiQueryAuthorization } from "../app-types";
@@ -17,26 +18,28 @@ class ReportService {
   ) {}
 
   async get(context: AuthContext, reportId: string, version?: number): Promise<SavedReport> {
-    const latest = await this.repository.find(context.organizationId, reportId);
-    const definition = await this.management?.findDefinitionHead(context, reportId);
-    const acl = definition ?? latest;
-    if (
-      !latest ||
-      !acl ||
-      (acl.user_id !== context.userId && !acl.shared_with.includes(context.userId))
-    )
-      throw new ApplicationError("NOT_FOUND", "报告不存在");
-    const report =
-      version === undefined || version === latest.version
-        ? latest
-        : await this.repository.find(context.organizationId, reportId, version);
-    if (!report || report.organization_id !== context.organizationId)
-      throw new ApplicationError("NOT_FOUND", "报告不存在");
-    await this.management?.source(context, report.analysis_run_id, false);
-    await Promise.all(
-      report.sources.map((source) => assertEvidenceAccess(source, context, this.authorization)),
-    );
-    return report;
+    return withCatalogReadScope(async () => {
+      const latest = await this.repository.find(context.organizationId, reportId);
+      const definition = await this.management?.findDefinitionHead(context, reportId);
+      const acl = definition ?? latest;
+      if (
+        !latest ||
+        !acl ||
+        (acl.user_id !== context.userId && !acl.shared_with.includes(context.userId))
+      )
+        throw new ApplicationError("NOT_FOUND", "报告不存在");
+      const report =
+        version === undefined || version === latest.version
+          ? latest
+          : await this.repository.find(context.organizationId, reportId, version);
+      if (!report || report.organization_id !== context.organizationId)
+        throw new ApplicationError("NOT_FOUND", "报告不存在");
+      await this.management?.source(context, report.analysis_run_id, false);
+      await Promise.all(
+        report.sources.map((source) => assertEvidenceAccess(source, context, this.authorization)),
+      );
+      return report;
+    });
   }
 
   async save(

@@ -5,9 +5,12 @@ import type { Node, Edge } from "@vue-flow/core";
 import type { RelationGraph } from "@ai-data/contracts";
 import FlowingEdge from "../../reports/components/flowing-edge.vue";
 import type { QueryEdgeData } from "../../reports/models/query-graph-types";
+import { useCanvasMotion } from "../../../shared/canvas/use-canvas-motion";
+import { layoutRelations } from "../stores/relation-layout";
 import "@vue-flow/core/dist/style.css";
 import "@vue-flow/core/dist/theme-default.css";
 const props = defineProps<{ graph: RelationGraph }>();
+const motion = useCanvasMotion();
 const { fitView, dimensions } = useVueFlow();
 function fitGraph() {
   void fitView({ padding: 0.25, maxZoom: 1 });
@@ -17,19 +20,20 @@ watch(() => [dimensions.value.width, dimensions.value.height], fitGraph, { flush
 const relations = computed(() =>
   [...props.graph.incoming, ...props.graph.outgoing].filter((row) => row.enabled),
 );
+const objects = computed(() => [
+  ...new Set([
+    props.graph.object_id,
+    ...relations.value.flatMap((row) => [row.object_id, row.target_object_id]),
+  ]),
+]);
+const positions = computed(() =>
+  layoutRelations(objects.value, relations.value, { x: 300, y: 140 }),
+);
 const nodes = computed<Node[]>(() =>
-  [
-    ...new Set([
-      props.graph.object_id,
-      ...relations.value.flatMap((row) => [row.object_id, row.target_object_id]),
-    ]),
-  ].map((id, index) => ({
+  objects.value.map((id) => ({
     id,
     data: { label: id },
-    position:
-      index === 0
-        ? { x: 300, y: 120 }
-        : { x: index % 2 ? 0 : 600, y: Math.floor((index - 1) / 2) * 140 },
+    position: positions.value.get(id)!,
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
   })),
@@ -56,7 +60,8 @@ const edges = computed<Edge<QueryEdgeData>[]>(() =>
       :min-zoom="0.2"
       :max-zoom="1.5"
       @nodes-initialized="fitGraph"
-      ><template #edge-flowing="edge"><FlowingEdge v-bind="edge" /></template
+      ><template #edge-flowing="edge"
+        ><FlowingEdge v-bind="edge" :animated="motion.enabled.value" /></template
     ></VueFlow>
   </div>
 </template>

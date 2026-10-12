@@ -1,0 +1,30 @@
+[
+  {
+    "frame": 0,
+    "time": 1791536679239,
+    "animation": "2s linear infinite relation-flow",
+    "dash": "0px",
+    "playState": "running"
+  },
+  {
+    "frame": 1,
+    "time": 1791536679726,
+    "animation": "2s linear infinite relation-flow",
+    "dash": "calc(33.3333px)",
+    "playState": "running"
+  },
+  {
+    "frame": 2,
+    "time": 1791536680169,
+    "animation": "2s linear infinite relation-flow",
+    "dash": "calc(33.3333px)",
+    "playState": "running"
+  },
+  {
+    "frame": 3,
+    "time": 1791536680612,
+    "animation": "2s linear infinite relation-flow",
+    "dash": "calc(33.3333px)",
+    "playState": "running"
+  }
+]

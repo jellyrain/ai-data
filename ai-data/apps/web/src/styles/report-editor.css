@@ -587,33 +587,43 @@
   border-color: var(--app-primary);
 }
 .flowing-edge .relation-base {
-  stroke: color-mix(in srgb, var(--app-primary) 38%, var(--app-muted));
+  stroke: color-mix(in srgb, var(--app-muted) 75%, var(--app-text));
   stroke-width: 1.3;
 }
 .flowing-edge.is-selected .relation-base {
   stroke: var(--app-primary);
   stroke-width: 1.8;
 }
+.relation-stream {
+  --relation-flow-color: #73c1ff;
+  filter: drop-shadow(0 0 2.5px var(--relation-flow-color));
+  pointer-events: none;
+}
 .relation-light {
   fill: none;
-  stroke: var(--app-primary);
-  stroke-width: 2.4;
+  stroke: var(--relation-flow-color);
+  stroke-width: var(--tail-width, 2.8);
   stroke-linecap: round;
-  stroke-dasharray: 1.5 98.5;
-  animation: relation-flow 4.6s linear infinite;
+  stroke-dasharray: 0.7 32.633333;
+  animation: relation-flow 2s linear infinite;
   pointer-events: none;
-  filter: drop-shadow(0 0 2px var(--app-primary));
+}
+.relation-head {
+  stroke: #daf1ff;
+  stroke-width: 1.1;
+  stroke-dasharray: 0.5 32.833333;
 }
 .flowing-edge.paused .relation-light {
   animation-play-state: paused;
 }
-.flowing-edge.is-selected .relation-light,
-.vue-flow__edge:hover .relation-light {
-  stroke-width: 3.2;
+.flowing-edge.is-selected .relation-stream,
+.vue-flow__edge:hover .relation-stream {
+  filter: drop-shadow(0 0 3.5px var(--relation-flow-color));
 }
 @keyframes relation-flow {
   from {
-    stroke-dashoffset: calc(100 + var(--trail));
+    /* 两端均为长度，保证 SVG 偏移连续插值，而非在等效周期端点间跳变。 */
+    stroke-dashoffset: calc(33.333333px + var(--trail));
   }
   to {
     stroke-dashoffset: var(--trail);
@@ -634,6 +644,17 @@
 }
 .relation-label.is-selected {
   color: var(--app-primary);
+}
+.relation-label:has(.report-relation-action) {
+  pointer-events: all;
+}
+.report-relation-action {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
 }
 .canvas-inspector {
   position: absolute;

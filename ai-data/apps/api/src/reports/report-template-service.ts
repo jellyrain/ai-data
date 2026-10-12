@@ -1,3 +1,4 @@
+import { withCatalogReadScope } from "../catalog/catalog-read-scope";
 import { createHash } from "node:crypto";
 import {
   stableStringify,
@@ -93,39 +94,41 @@ class ReportTemplateService {
     context: AuthContext,
     executor: MetadataQueryExecutor = this.dependencies.database,
   ): Promise<ReportDefinitionVersion[]> {
-    const result = await executor.execute({
-      sql: "SELECT record_json FROM (SELECT v.record_json,ROW_NUMBER() OVER(PARTITION BY v.knowledge_id ORDER BY v.version DESC) AS ordinal FROM dbo.knowledge_versions v JOIN dbo.knowledge_heads h ON h.organization_id=v.organization_id AND h.knowledge_id=v.knowledge_id WHERE v.organization_id=@org AND h.enabled=1 AND v.effective_at<=CONVERT(datetime2,@now)) versions WHERE ordinal=1",
-      parameters: [
-        { name: "org", type: "string", value: context.organizationId },
-        { name: "now", type: "string", value: runTime() },
-      ],
-    });
-    const records: ReportDefinitionVersion[] = [];
-    for (const row of result.rows) {
-      const publication = parseStoredRecord(() =>
-        publishedKnowledgeSchema.parse(JSON.parse(String(row.record_json))),
-      );
-      if (publication.content.type !== "report_template") continue;
-      try {
-        await this.dependencies.authorizeScope(context, publication.scope, executor);
-        const definition = await this.definition(context, publication.content, executor);
-        await this.dependencies.builder.validate(context, definition.definition, executor);
-        records.push(definition);
-      } catch (error) {
-        if (!(
-          error instanceof ApplicationError &&
-          [
-            "NOT_FOUND",
-            "UNAUTHORIZED",
-            "UNAUTHORIZED_OBJECT",
-            "UNAUTHORIZED_COLUMN",
-            "POLICY_REJECTED",
-          ].includes(error.code)
-        ))
-          throw error;
+    return withCatalogReadScope(async () => {
+      const result = await executor.execute({
+        sql: "SELECT record_json FROM (SELECT v.record_json,ROW_NUMBER() OVER(PARTITION BY v.knowledge_id ORDER BY v.version DESC) AS ordinal FROM dbo.knowledge_versions v JOIN dbo.knowledge_heads h ON h.organization_id=v.organization_id AND h.knowledge_id=v.knowledge_id WHERE v.organization_id=@org AND h.enabled=1 AND v.effective_at<=CONVERT(datetime2,@now)) versions WHERE ordinal=1",
+        parameters: [
+          { name: "org", type: "string", value: context.organizationId },
+          { name: "now", type: "string", value: runTime() },
+        ],
+      });
+      const records: ReportDefinitionVersion[] = [];
+      for (const row of result.rows) {
+        const publication = parseStoredRecord(() =>
+          publishedKnowledgeSchema.parse(JSON.parse(String(row.record_json))),
+        );
+        if (publication.content.type !== "report_template") continue;
+        try {
+          await this.dependencies.authorizeScope(context, publication.scope, executor);
+          const definition = await this.definition(context, publication.content, executor);
+          await this.dependencies.builder.validate(context, definition.definition, executor);
+          records.push(definition);
+        } catch (error) {
+          if (!(
+            error instanceof ApplicationError &&
+            [
+              "NOT_FOUND",
+              "UNAUTHORIZED",
+              "UNAUTHORIZED_OBJECT",
+              "UNAUTHORIZED_COLUMN",
+              "POLICY_REJECTED",
+            ].includes(error.code)
+          ))
+            throw error;
+        }
       }
-    }
-    return records;
+      return records;
+    });
   }
 }
 export { ReportTemplateService };

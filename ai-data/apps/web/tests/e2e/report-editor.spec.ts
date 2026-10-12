@@ -60,6 +60,88 @@ async function login(page: Page) {
   await expect(page).toHaveURL(/analysis/);
 }
 
+test("右键菜单按位置显示操作，Ctrl 拖动平移后仍可正常编辑节点", async ({ page }) => {
+  await login(page);
+  await page.route("**/reports/report/definition", (route) =>
+    route.fulfill({ json: graphDefinition(1) }),
+  );
+  await page.goto("/reports/report/edit");
+  await page.getByRole("button", { name: "数据编排", exact: true }).click();
+  const node = page.locator(".vue-flow__node").first();
+  await expect(node).toBeVisible();
+  const position = () => node.getAttribute("style");
+  const viewport = () => page.locator(".vue-flow__transformationpane").getAttribute("style");
+  for (const mode of ["选择模式", "平移模式"]) {
+    await page.getByRole("button", { name: mode, exact: true }).click();
+    const before = await viewport(),
+      nodeBefore = await position();
+    const rect = (await node.boundingBox())!;
+    await page.mouse.move(rect.x + 50, rect.y + 40);
+    await page.keyboard.down("Control");
+    await page.mouse.down();
+    await page.mouse.move(rect.x + 120, rect.y + 85, { steps: 10 });
+    await page.mouse.up();
+    await page.keyboard.up("Control");
+    await expect.poll(viewport).not.toBe(before);
+    expect(await position()).toBe(nodeBefore);
+    await expect(page.locator(".canvas-inspector")).toHaveCount(0);
+  }
+  await page.getByRole("button", { name: "选择模式", exact: true }).click();
+  const before = await position(),
+    rect = (await node.boundingBox())!;
+  await page.mouse.move(rect.x + 50, rect.y + 40);
+  await page.mouse.down();
+  await page.mouse.move(rect.x + 100, rect.y + 65, { steps: 8 });
+  await page.mouse.up();
+  await expect.poll(position).not.toBe(before);
+  const beforeMenu = await viewport();
+  await node.click({ button: "right", position: { x: 40, y: 40 } });
+  await expect(page.getByRole("menu", { name: "画布操作" })).toBeVisible();
+  await expect(page.locator(".canvas-inspector")).toHaveCount(0);
+  expect(await viewport()).toBe(beforeMenu);
+  await page.getByRole("menuitem", { name: "配置查询", exact: true }).click();
+  await expect(page.locator(".canvas-inspector")).toBeVisible();
+  await page.getByRole("button", { name: "关闭属性面板", exact: true }).click();
+  await page.locator(".relation-label").first().click({ button: "right" });
+  await expect(page.getByRole("menuitem", { name: "配置关联", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu", { name: "画布操作" })).toHaveCount(0);
+  const bounds = (await page.locator(".report-canvas").boundingBox())!;
+  await page.mouse.click(bounds.x + bounds.width - 20, bounds.y + bounds.height - 140, {
+    button: "right",
+  });
+  await expect(page.getByRole("menuitem", { name: "添加查询", exact: true })).toBeVisible();
+  expect(
+    await page.getByRole("menu").evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return r.right <= innerWidth && r.bottom <= innerHeight;
+    }),
+  ).toBe(true);
+  await page.getByRole("menuitem", { name: "适应所有节点", exact: true }).click();
+  await expect(page.getByRole("menu", { name: "画布操作" })).toHaveCount(0);
+});
+
+test("连线光流可开关并记住选择，关闭保留基础线和箭头", async ({ page }) => {
+  await login(page);
+  await page.route("**/reports/report/definition", (route) =>
+    route.fulfill({ json: graphDefinition(1) }),
+  );
+  await page.goto("/reports/report/edit");
+  await page.getByRole("button", { name: "数据编排", exact: true }).click();
+  const toggle = page.getByRole("button", { name: "连线动效", exact: true });
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".relation-light").first()).toBeVisible();
+  await toggle.click();
+  await expect(page.locator(".relation-light")).toHaveCount(0);
+  await expect(page.locator(".relation-base").first()).toBeVisible();
+  await expect(page.locator(".relation-base").first()).toHaveAttribute("marker-end", /url/);
+  await page.reload();
+  await page.getByRole("button", { name: "数据编排", exact: true }).click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await toggle.click();
+  await expect(page.locator(".relation-light").first()).toBeVisible();
+});
+
 test("从中心新建报表，表单与画布切换保留草稿", async ({ page }) => {
   await page.goto("/login");
   await page.getByLabel("用户名", { exact: true }).fill("editor");
@@ -301,6 +383,15 @@ test("添加批准关系、流光方向与布局保存，重新打开保持定�
   await expect
     .poll(() => light.evaluate((el) => getComputedStyle(el).strokeDashoffset))
     .not.toBe(offset);
+  // 端点相差一个光束周期，只在端点跳变时视觉上静止，必须出现连续移动的中间值。
+  await expect
+    .poll(async () => {
+      const value = await light.evaluate((el) =>
+        Number(getComputedStyle(el).strokeDashoffset.match(/[\d.]+/)?.[0]),
+      );
+      return value > 0.5 && value < 32.8;
+    })
+    .toBe(true);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(light).toBeHidden();
   await expect(page.locator(".relation-base")).toBeVisible();

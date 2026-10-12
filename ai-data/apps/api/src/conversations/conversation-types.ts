@@ -1,4 +1,5 @@
 import type { AnalysisRun, AnalysisRunStatus } from "../analysis-runs/analysis-run-record-types";
+import type { ImageAttachment } from "@ai-data/contracts";
 
 /** API 会话、消息和分析运行的持久化能力。 */
 interface ConversationRepository {
@@ -24,6 +25,7 @@ interface ConversationRepository {
     content: string,
     idempotencyKey: string,
     sessionId?: string,
+    attachmentIds?: string[],
   ): Promise<SubmittedMessage | null>;
 }
 
@@ -61,6 +63,8 @@ type ConversationMessage = {
   role: "user" | "assistant" | "system" | "tool";
   /** 消息正文。 */
   content: string;
+  /** 已绑定的图片按用户提交顺序返回；旧文字消息可省略。 */
+  attachments?: ImageAttachment[];
   /** 会话内递增序号。 */
   sequence: number;
   /** 创建时间。 */

@@ -227,6 +227,7 @@ describe("统一报表：API、DAS HTTP、SQL 与对话事务", () => {
       await dataAccessSessions.issueCredential(das.serviceId),
     );
     transactionMemory = createMemoryServices({
+      catalog,
       database,
       config: {
         ...config,

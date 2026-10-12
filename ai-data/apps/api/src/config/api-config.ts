@@ -53,6 +53,8 @@ const apiConfigSchema = z
   .object({
     /** 运行环境名称，用于日志和默认安全策略。 */
     node_env: z.enum(["development", "test", "production"]),
+    /** 图片持久化目录，相对启动目录解析；省略使用 secrets/conversation-attachments。 */
+    attachments_directory: z.string().min(1).optional(),
     /** 省略使用独立后台队列的默认预算。 */
     memory_tasks: memoryTaskConfigSchema.optional(),
     /** API HTTP 服务配置。 */

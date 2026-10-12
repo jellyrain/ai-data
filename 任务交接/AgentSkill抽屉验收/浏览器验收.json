@@ -1,0 +1,34 @@
+{
+  "environment": "production-preview / isolated management fixtures / real repository Skill documents",
+  "results": [
+    {
+      "name": "新建页：中英文长描述与右侧按钮对齐"
+    },
+    {
+      "name": "新建页：800px右侧抽屉、正文独立滚动、固定标题、关闭恢复焦点与勾选"
+    },
+    {
+      "name": "子文档读取、失败提示与重试、Esc关闭、重开路径复位、草稿保留"
+    },
+    {
+      "name": "亮色阅读与边界"
+    },
+    {
+      "name": "390px：按钮换行、抽屉全宽、无横向溢出、关闭保留勾选"
+    },
+    {
+      "name": "1024px：抽屉适配与关闭"
+    },
+    {
+      "name": "配置详情入口：统一抽屉，关闭保留资源地址"
+    },
+    {
+      "name": "历史版本入口：关闭保留版本号和版本记录分区"
+    },
+    {
+      "name": "编辑入口：关闭后保留派生草稿，管理写请求与页面错误均为0"
+    }
+  ],
+  "errors": [],
+  "writes": 0
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "frame": 0,
+    "time": 1791536735045,
+    "dash": "8.37106px",
+    "state": "running"
+  },
+  {
+    "frame": 1,
+    "time": 1791536735458,
+    "dash": "0.875499px",
+    "state": "running"
+  },
+  {
+    "frame": 2,
+    "time": 1791536735921,
+    "dash": "26.9938px",
+    "state": "running"
+  },
+  {
+    "frame": 3,
+    "time": 1791536736361,
+    "dash": "19.221px",
+    "state": "running"
+  }
+]

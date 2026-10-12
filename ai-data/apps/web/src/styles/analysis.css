@@ -1,6 +1,112 @@
 .muted {
   color: var(--app-muted);
 }
+.image-file-input {
+  display: none;
+}
+.draft-images,
+.message-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.draft-images {
+  padding: 12px 14px 2px;
+}
+.draft-image,
+.message-image {
+  margin: 0;
+  min-width: 0;
+}
+.draft-image {
+  position: relative;
+  width: 104px;
+}
+.draft-image .el-image {
+  width: 104px;
+  height: 78px;
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  background: var(--app-surface);
+}
+.draft-image .remove-image {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+}
+.draft-image figcaption,
+.message-image figcaption {
+  font-size: 12px;
+  line-height: 1.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.message-images {
+  margin-top: 12px;
+}
+.user-message .message-images {
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 680px;
+}
+.message-image {
+  width: min(220px, 100%);
+}
+.message-image .el-image,
+.image-placeholder {
+  width: 100%;
+  height: 160px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+}
+.image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.draft-image .el-image,
+.message-image .el-image {
+  cursor: zoom-in;
+}
+.draft-image .el-image:focus-visible,
+.message-image .el-image:focus-visible {
+  outline: 2px solid var(--app-primary);
+  outline-offset: 3px;
+}
+.composer-footer .attach-image-button {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 6px;
+  gap: 5px;
+}
+.composer-footer > .muted {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .draft-image {
+    width: 80px;
+  }
+  .draft-image .el-image {
+    width: 80px;
+    height: 64px;
+  }
+  .draft-images {
+    gap: 10px;
+  }
+  .composer-footer > .muted {
+    font-size: 11px;
+  }
+  .message-image {
+    width: min(160px, 100%);
+  }
+}
 .inline-error {
   color: var(--el-color-danger);
   overflow-wrap: anywhere;

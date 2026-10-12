@@ -206,6 +206,98 @@
   color: var(--app-muted);
   line-height: 1.6;
 }
+.agent-skill-options {
+  gap: 0;
+}
+.agent-skill-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px 24px;
+  padding: 16px 0;
+}
+.agent-skill-option + .agent-skill-option {
+  border-top: 1px solid var(--app-border);
+}
+.agent-skill-option .el-checkbox {
+  min-width: 0;
+  margin-right: 0;
+}
+.agent-skill-option .el-checkbox__input {
+  margin-top: 4px;
+}
+.agent-skill-option .el-checkbox__label {
+  min-width: 0;
+  line-height: 1.6;
+}
+.agent-skill-option small {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 400;
+}
+.agent-skill-option > .el-button {
+  margin: 0;
+}
+.agent-skill-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.agent-skill-links .el-button {
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  min-height: 32px;
+  margin: 0;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.6;
+}
+.agent-skill-links .el-button > span {
+  min-width: 0;
+}
+.agent-skill-drawer .el-drawer__header {
+  margin-bottom: 0;
+  overflow-wrap: anywhere;
+}
+.agent-skill-drawer .el-drawer__body {
+  padding: 0;
+  overflow: hidden;
+}
+.agent-skill-preview {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.agent-skill-preview-toolbar {
+  flex: none;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--app-border);
+}
+.agent-skill-preview-toolbar .management-help {
+  margin: 0 0 16px;
+}
+.agent-skill-document-form > label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.agent-skill-document-form .management-inline-row {
+  margin-bottom: 0;
+}
+.agent-skill-document-form .el-input {
+  min-width: 0;
+  flex: 1;
+}
+.agent-skill-preview-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0 24px 24px;
+}
 .management-inline-row {
   display: flex;
   gap: 10px;
@@ -245,6 +337,20 @@
   }
   .management-inline-row {
     flex-wrap: wrap;
+  }
+  .agent-skill-option {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .agent-skill-option > .el-button {
+    justify-self: start;
+    margin-left: 24px;
+  }
+  .agent-skill-preview-toolbar {
+    padding: 16px;
+  }
+  .agent-skill-preview-content {
+    padding: 0 16px 16px;
   }
 }
 
